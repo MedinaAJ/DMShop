@@ -1,0 +1,23 @@
+{
+  "name": "dmshop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DMShop — E-Commerce Open Source con NodeJS y Angular",
+  "license": "MIT",
+  "workspaces": [
+    "shared",
+    "backend"
+  ],
+  "scripts": {
+    "backend:dev": "npm run dev --workspace=backend",
+    "backend:build": "npm run build --workspace=backend",
+    "backend:start": "npm run start --workspace=backend",
+    "shared:build": "npm run build --workspace=shared",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"**/*.{ts,json,html,scss,css}\""
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

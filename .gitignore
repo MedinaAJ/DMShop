@@ -1,0 +1,38 @@
+# Dependencias
+node_modules/
+dist/
+.angular/
+
+# Entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Uploads
+uploads/
+
+# IDE
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+*.tsbuildinfo
+
+# Coverage
+coverage/
+
+# Temporales
+tmp/
+temp/
