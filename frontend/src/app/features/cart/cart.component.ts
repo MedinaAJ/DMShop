@@ -1,15 +1,19 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { CartService } from '../../core/services/cart.service';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, CurrencyPipe],
+  imports: [RouterLink, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatFormFieldModule, MatInputModule, MatSnackBarModule, CurrencyPipe],
   template: `
     <div class="max-w-4xl mx-auto px-4 py-8">
       <h1 class="text-2xl font-bold mb-6">Carrito de compra</h1>
@@ -96,6 +100,35 @@ import { CartService } from '../../core/services/cart.service';
               <span>-{{ cartService.cart()!.totalDiscounts | currency: 'EUR' }}</span>
             </div>
           }
+
+          <!-- Applied coupons -->
+          @if (cartService.cart()!.appliedDiscounts?.length) {
+            <div class="mb-3">
+              @for (d of cartService.cart()!.appliedDiscounts!; track d.id) {
+                <div class="flex items-center justify-between text-sm bg-green-50 rounded px-3 py-1.5 mb-1">
+                  <span class="text-green-700">
+                    <mat-icon class="!text-base align-middle mr-1">local_offer</mat-icon>
+                    {{ d.name }} @if (d.code) { ({{ d.code }}) }
+                  </span>
+                  <button mat-icon-button class="!w-6 !h-6" (click)="removeDiscount(d.id)">
+                    <mat-icon class="!text-base text-red-400">close</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Coupon input -->
+          <div class="flex items-center gap-2 mb-3">
+            <mat-form-field appearance="outline" class="flex-1 !mb-0" subscriptSizing="dynamic">
+              <mat-label>Código de cupón</mat-label>
+              <input matInput [(ngModel)]="couponCode" name="coupon" (keyup.enter)="applyCoupon()" />
+            </mat-form-field>
+            <button mat-stroked-button (click)="applyCoupon()" [disabled]="!couponCode()">
+              Aplicar
+            </button>
+          </div>
+
           <hr class="my-3" />
           <div class="flex justify-between text-xl font-bold">
             <span>Total</span>
@@ -121,6 +154,8 @@ import { CartService } from '../../core/services/cart.service';
 })
 export class CartComponent {
   readonly cartService = inject(CartService);
+  private readonly snack = inject(MatSnackBar);
+  readonly couponCode = signal('');
 
   async updateQty(itemId: number, quantity: number): Promise<void> {
     if (quantity < 1) return;
@@ -129,5 +164,21 @@ export class CartComponent {
 
   async remove(itemId: number): Promise<void> {
     await this.cartService.removeItem(itemId);
+  }
+
+  async applyCoupon(): Promise<void> {
+    const code = this.couponCode().trim();
+    if (!code) return;
+    try {
+      await this.cartService.applyDiscount(code);
+      this.couponCode.set('');
+      this.snack.open('Cupón aplicado', 'OK', { duration: 2000 });
+    } catch {
+      this.snack.open('Cupón inválido o expirado', 'Cerrar', { duration: 3000 });
+    }
+  }
+
+  async removeDiscount(cartRuleId: number): Promise<void> {
+    await this.cartService.removeDiscount(cartRuleId);
   }
 }

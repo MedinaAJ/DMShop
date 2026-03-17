@@ -44,7 +44,7 @@ export const orderController = {
       return;
     }
 
-    const summary = await cartCalculator.calculate(cart.id, idAddressDelivery, idCarrier);
+    const summary = await cartCalculator.calculate(cart.id, idAddressDelivery, idCarrier, userId);
     sendSuccess(res, summary);
   },
 

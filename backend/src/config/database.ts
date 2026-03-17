@@ -47,6 +47,7 @@ import {
   // Cart
   Cart,
   CartItem,
+  CartCartRule,
   CartRule,
   // Carriers
   Carrier,
@@ -110,6 +111,7 @@ const models = [
   // Cart
   Cart,
   CartItem,
+  CartCartRule,
   CartRule,
   // Carriers
   Carrier,

@@ -78,7 +78,7 @@ export const orderService = {
     }
 
     // Calculate cart totals
-    const summary = await cartCalculator.calculate(cart.id, input.idAddressDelivery, input.idCarrier);
+    const summary = await cartCalculator.calculate(cart.id, input.idAddressDelivery, input.idCarrier, userId);
 
     if (summary.items.length === 0) {
       throw AppError.badRequest('El carrito está vacío', ErrorCode.CART_EMPTY);

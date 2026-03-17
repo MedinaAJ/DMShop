@@ -13,9 +13,10 @@ import { CarrierRange } from '../../models/carrier-range.model.js';
 import { CarrierRangePrice } from '../../models/carrier-range-price.model.js';
 import { CarrierZone } from '../../models/carrier-zone.model.js';
 import type { CartSummary, CartItemDetailed } from '@dmshop/shared';
+import { discountService } from '../discount/service.js';
 
 export const cartCalculator = {
-  async calculate(cartId: number, idAddressDelivery?: number, idCarrier?: number): Promise<CartSummary> {
+  async calculate(cartId: number, idAddressDelivery?: number, idCarrier?: number, userId?: number | null): Promise<CartSummary> {
     const cart = await Cart.findByPk(cartId, {
       include: [
         {
@@ -86,6 +87,15 @@ export const cartCalculator = {
         }
       }
 
+      // Apply specific price if available
+      const specificPrice = await discountService.getSpecificPrice(
+        product.id, cartItem.id_combination, userId ?? null,
+        null, null, countryId, cartItem.quantity,
+      );
+      if (specificPrice) {
+        unitPrice = discountService.applySpecificPrice(unitPrice, specificPrice);
+      }
+
       // Calculate tax rate for this product
       const taxRate = await this.getTaxRate(product.id_tax_rule_group, countryId, stateId);
       const unitPriceWithTax = unitPrice * (1 + taxRate / 100);
@@ -129,7 +139,20 @@ export const cartCalculator = {
       totalShippingTax = shippingResult.costWithTax;
     }
 
-    const totalPaid = totalProductsTax + totalShippingTax;
+    // Calculate cart rule discounts
+    // Use average tax rate for discount calculation
+    const avgTaxRate = totalProducts > 0 ? ((totalProductsTax / totalProducts) - 1) * 100 : 0;
+    const discountResult = await discountService.calculateCartDiscounts(
+      cartId, totalProductsTax, totalProducts, avgTaxRate,
+    );
+
+    // Apply free shipping from cart rules
+    if (discountResult.freeShipping) {
+      totalShipping = 0;
+      totalShippingTax = 0;
+    }
+
+    const totalPaid = totalProductsTax + totalShippingTax - discountResult.totalDiscountsTax;
 
     return {
       items,
@@ -137,11 +160,12 @@ export const cartCalculator = {
       totalProductsTax: round(totalProductsTax),
       totalShipping: round(totalShipping),
       totalShippingTax: round(totalShippingTax),
-      totalDiscounts: 0,
-      totalDiscountsTax: 0,
-      totalPaid: round(totalPaid),
+      totalDiscounts: round(discountResult.totalDiscounts),
+      totalDiscountsTax: round(discountResult.totalDiscountsTax),
+      totalPaid: round(Math.max(0, totalPaid)),
       itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
-    };
+      appliedDiscounts: discountResult.discounts,
+    } as CartSummary & { appliedDiscounts: unknown[] };
   },
 
   async getTaxRate(taxRulesGroupId: number, countryId: number | null, stateId: number | null): Promise<number> {

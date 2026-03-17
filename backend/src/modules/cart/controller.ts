@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { cartService } from './service.js';
+import { discountService } from '../discount/service.js';
+import { Cart } from '../../models/cart.model.js';
 import { sendSuccess, sendNoContent } from '../../utils/response.js';
 
 export const cartController = {
@@ -32,5 +34,21 @@ export const cartController = {
   async removeItem(req: Request, res: Response) {
     await cartService.removeItem(req.user?.userId ?? null, Number(req.params.id));
     sendNoContent(res);
+  },
+
+  async applyDiscount(req: Request, res: Response) {
+    const userId = req.user!.userId;
+    const cart = (await cartService.getOrCreate(userId)) as Cart;
+    await discountService.applyCode(cart.id, userId, req.body.code);
+    const updated = await cartService.getOrCreate(userId);
+    sendSuccess(res, updated);
+  },
+
+  async removeDiscount(req: Request, res: Response) {
+    const userId = req.user!.userId;
+    const cart = (await cartService.getOrCreate(userId)) as Cart;
+    await discountService.removeCode(cart.id, Number(req.params.id));
+    const updated = await cartService.getOrCreate(userId);
+    sendSuccess(res, updated);
   },
 };

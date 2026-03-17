@@ -10,6 +10,7 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 import { CartItem } from './cart-item.model.js';
+import { CartCartRule } from './cart-cart-rule.model.js';
 import { User } from './user.model.js';
 
 @Table({ tableName: 'carts' })
@@ -41,6 +42,9 @@ export class Cart extends Model {
 
   @HasMany(() => CartItem)
   declare items: CartItem[];
+
+  @HasMany(() => CartCartRule)
+  declare cartRules: CartCartRule[];
 
   @CreatedAt
   @Column({ type: DataType.DATE, field: 'created_at' })

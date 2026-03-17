@@ -17,6 +17,15 @@ interface CartItem {
   totalPriceWithTax: number;
 }
 
+interface AppliedDiscount {
+  id: number;
+  name: string;
+  code: string | null;
+  type: string;
+  value: number;
+  savings: number;
+}
+
 interface CartSummary {
   items: CartItem[];
   totalProducts: number;
@@ -27,6 +36,7 @@ interface CartSummary {
   totalDiscountsTax: number;
   totalPaid: number;
   itemCount: number;
+  appliedDiscounts?: AppliedDiscount[];
 }
 
 interface CartResponse {
@@ -86,6 +96,30 @@ export class CartService {
     this._loading.set(true);
     try {
       const res = await firstValueFrom(this.api.delete<CartResponse>(`/cart/items/${itemId}`));
+      this._cart.set(res.data);
+    } finally {
+      this._loading.set(false);
+    }
+  }
+
+  async applyDiscount(code: string): Promise<void> {
+    this._loading.set(true);
+    try {
+      const res = await firstValueFrom(
+        this.api.post<CartResponse>('/cart/apply-discount', { code }),
+      );
+      this._cart.set(res.data);
+    } finally {
+      this._loading.set(false);
+    }
+  }
+
+  async removeDiscount(cartRuleId: number): Promise<void> {
+    this._loading.set(true);
+    try {
+      const res = await firstValueFrom(
+        this.api.delete<CartResponse>(`/cart/remove-discount/${cartRuleId}`),
+      );
       this._cart.set(res.data);
     } finally {
       this._loading.set(false);

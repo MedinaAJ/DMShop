@@ -52,6 +52,7 @@ export { UserGroup } from './user-group.model.js';
 // Cart
 export { Cart } from './cart.model.js';
 export { CartItem } from './cart-item.model.js';
+export { CartCartRule } from './cart-cart-rule.model.js';
 export { CartRule } from './cart-rule.model.js';
 
 // Carriers

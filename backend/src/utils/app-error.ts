@@ -13,7 +13,7 @@ export class AppError extends Error {
     Object.setPrototypeOf(this, AppError.prototype);
   }
 
-  static badRequest(message: string, code = ErrorCode.VALIDATION_ERROR, field?: string) {
+  static badRequest(message: string, code: string = ErrorCode.VALIDATION_ERROR, field?: string) {
     return new AppError(400, code, message, field);
   }
 
@@ -25,7 +25,7 @@ export class AppError extends Error {
     return new AppError(403, ErrorCode.FORBIDDEN, message);
   }
 
-  static notFound(message = 'Recurso no encontrado', code = ErrorCode.NOT_FOUND) {
+  static notFound(message = 'Recurso no encontrado', code: string = ErrorCode.NOT_FOUND) {
     return new AppError(404, code, message);
   }
 

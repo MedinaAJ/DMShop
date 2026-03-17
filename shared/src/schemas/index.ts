@@ -10,3 +10,4 @@ export * from './tax.schema.js';
 export * from './carrier.schema.js';
 export * from './geo.schema.js';
 export * from './order.schema.js';
+export * from './discount.schema.js';

@@ -67,6 +67,10 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-icon matListItemIcon>receipt_long</mat-icon>
             <span>Pedidos</span>
           </a>
+          <a mat-list-item routerLink="/cart-rules" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>local_offer</mat-icon>
+            <span>Descuentos</span>
+          </a>
           <a mat-list-item routerLink="/customers" routerLinkActive="!bg-blue-50 !text-blue-700">
             <mat-icon matListItemIcon>people</mat-icon>
             <span>Clientes</span>

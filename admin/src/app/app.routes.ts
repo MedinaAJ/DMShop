@@ -96,6 +96,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'cart-rules',
+        loadComponent: () =>
+          import('./features/discounts/cart-rule-list.component').then(
+            (m) => m.CartRuleListComponent,
+          ),
+      },
+      {
+        path: 'cart-rules/:id',
+        loadComponent: () =>
+          import('./features/discounts/cart-rule-form.component').then(
+            (m) => m.CartRuleFormComponent,
+          ),
+      },
+      {
         path: 'orders',
         loadComponent: () =>
           import('./features/orders/order-list/order-list.component').then(
