@@ -2,35 +2,129 @@ import { Sequelize } from 'sequelize-typescript';
 import { env } from './env.js';
 import { logger } from './logger.js';
 import {
+  // Core
   User,
   RefreshToken,
   Lang,
   Currency,
   Configuration,
+  // Catalog
   Category,
   CategoryLang,
   Manufacturer,
+  Supplier,
   Product,
   ProductLang,
   ProductImage,
+  ProductCategory,
+  // Attributes & Combinations
+  Attribute,
+  AttributeLang,
+  AttributeValue,
+  AttributeValueLang,
+  ProductCombination,
+  CombinationAttributeValue,
+  CombinationImage,
+  // Features
+  Feature,
+  FeatureLang,
+  FeatureValue,
+  FeatureValueLang,
+  ProductFeature,
+  // Geography
+  Zone,
+  Country,
+  State,
+  Address,
+  // Tax
+  Tax,
+  TaxRulesGroup,
+  TaxRule,
+  // Customer groups
+  CustomerGroup,
+  CustomerGroupLang,
+  UserGroup,
+  // Cart
   Cart,
   CartItem,
+  CartRule,
+  // Carriers
+  Carrier,
+  CarrierZone,
+  CarrierRange,
+  CarrierRangePrice,
+  // Orders
+  OrderState,
+  Order,
+  OrderItem,
+  OrderHistory,
+  OrderPayment,
+  OrderCarrier,
+  // Pricing
+  SpecificPrice,
 } from '../models/index.js';
 
 const models = [
+  // Core
   User,
   RefreshToken,
   Lang,
   Currency,
   Configuration,
+  // Catalog
   Category,
   CategoryLang,
   Manufacturer,
+  Supplier,
   Product,
   ProductLang,
   ProductImage,
+  ProductCategory,
+  // Attributes & Combinations
+  Attribute,
+  AttributeLang,
+  AttributeValue,
+  AttributeValueLang,
+  ProductCombination,
+  CombinationAttributeValue,
+  CombinationImage,
+  // Features
+  Feature,
+  FeatureLang,
+  FeatureValue,
+  FeatureValueLang,
+  ProductFeature,
+  // Geography
+  Zone,
+  Country,
+  State,
+  Address,
+  // Tax
+  Tax,
+  TaxRulesGroup,
+  TaxRule,
+  // Customer groups
+  CustomerGroup,
+  CustomerGroupLang,
+  UserGroup,
+  // Cart
   Cart,
   CartItem,
+  CartRule,
+  // Carriers
+  Carrier,
+  CarrierZone,
+  CarrierRange,
+  CarrierRangePrice,
+  // Orders
+  OrderState,
+  Order,
+  OrderItem,
+  OrderHistory,
+  OrderPayment,
+  OrderCarrier,
+  // Pricing
+  SpecificPrice,
 ];
 
 export const sequelize = new Sequelize({

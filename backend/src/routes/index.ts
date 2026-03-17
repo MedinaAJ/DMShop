@@ -4,6 +4,14 @@ import { productRouter } from '../modules/product/routes.js';
 import { categoryRouter } from '../modules/category/routes.js';
 import { cartRouter } from '../modules/cart/routes.js';
 import { userRouter } from '../modules/user/routes.js';
+import { addressRouter } from '../modules/address/routes.js';
+import { manufacturerRouter } from '../modules/manufacturer/routes.js';
+import { supplierRouter } from '../modules/supplier/routes.js';
+import { attributeRouter } from '../modules/attribute/routes.js';
+import { featureRouter } from '../modules/feature/routes.js';
+import { taxRouter } from '../modules/tax/routes.js';
+import { carrierRouter } from '../modules/carrier/routes.js';
+import { geoRouter } from '../modules/geo/routes.js';
 
 export const apiRouter = Router();
 
@@ -12,3 +20,11 @@ apiRouter.use('/products', productRouter);
 apiRouter.use('/categories', categoryRouter);
 apiRouter.use('/cart', cartRouter);
 apiRouter.use('/users', userRouter);
+apiRouter.use('/addresses', addressRouter);
+apiRouter.use('/manufacturers', manufacturerRouter);
+apiRouter.use('/suppliers', supplierRouter);
+apiRouter.use('/attributes', attributeRouter);
+apiRouter.use('/features', featureRouter);
+apiRouter.use('/tax', taxRouter);
+apiRouter.use('/carriers', carrierRouter);
+apiRouter.use('/geo', geoRouter);

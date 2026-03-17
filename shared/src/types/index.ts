@@ -4,3 +4,6 @@ export * from './category.js';
 export * from './cart.js';
 export * from './order.js';
 export * from './common.js';
+export * from './geo.js';
+export * from './tax.js';
+export * from './carrier.js';

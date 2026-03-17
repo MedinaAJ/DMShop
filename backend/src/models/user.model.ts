@@ -4,12 +4,15 @@ import {
   Model,
   DataType,
   HasMany,
-  ForeignKey,
-  BelongsTo,
+  BelongsToMany,
   CreatedAt,
   UpdatedAt,
   DeletedAt,
 } from 'sequelize-typescript';
+import { Address } from './address.model.js';
+import { Order } from './order.model.js';
+import { CustomerGroup } from './customer-group.model.js';
+import { UserGroup } from './user-group.model.js';
 
 @Table({ tableName: 'users', paranoid: true })
 export class User extends Model {
@@ -43,6 +46,15 @@ export class User extends Model {
 
   @Column({ type: DataType.DATE, allowNull: true, field: 'last_login_at' })
   declare last_login_at: Date | null;
+
+  @HasMany(() => Address)
+  declare addresses: Address[];
+
+  @HasMany(() => Order)
+  declare orders: Order[];
+
+  @BelongsToMany(() => CustomerGroup, () => UserGroup)
+  declare groups: CustomerGroup[];
 
   @CreatedAt
   @Column({ type: DataType.DATE, field: 'created_at' })

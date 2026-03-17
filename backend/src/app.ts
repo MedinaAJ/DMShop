@@ -8,6 +8,7 @@ import { env } from './config/env.js';
 import { sequelize, initDatabase } from './config/database.js';
 import { logger } from './config/logger.js';
 import { errorHandler } from './middleware/error-handler.js';
+import { resolveLanguage } from './middleware/language.js';
 import { setupSwagger } from './config/swagger.js';
 import { apiRouter } from './routes/index.js';
 
@@ -40,6 +41,9 @@ app.use('/uploads', express.static(env.UPLOAD_DIR));
 
 // --- API docs ---
 setupSwagger(app);
+
+// --- Language resolution ---
+app.use(resolveLanguage);
 
 // --- API routes ---
 app.use('/api/v1', apiRouter);

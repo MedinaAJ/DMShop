@@ -6,6 +6,7 @@ import {
   HasMany,
   ForeignKey,
   BelongsTo,
+  BelongsToMany,
   CreatedAt,
   UpdatedAt,
   DeletedAt,
@@ -14,6 +15,12 @@ import { ProductLang } from './product-lang.model.js';
 import { ProductImage } from './product-image.model.js';
 import { Category } from './category.model.js';
 import { Manufacturer } from './manufacturer.model.js';
+import { Supplier } from './supplier.model.js';
+import { TaxRulesGroup } from './tax-rules-group.model.js';
+import { ProductCombination } from './product-combination.model.js';
+import { ProductCategory } from './product-category.model.js';
+import { ProductFeature } from './product-feature.model.js';
+import { SpecificPrice } from './specific-price.model.js';
 
 @Table({ tableName: 'products', paranoid: true })
 export class Product extends Model {
@@ -28,9 +35,11 @@ export class Product extends Model {
   @Column({ type: DataType.INTEGER, allowNull: true, field: 'id_manufacturer' })
   declare id_manufacturer: number | null;
 
+  @ForeignKey(() => Supplier)
   @Column({ type: DataType.INTEGER, allowNull: true, field: 'id_supplier' })
   declare id_supplier: number | null;
 
+  @ForeignKey(() => TaxRulesGroup)
   @Column({ type: DataType.INTEGER, allowNull: false, field: 'id_tax_rule_group', defaultValue: 1 })
   declare id_tax_rule_group: number;
 
@@ -80,11 +89,29 @@ export class Product extends Model {
   @BelongsTo(() => Manufacturer, 'id_manufacturer')
   declare manufacturer: Manufacturer | null;
 
+  @BelongsTo(() => Supplier, 'id_supplier')
+  declare supplier: Supplier | null;
+
+  @BelongsTo(() => TaxRulesGroup, 'id_tax_rule_group')
+  declare taxRulesGroup: TaxRulesGroup;
+
   @HasMany(() => ProductLang)
   declare translations: ProductLang[];
 
   @HasMany(() => ProductImage)
   declare images: ProductImage[];
+
+  @HasMany(() => ProductCombination)
+  declare combinations: ProductCombination[];
+
+  @HasMany(() => ProductFeature)
+  declare features: ProductFeature[];
+
+  @HasMany(() => SpecificPrice)
+  declare specificPrices: SpecificPrice[];
+
+  @BelongsToMany(() => Category, () => ProductCategory)
+  declare categories: Category[];
 
   @CreatedAt
   @Column({ type: DataType.DATE, field: 'created_at' })
