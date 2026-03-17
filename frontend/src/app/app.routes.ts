@@ -34,6 +34,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/cart/cart.component').then((m) => m.CartComponent),
       },
       {
+        path: 'checkout',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/checkout/checkout.component').then((m) => m.CheckoutComponent),
+      },
+      {
         path: 'auth/login',
         canActivate: [guestGuard],
         loadComponent: () =>
@@ -77,6 +83,20 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/account/addresses/address-form.component').then(
                 (m) => m.AddressFormComponent,
+              ),
+          },
+          {
+            path: 'orders',
+            loadComponent: () =>
+              import('./features/account/orders/order-list.component').then(
+                (m) => m.OrderListComponent,
+              ),
+          },
+          {
+            path: 'orders/:id',
+            loadComponent: () =>
+              import('./features/account/orders/order-detail.component').then(
+                (m) => m.OrderDetailComponent,
               ),
           },
         ],

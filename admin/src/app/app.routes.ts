@@ -103,6 +103,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'orders/:id',
+        loadComponent: () =>
+          import('./features/orders/order-detail/order-detail.component').then(
+            (m) => m.OrderDetailComponent,
+          ),
+      },
+      {
         path: 'customers',
         loadComponent: () =>
           import('./features/customers/customer-list/customer-list.component').then(

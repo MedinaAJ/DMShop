@@ -12,6 +12,7 @@ import { featureRouter } from '../modules/feature/routes.js';
 import { taxRouter } from '../modules/tax/routes.js';
 import { carrierRouter } from '../modules/carrier/routes.js';
 import { geoRouter } from '../modules/geo/routes.js';
+import { orderRouter } from '../modules/order/routes.js';
 
 export const apiRouter = Router();
 
@@ -28,3 +29,4 @@ apiRouter.use('/features', featureRouter);
 apiRouter.use('/tax', taxRouter);
 apiRouter.use('/carriers', carrierRouter);
 apiRouter.use('/geo', geoRouter);
+apiRouter.use('/orders', orderRouter);
