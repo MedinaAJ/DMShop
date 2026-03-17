@@ -1,5 +1,4 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,7 +21,7 @@ interface CategoryTreeResponse {
 @Component({
   selector: 'app-category-list',
   standalone: true,
-  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
   template: `
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Categorías</h1>

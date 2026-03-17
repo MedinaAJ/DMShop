@@ -1,7 +1,9 @@
 // Custom Theming for Angular Material
 @use '@angular/material' as mat;
 
-@import "tailwindcss";
+// Tailwind: import only theme + utilities (skip preflight to avoid resetting Angular Material styles)
+@use "tailwindcss/theme";
+@use "tailwindcss/utilities";
 
 html {
   @include mat.theme((

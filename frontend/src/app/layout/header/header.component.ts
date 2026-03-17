@@ -32,6 +32,8 @@ import { CartService } from '../../core/services/cart.service';
           [matBadge]="cartService.itemCount() || null"
           matBadgeColor="warn"
           matBadgeSize="small"
+          aria-hidden="false"
+          aria-label="Carrito de compras"
         >
           shopping_cart
         </mat-icon>
