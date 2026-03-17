@@ -156,6 +156,11 @@ export const routes: Routes = [
           import('./features/geo/geo-management.component').then((m) => m.GeoManagementComponent),
       },
       {
+        path: 'payment-settings',
+        loadComponent: () =>
+          import('./features/settings/payment-settings.component').then((m) => m.PaymentSettingsComponent),
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',

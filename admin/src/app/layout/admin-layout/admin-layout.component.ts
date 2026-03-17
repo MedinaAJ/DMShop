@@ -87,6 +87,10 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-icon matListItemIcon>public</mat-icon>
             <span>Geográfico</span>
           </a>
+          <a mat-list-item routerLink="/payment-settings" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>payment</mat-icon>
+            <span>Pagos</span>
+          </a>
         </mat-nav-list>
       </mat-sidenav>
 

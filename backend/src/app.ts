@@ -11,6 +11,7 @@ import { errorHandler } from './middleware/error-handler.js';
 import { resolveLanguage } from './middleware/language.js';
 import { setupSwagger } from './config/swagger.js';
 import { apiRouter } from './routes/index.js';
+import { registerPaymentModules } from './modules/payment/index.js';
 
 const app = express();
 
@@ -61,6 +62,9 @@ async function bootstrap() {
   try {
     await initDatabase();
     logger.info('Database connected successfully');
+
+    registerPaymentModules();
+    logger.info('Payment modules registered');
 
     app.listen(env.PORT, () => {
       logger.info(`DMShop API running on http://localhost:${env.PORT}`);

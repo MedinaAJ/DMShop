@@ -15,6 +15,7 @@ import { CurrencyPipe } from '@angular/common';
 import { OrderService, AddressOption, CarrierOption, CartSummaryResponse } from '../../core/services/order.service';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PaymentService, PaymentMethodOption } from '../../core/services/payment.service';
 
 @Component({
   selector: 'app-checkout',
@@ -142,36 +143,31 @@ import { AuthService } from '../../core/services/auth.service';
                   <!-- Payment method -->
                   <div>
                     <h3 class="font-semibold mb-3">Método de pago</h3>
-                    <div class="space-y-3">
-                      <div class="border rounded-lg p-4 cursor-pointer transition"
-                           [class.border-blue-500]="paymentMethod === 'bank_transfer'"
-                           [class.bg-blue-50]="paymentMethod === 'bank_transfer'"
-                           (click)="paymentMethod = 'bank_transfer'">
-                        <div class="flex items-center gap-3">
-                          <mat-icon [class.text-blue-600]="paymentMethod === 'bank_transfer'">
-                            {{ paymentMethod === 'bank_transfer' ? 'radio_button_checked' : 'radio_button_unchecked' }}
-                          </mat-icon>
-                          <div>
-                            <p class="font-semibold">Transferencia bancaria</p>
-                            <p class="text-sm text-gray-500">Realiza el pago por transferencia</p>
+                    @if (loadingMethods()) {
+                      <div class="flex justify-center py-4"><mat-spinner diameter="28" /></div>
+                    } @else if (paymentMethods.length === 0) {
+                      <p class="text-gray-500">No hay métodos de pago disponibles.</p>
+                    } @else {
+                      <div class="space-y-3">
+                        @for (pm of paymentMethods; track pm.name) {
+                          <div class="border rounded-lg p-4 cursor-pointer transition"
+                               [class.border-blue-500]="paymentMethod === pm.name"
+                               [class.bg-blue-50]="paymentMethod === pm.name"
+                               (click)="paymentMethod = pm.name">
+                            <div class="flex items-center gap-3">
+                              <mat-icon [class.text-blue-600]="paymentMethod === pm.name">
+                                {{ paymentMethod === pm.name ? 'radio_button_checked' : 'radio_button_unchecked' }}
+                              </mat-icon>
+                              <mat-icon class="text-gray-500">{{ pm.icon }}</mat-icon>
+                              <div>
+                                <p class="font-semibold">{{ pm.displayName }}</p>
+                                <p class="text-sm text-gray-500">{{ pm.description }}</p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        }
                       </div>
-                      <div class="border rounded-lg p-4 cursor-pointer transition"
-                           [class.border-blue-500]="paymentMethod === 'cash_on_delivery'"
-                           [class.bg-blue-50]="paymentMethod === 'cash_on_delivery'"
-                           (click)="paymentMethod = 'cash_on_delivery'">
-                        <div class="flex items-center gap-3">
-                          <mat-icon [class.text-blue-600]="paymentMethod === 'cash_on_delivery'">
-                            {{ paymentMethod === 'cash_on_delivery' ? 'radio_button_checked' : 'radio_button_unchecked' }}
-                          </mat-icon>
-                          <div>
-                            <p class="font-semibold">Contra reembolso</p>
-                            <p class="text-sm text-gray-500">Paga al recibir el pedido</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    }
 
                     <mat-form-field class="w-full mt-4">
                       <mat-label>Nota (opcional)</mat-label>
@@ -201,21 +197,24 @@ export class CheckoutComponent implements OnInit {
   readonly orderService = inject(OrderService);
   readonly cartService = inject(CartService);
   readonly authService = inject(AuthService);
+  private readonly paymentService = inject(PaymentService);
   private readonly router = inject(Router);
   private readonly snack = inject(MatSnackBar);
 
   addresses: AddressOption[] = [];
   carriers: CarrierOption[] = [];
+  paymentMethods: PaymentMethodOption[] = [];
   summary: CartSummaryResponse | null = null;
 
   selectedAddressId: number | null = null;
   selectedCarrierId: number | null = null;
-  paymentMethod = 'bank_transfer';
+  paymentMethod = '';
   orderNote = '';
 
   loading = signal(true);
   loadingCarriers = signal(false);
   loadingSummary = signal(false);
+  loadingMethods = signal(false);
   placing = signal(false);
 
   ngOnInit(): void {
@@ -224,8 +223,13 @@ export class CheckoutComponent implements OnInit {
 
   async loadAddresses(): Promise<void> {
     try {
-      const res = await this.orderService.getAddresses();
-      this.addresses = res.data;
+      const [addrRes, methods] = await Promise.all([
+        this.orderService.getAddresses(),
+        this.paymentService.getAvailableMethods(),
+      ]);
+      this.addresses = addrRes.data;
+      this.paymentMethods = methods;
+      if (methods.length > 0) this.paymentMethod = methods[0].name;
     } catch { /* empty */ }
     this.loading.set(false);
   }
@@ -261,6 +265,7 @@ export class CheckoutComponent implements OnInit {
 
     this.placing.set(true);
     try {
+      // 1. Create the order
       const res = await this.orderService.placeOrder({
         idAddressDelivery: this.selectedAddressId,
         idCarrier: this.selectedCarrierId,
@@ -268,12 +273,23 @@ export class CheckoutComponent implements OnInit {
         note: this.orderNote || undefined,
       });
 
+      const orderId = res.data.id;
+
+      // 2. Process payment
+      const paymentResult = await this.paymentService.processPayment(orderId, this.paymentMethod);
+
       // Clear cart
       this.cartService.clear();
       await this.cartService.load();
 
+      if (paymentResult.status === 'redirect' && paymentResult.redirectUrl) {
+        // Redirect to external payment page (e.g. Stripe Checkout)
+        window.location.href = paymentResult.redirectUrl;
+        return;
+      }
+
       this.snack.open('¡Pedido realizado con éxito!', 'OK', { duration: 4000 });
-      this.router.navigate(['/account/orders', res.data.id]);
+      this.router.navigate(['/account/orders', orderId]);
     } catch (err: any) {
       const msg = err?.error?.errors?.[0]?.message || 'Error al procesar el pedido';
       this.snack.open(msg, 'Cerrar', { duration: 4000 });
