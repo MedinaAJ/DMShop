@@ -87,14 +87,14 @@ export class Product extends Model {
   declare images: ProductImage[];
 
   @CreatedAt
-  @Column({ field: 'created_at' })
+  @Column({ type: DataType.DATE, field: 'created_at' })
   declare created_at: Date;
 
   @UpdatedAt
-  @Column({ field: 'updated_at' })
+  @Column({ type: DataType.DATE, field: 'updated_at' })
   declare updated_at: Date;
 
   @DeletedAt
-  @Column({ field: 'deleted_at' })
+  @Column({ type: DataType.DATE, field: 'deleted_at' })
   declare deleted_at: Date | null;
 }

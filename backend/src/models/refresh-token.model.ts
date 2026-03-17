@@ -28,6 +28,6 @@ export class RefreshToken extends Model {
   declare expires_at: Date;
 
   @CreatedAt
-  @Column({ field: 'created_at' })
+  @Column({ type: DataType.DATE, field: 'created_at' })
   declare created_at: Date;
 }

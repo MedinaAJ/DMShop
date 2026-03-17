@@ -12,10 +12,10 @@ export class Configuration extends Model {
   declare value: string;
 
   @CreatedAt
-  @Column({ field: 'created_at' })
+  @Column({ type: DataType.DATE, field: 'created_at' })
   declare created_at: Date;
 
   @UpdatedAt
-  @Column({ field: 'updated_at' })
+  @Column({ type: DataType.DATE, field: 'updated_at' })
   declare updated_at: Date;
 }

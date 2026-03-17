@@ -5,14 +5,14 @@ export interface User extends SoftDeletableEntity {
   email: string;
   firstName: string;
   lastName: string;
-  role: UserRole;
+  role: UserRoleType;
   active: boolean;
   idDefaultGroup: number;
   newsletter: boolean;
   lastLoginAt: Date | null;
 }
 
-export type UserRole = 'customer' | 'admin' | 'employee';
+export type UserRoleType = 'customer' | 'admin' | 'employee';
 
 export interface Address {
   id: number;
@@ -45,5 +45,5 @@ export interface UserPublic {
   email: string;
   firstName: string;
   lastName: string;
-  role: UserRole;
+  role: UserRoleType;
 }

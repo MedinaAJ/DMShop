@@ -1,3 +1,11 @@
+import dotenv from 'dotenv';
+import { resolve } from 'path';
+
+// Cargar .env desde la raíz del monorepo
+dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
+// Fallback: intentar también desde cwd (por si se ejecuta desde la raíz)
+dotenv.config();
+
 const requiredEnv = (key: string): string => {
   const value = process.env[key];
   if (!value) {
