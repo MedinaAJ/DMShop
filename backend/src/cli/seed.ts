@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import '../config/env.js';
 import { sequelize } from '../config/database.js';
 import { Lang } from '../models/lang.model.js';
 import { Currency } from '../models/currency.model.js';

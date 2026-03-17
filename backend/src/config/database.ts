@@ -34,7 +34,7 @@ const models = [
 ];
 
 export const sequelize = new Sequelize({
-  dialect: 'mariadb',
+  dialect: 'mysql',
   host: env.DB_HOST,
   port: env.DB_PORT,
   database: env.DB_NAME,
