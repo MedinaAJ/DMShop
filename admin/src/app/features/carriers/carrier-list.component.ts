@@ -1,46 +1,61 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { ApiService } from '../../../core/services/api.service';
+import { MatChipsModule } from '@angular/material/chips';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
-  selector: 'app-customer-list',
+  selector: 'app-carrier-list',
   standalone: true,
   imports: [
+    RouterLink,
     MatTableModule,
-    MatProgressSpinnerModule,
     MatButtonModule,
     MatIconModule,
     MatPaginatorModule,
+    MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatChipsModule,
   ],
   template: `
-    <h1 class="text-2xl font-bold mb-6">Clientes</h1>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Transportistas</h1>
+      <a mat-flat-button color="primary" routerLink="/carriers/new">
+        <mat-icon>add</mat-icon> Nuevo transportista
+      </a>
+    </div>
 
     @if (loading) {
-      <div class="flex justify-center py-12">
-        <mat-spinner diameter="48" />
-      </div>
+      <div class="flex justify-center py-12"><mat-spinner diameter="48" /></div>
     } @else {
       <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table mat-table [dataSource]="customers" class="w-full">
+        <table mat-table [dataSource]="items" class="w-full">
           <ng-container matColumnDef="id">
             <th mat-header-cell *matHeaderCellDef>ID</th>
             <td mat-cell *matCellDef="let c">{{ c.id }}</td>
           </ng-container>
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef>Nombre</th>
-            <td mat-cell *matCellDef="let c">
-              {{ c.first_name || c.firstName }} {{ c.last_name || c.lastName }}
-            </td>
+            <td mat-cell *matCellDef="let c">{{ c.name }}</td>
           </ng-container>
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef>Email</th>
-            <td mat-cell *matCellDef="let c">{{ c.email }}</td>
+          <ng-container matColumnDef="delay">
+            <th mat-header-cell *matHeaderCellDef>Plazo (días)</th>
+            <td mat-cell *matCellDef="let c">{{ c.delay }}</td>
+          </ng-container>
+          <ng-container matColumnDef="zones">
+            <th mat-header-cell *matHeaderCellDef>Zonas</th>
+            <td mat-cell *matCellDef="let c">
+              <mat-chip-set>
+                @for (z of c.zones || []; track z.id) {
+                  <mat-chip>{{ z.name }}</mat-chip>
+                }
+              </mat-chip-set>
+            </td>
           </ng-container>
           <ng-container matColumnDef="active">
             <th mat-header-cell *matHeaderCellDef>Estado</th>
@@ -53,17 +68,14 @@ import { ApiService } from '../../../core/services/api.service';
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let c">
-              <button mat-icon-button (click)="toggleActive(c)">
-                <mat-icon>{{ c.active ? 'toggle_on' : 'toggle_off' }}</mat-icon>
-              </button>
+              <a mat-icon-button [routerLink]="['/carriers', c.id]"><mat-icon>edit</mat-icon></a>
               <button mat-icon-button color="warn" (click)="remove(c.id)">
                 <mat-icon>delete</mat-icon>
               </button>
             </td>
           </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
         </table>
         <mat-paginator
           [length]="total"
@@ -76,12 +88,12 @@ import { ApiService } from '../../../core/services/api.service';
     }
   `,
 })
-export class CustomerListComponent implements OnInit {
+export class CarrierListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly snackBar = inject(MatSnackBar);
 
-  customers: any[] = [];
-  displayedColumns = ['id', 'name', 'email', 'active', 'actions'];
+  items: any[] = [];
+  columns = ['id', 'name', 'delay', 'zones', 'active', 'actions'];
   loading = true;
   page = 1;
   perPage = 10;
@@ -93,15 +105,10 @@ export class CustomerListComponent implements OnInit {
 
   load(): void {
     this.loading = true;
-    this.api.get<any>('/users', { page: this.page, perPage: this.perPage }).subscribe({
-      next: (res) => {
-        this.customers = res.data;
-        this.total = res.meta?.total || res.data.length;
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-      },
+    this.api.get<any>('/carriers', { page: this.page, perPage: this.perPage }).subscribe((res) => {
+      this.items = res.data;
+      this.total = res.meta.total;
+      this.loading = false;
     });
   }
 
@@ -111,26 +118,11 @@ export class CustomerListComponent implements OnInit {
     this.load();
   }
 
-  toggleActive(c: any): void {
-    this.api.patch(`/users/${c.id}/toggle-active`, {}).subscribe({
-      next: () => {
-        c.active = !c.active;
-        this.snackBar.open(c.active ? 'Cliente activado' : 'Cliente desactivado', 'OK', {
-          duration: 2000,
-        });
-      },
-      error: () => this.snackBar.open('Error', 'Cerrar', { duration: 3000 }),
-    });
-  }
-
   remove(id: number): void {
-    if (!confirm('¿Eliminar este cliente?')) return;
-    this.api.delete(`/users/${id}`).subscribe({
-      next: () => {
-        this.snackBar.open('Cliente eliminado', 'OK', { duration: 2000 });
-        this.load();
-      },
-      error: () => this.snackBar.open('Error', 'Cerrar', { duration: 3000 }),
+    if (!confirm('¿Eliminar este transportista?')) return;
+    this.api.delete(`/carriers/${id}`).subscribe(() => {
+      this.snackBar.open('Transportista eliminado', 'OK', { duration: 3000 });
+      this.load();
     });
   }
 }

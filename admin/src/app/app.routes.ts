@@ -40,6 +40,62 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'manufacturers',
+        loadComponent: () =>
+          import('./features/manufacturers/manufacturer-list.component').then(
+            (m) => m.ManufacturerListComponent,
+          ),
+      },
+      {
+        path: 'manufacturers/:id',
+        loadComponent: () =>
+          import('./features/manufacturers/manufacturer-form.component').then(
+            (m) => m.ManufacturerFormComponent,
+          ),
+      },
+      {
+        path: 'suppliers',
+        loadComponent: () =>
+          import('./features/suppliers/supplier-list.component').then(
+            (m) => m.SupplierListComponent,
+          ),
+      },
+      {
+        path: 'suppliers/:id',
+        loadComponent: () =>
+          import('./features/suppliers/supplier-form.component').then(
+            (m) => m.SupplierFormComponent,
+          ),
+      },
+      {
+        path: 'attributes',
+        loadComponent: () =>
+          import('./features/attributes/attribute-list.component').then(
+            (m) => m.AttributeListComponent,
+          ),
+      },
+      {
+        path: 'attributes/:id',
+        loadComponent: () =>
+          import('./features/attributes/attribute-form.component').then(
+            (m) => m.AttributeFormComponent,
+          ),
+      },
+      {
+        path: 'features',
+        loadComponent: () =>
+          import('./features/feature-mgmt/feature-list.component').then(
+            (m) => m.FeatureListComponent,
+          ),
+      },
+      {
+        path: 'features/:id',
+        loadComponent: () =>
+          import('./features/feature-mgmt/feature-form.component').then(
+            (m) => m.FeatureFormComponent,
+          ),
+      },
+      {
         path: 'orders',
         loadComponent: () =>
           import('./features/orders/order-list/order-list.component').then(
@@ -52,6 +108,31 @@ export const routes: Routes = [
           import('./features/customers/customer-list/customer-list.component').then(
             (m) => m.CustomerListComponent,
           ),
+      },
+      {
+        path: 'carriers',
+        loadComponent: () =>
+          import('./features/carriers/carrier-list.component').then((m) => m.CarrierListComponent),
+      },
+      {
+        path: 'carriers/:id',
+        loadComponent: () =>
+          import('./features/carriers/carrier-form.component').then((m) => m.CarrierFormComponent),
+      },
+      {
+        path: 'taxes',
+        loadComponent: () =>
+          import('./features/taxes/tax-list.component').then((m) => m.TaxListComponent),
+      },
+      {
+        path: 'taxes/:id',
+        loadComponent: () =>
+          import('./features/taxes/tax-form.component').then((m) => m.TaxFormComponent),
+      },
+      {
+        path: 'geo',
+        loadComponent: () =>
+          import('./features/geo/geo-management.component').then((m) => m.GeoManagementComponent),
       },
       {
         path: '',

@@ -58,6 +58,27 @@ export const routes: Routes = [
                 (m) => m.AccountDashboardComponent,
               ),
           },
+          {
+            path: 'addresses',
+            loadComponent: () =>
+              import('./features/account/addresses/address-list.component').then(
+                (m) => m.AddressListComponent,
+              ),
+          },
+          {
+            path: 'addresses/new',
+            loadComponent: () =>
+              import('./features/account/addresses/address-form.component').then(
+                (m) => m.AddressFormComponent,
+              ),
+          },
+          {
+            path: 'addresses/:id',
+            loadComponent: () =>
+              import('./features/account/addresses/address-form.component').then(
+                (m) => m.AddressFormComponent,
+              ),
+          },
         ],
       },
       {

@@ -43,6 +43,26 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-icon matListItemIcon>category</mat-icon>
             <span>Categorías</span>
           </a>
+          <a
+            mat-list-item
+            routerLink="/manufacturers"
+            routerLinkActive="!bg-blue-50 !text-blue-700"
+          >
+            <mat-icon matListItemIcon>factory</mat-icon>
+            <span>Fabricantes</span>
+          </a>
+          <a mat-list-item routerLink="/suppliers" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>local_shipping</mat-icon>
+            <span>Proveedores</span>
+          </a>
+          <a mat-list-item routerLink="/attributes" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>palette</mat-icon>
+            <span>Atributos</span>
+          </a>
+          <a mat-list-item routerLink="/features" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>tune</mat-icon>
+            <span>Características</span>
+          </a>
           <a mat-list-item routerLink="/orders" routerLinkActive="!bg-blue-50 !text-blue-700">
             <mat-icon matListItemIcon>receipt_long</mat-icon>
             <span>Pedidos</span>
@@ -50,6 +70,18 @@ import { AuthService } from '../../core/services/auth.service';
           <a mat-list-item routerLink="/customers" routerLinkActive="!bg-blue-50 !text-blue-700">
             <mat-icon matListItemIcon>people</mat-icon>
             <span>Clientes</span>
+          </a>
+          <a mat-list-item routerLink="/carriers" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>airport_shuttle</mat-icon>
+            <span>Transportistas</span>
+          </a>
+          <a mat-list-item routerLink="/taxes" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>account_balance</mat-icon>
+            <span>Impuestos</span>
+          </a>
+          <a mat-list-item routerLink="/geo" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>public</mat-icon>
+            <span>Geográfico</span>
           </a>
         </mat-nav-list>
       </mat-sidenav>
