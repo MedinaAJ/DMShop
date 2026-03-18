@@ -44,13 +44,10 @@ describe('discountService.applySpecificPrice — precisión decimal', () => {
     expect(discountService.applySpecificPrice(50, sp)).toBe(0);
   });
 
-  it('reducción 50%: 19.99 → 9.99 (round float real)', () => {
-    // BUG (float): 19.99 * 0.5 = 9.995, luego 9.995*100 = 999.4999... → Math.round = 999 → 9.99
-    // Matemáticamente debería ser 10.00, pero el round() basado en Math.round
-    // pierde la mitad del centavo por la representación IEEE 754.
-    // Este test documenta el comportamiento REAL del código.
+  it('reducción 50%: 19.99 → 10.00 (corregido con Number.EPSILON)', () => {
+    // Con Number.EPSILON: (9.995 + 2.22e-16) * 100 = 999.500...22 → Math.round = 1000 → 10.00
     const sp = { price: -1, reduction: 50, reduction_type: 'percentage' } as any;
-    expect(discountService.applySpecificPrice(19.99, sp)).toBe(9.99);
+    expect(discountService.applySpecificPrice(19.99, sp)).toBe(10.00);
   });
 
   it('reducción 33.33%: 29.99 → 19.99 (resultado real del round)', () => {

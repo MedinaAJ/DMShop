@@ -85,6 +85,7 @@ export const cartCalculator = {
     const items: CartItemDetailed[] = [];
     let totalProducts = 0;
     let totalProductsTax = 0;
+    let totalWeight = 0;
 
     for (const cartItem of cart.items) {
       const product = cartItem.product;
@@ -141,6 +142,7 @@ export const cartCalculator = {
 
       totalProducts += lineTotal;
       totalProductsTax += lineTotalWithTax;
+      totalWeight += Number(product.weight || 0) * cartItem.quantity;
     }
 
     // Calculate shipping cost
@@ -149,7 +151,7 @@ export const cartCalculator = {
     const carrierId = idCarrier ?? cart.id_carrier;
 
     if (carrierId && zoneId) {
-      const shippingResult = await this.getShippingCost(carrierId, zoneId, totalProducts, 0);
+      const shippingResult = await this.getShippingCost(carrierId, zoneId, totalProducts, totalWeight);
       totalShipping = shippingResult.cost;
       totalShippingTax = shippingResult.costWithTax;
     }
@@ -315,5 +317,5 @@ export const cartCalculator = {
 };
 
 function round(value: number): number {
-  return Math.round(value * 100) / 100;
+  return Number(Math.round(parseFloat(value + 'e+2')) + 'e-2');
 }

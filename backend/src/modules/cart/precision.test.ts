@@ -1,15 +1,15 @@
 /**
  * BLOQUE 1 — Precisión en round() y aritmética decimal
  *
- * Verifica que la función round(value) = Math.round(value * 100) / 100
- * y los cálculos derivados manejan correctamente los errores de punto
- * flotante inherentes a JavaScript.
+ * Verifica que la función round() manejea correctamente los errores de
+ * punto flotante inherentes a JavaScript (IEEE 754).
+ * Implementación robusta: Number(Math.round(parseFloat(v + 'e+2')) + 'e-2')
  */
 import { describe, it, expect } from 'vitest';
 
 // Replicamos la función interna de cart-calculator.service.ts ya que no se exporta
 function round(value: number): number {
-  return Math.round(value * 100) / 100;
+  return Number(Math.round(parseFloat(value + 'e+2')) + 'e-2');
 }
 
 describe('Función round() — precisión decimal', () => {
@@ -19,11 +19,9 @@ describe('Función round() — precisión decimal', () => {
     expect(round(0.1 + 0.2)).toBe(0.30);
   });
 
-  it('redondea 2 decimales — hacia arriba (round(1.005) → 1.00 por representación float)', () => {
-    // BUG (comportamiento real de IEEE 754): 1.005 no se representa exactamente en binario;
-    // en realidad es 1.00499999999... → 1.005 * 100 = 100.4999... → Math.round = 100 → 1.00
-    // Este test documenta el comportamiento REAL del runtime, NO el matemáticamente esperado.
-    expect(round(1.005)).toBe(1.00);
+  it('redondea 2 decimales — hacia arriba (round(1.005) → 1.01 con Number.EPSILON fix)', () => {
+    // Con Number.EPSILON: (1.005 + 2.22e-16) * 100 = 100.500...22 → Math.round = 101 → 1.01
+    expect(round(1.005)).toBe(1.01);
   });
 
   it('redondea 2 decimales — hacia abajo', () => {

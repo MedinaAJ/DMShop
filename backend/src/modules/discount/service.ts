@@ -313,5 +313,5 @@ export const discountService = {
 };
 
 function round(value: number): number {
-  return Math.round(value * 100) / 100;
+  return Number(Math.round(parseFloat(value + 'e+2')) + 'e-2');
 }

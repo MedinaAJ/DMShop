@@ -49,12 +49,13 @@ import { cartCalculator } from './cart-calculator.service.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function makeProduct(id: number, price: number, taxRuleGroupId = 0) {
+function makeProduct(id: number, price: number, taxRuleGroupId = 0, weight = 0) {
   return {
     id,
     price,
     id_tax_rule_group: taxRuleGroupId,
     quantity: 100,
+    weight,
     translations: [{ name: `Producto ${id}`, slug: `producto-${id}` }],
     images: [],
   };
@@ -473,9 +474,9 @@ describe('cartCalculator — envío por peso', () => {
   it('cartWeight 2.5kg → rango [2-5) → shipping = 8.99', async () => {
     // carrier.shipping_method='weight', delimiter es el peso del carrito
     // ranges: [0-2)=4.99, [2-5)=8.99, [5-10)=14.99
-    // weight=2.5 → 2.5>=2 && 2.5<5 → 8.99
-    const product = makeProduct(1, 100);
-    const item = makeCartItem(1, product, 1);
+    // producto con weight=1.25, quantity=2 → totalWeight=2.5 → rango [2-5) → 8.99
+    const product = makeProduct(1, 100, 0, 1.25);
+    const item = makeCartItem(1, product, 2);
     vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, [item], 20, 1) as any);
     vi.mocked(Address.findByPk).mockResolvedValue({
       id_country: 6, id_state: null, country: { id_zone: 1 },
@@ -489,15 +490,10 @@ describe('cartCalculator — envío por peso', () => {
     vi.mocked(Carrier.findByPk).mockResolvedValue(carrier as any);
     vi.mocked(CarrierZone.findOne).mockResolvedValue({ id_carrier: 20, id_zone: 1 } as any);
 
-    // Note: cartWeight=0 is passed by calculate() (no weight tracking in cart items currently)
-    // The calculator passes cartWeight=0 → falls in range [0-2) → 4.99
-    // This documents the ACTUAL behavior: calculate() always passes cartWeight=0
-    // BUG: cart-calculator.service.ts always passes cartWeight=0 to getShippingCost,
-    //      products have no weight field tracked; weight-based shipping always hits first range.
+    // Bug corregido: calculate() ahora acumula product.weight * quantity → totalWeight
+    // product.weight = 1.25, quantity = 2 → totalWeight = 2.5 → rango [2-5) → 8.99
     const result = await cartCalculator.calculate(1, 1, 20);
 
-    // With cartWeight=0 → range [0-2) → 4.99 (actual behavior, not 8.99)
-    // BUG: weight-based shipping cannot work correctly because calculate() always passes cartWeight=0
-    expect(result.totalShipping).toBe(4.99);
+    expect(result.totalShipping).toBe(8.99);
   });
 });
