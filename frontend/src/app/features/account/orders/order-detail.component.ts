@@ -26,9 +26,15 @@ import { OrderService } from '../../../core/services/order.service';
             <h2 class="text-xl font-semibold">Pedido #{{ order.reference }}</h2>
             <p class="text-sm text-gray-500">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
-          <span class="px-3 py-1 rounded text-white text-sm font-semibold" [style.backgroundColor]="order.stateColor">
-            {{ order.stateName }}
-          </span>
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded text-white text-sm font-semibold" [style.backgroundColor]="order.stateColor">
+              {{ order.stateName }}
+            </span>
+            <button mat-stroked-button (click)="downloadInvoice()" [disabled]="downloadingInvoice" class="text-sm">
+              <mat-icon>picture_as_pdf</mat-icon>
+              {{ downloadingInvoice ? 'Generando...' : 'Factura PDF' }}
+            </button>
+          </div>
         </div>
 
         <!-- Items -->
@@ -135,6 +141,7 @@ export class OrderDetailComponent implements OnInit {
 
   order: any = null;
   loading = true;
+  downloadingInvoice = false;
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -148,5 +155,24 @@ export class OrderDetailComponent implements OnInit {
       this.order = res.data;
     } catch { /* empty */ }
     this.loading = false;
+  }
+
+  downloadInvoice(): void {
+    if (!this.order) return;
+    this.downloadingInvoice = true;
+    this.orderService.downloadInvoice(this.order.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `factura-${this.order.reference}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.downloadingInvoice = false;
+      },
+      error: () => {
+        this.downloadingInvoice = false;
+      },
+    });
   }
 }

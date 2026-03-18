@@ -91,6 +91,10 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-icon matListItemIcon>payment</mat-icon>
             <span>Pagos</span>
           </a>
+          <a mat-list-item routerLink="/email-settings" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>email</mat-icon>
+            <span>Email (SMTP)</span>
+          </a>
         </mat-nav-list>
       </mat-sidenav>
 

@@ -43,6 +43,8 @@ export const env = {
   SMTP_USER: optionalEnv('SMTP_USER', ''),
   SMTP_PASS: optionalEnv('SMTP_PASS', ''),
   SMTP_FROM: optionalEnv('SMTP_FROM', 'noreply@dmshop.com'),
+  SMTP_FROM_NAME: optionalEnv('SMTP_FROM_NAME', 'DMShop'),
+  SMTP_FROM_EMAIL: optionalEnv('SMTP_FROM_EMAIL', 'noreply@dmshop.com'),
 
   UPLOAD_DIR: optionalEnv('UPLOAD_DIR', 'uploads'),
   MAX_FILE_SIZE: parseInt(optionalEnv('MAX_FILE_SIZE', '10485760'), 10),

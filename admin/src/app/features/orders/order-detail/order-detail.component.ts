@@ -92,6 +92,11 @@ interface OrderState { id: number; name: string; color: string; }
         <span class="px-3 py-1 rounded text-white text-sm font-semibold" [style.backgroundColor]="order.stateColor">
           {{ order.stateName }}
         </span>
+        <span class="flex-1"></span>
+        <button mat-stroked-button (click)="downloadInvoice()" [disabled]="downloadingInvoice">
+          <mat-icon>picture_as_pdf</mat-icon>
+          {{ downloadingInvoice ? 'Generando...' : 'Descargar factura PDF' }}
+        </button>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -290,6 +295,7 @@ export class OrderDetailComponent implements OnInit {
   order: OrderDetail | null = null;
   states: OrderState[] = [];
   loading = true;
+  downloadingInvoice = false;
 
   newStateId: number | null = null;
   stateComment = '';
@@ -362,5 +368,25 @@ export class OrderDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/orders']);
+  }
+
+  downloadInvoice(): void {
+    if (!this.order) return;
+    this.downloadingInvoice = true;
+    this.api.getBlob(`/orders/${this.order.id}/invoice`).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `factura-${this.order!.reference}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.downloadingInvoice = false;
+      },
+      error: () => {
+        this.snack.open('Error al generar la factura', 'Cerrar', { duration: 3000 });
+        this.downloadingInvoice = false;
+      },
+    });
   }
 }

@@ -124,4 +124,8 @@ export class OrderService {
       this.api.post<{ success: boolean; data: OrderDetail }>('/orders', data),
     );
   }
+
+  downloadInvoice(orderId: number) {
+    return this.api.getBlob(`/orders/${orderId}/invoice`);
+  }
 }

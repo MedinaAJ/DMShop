@@ -161,6 +161,11 @@ export const routes: Routes = [
           import('./features/settings/payment-settings.component').then((m) => m.PaymentSettingsComponent),
       },
       {
+        path: 'email-settings',
+        loadComponent: () =>
+          import('./features/settings/email-settings.component').then((m) => m.EmailSettingsComponent),
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',

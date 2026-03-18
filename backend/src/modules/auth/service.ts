@@ -9,6 +9,7 @@ import { eventBus } from '../../hooks/event-bus.js';
 import { HookName } from '@dmshop/shared';
 import type { JwtPayload } from '../../middleware/authenticate.js';
 import type { LoginInput, RegisterInput } from '@dmshop/shared';
+import { mailService } from '../mail/mail.service.js';
 
 const SALT_ROUNDS = 12;
 
@@ -34,6 +35,11 @@ export const authService = {
     const tokens = await this.generateTokens(user);
 
     await eventBus.emitAsync(HookName.ON_USER_REGISTER, { userId: user.id });
+
+    // Fire-and-forget: send welcome email
+    mailService.sendWelcome({ email: user.email, first_name: user.first_name }).catch((err) =>
+      console.error('[AuthService] Error sending welcome email:', err),
+    );
 
     return {
       ...tokens,

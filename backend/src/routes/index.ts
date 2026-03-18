@@ -18,6 +18,10 @@ import { discountRouter } from '../modules/discount/routes.js';
 import { paymentRouter } from '../modules/payment/routes.js';
 import { configurationRouter } from '../modules/configuration/routes.js';
 import { stockRouter } from '../modules/stock/routes.js';
+import { mailRouter } from '../modules/mail/mail.routes.js';
+import { invoiceController } from '../modules/invoice/invoice.controller.js';
+import { authenticate } from '../middleware/authenticate.js';
+import { asyncHandler } from '../middleware/async-handler.js';
 
 export const apiRouter = Router();
 
@@ -40,3 +44,7 @@ apiRouter.use('/payment', paymentRouter);
 apiRouter.use('/configurations', configurationRouter);
 apiRouter.use('/search', searchRouter);
 apiRouter.use('/stock', stockRouter);
+apiRouter.use('/mail', mailRouter);
+
+// Invoice download: GET /api/v1/orders/:id/invoice
+apiRouter.get('/orders/:id/invoice', authenticate, asyncHandler(invoiceController.downloadInvoice));

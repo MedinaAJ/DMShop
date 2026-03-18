@@ -24,6 +24,7 @@ import type { CreateOrderInput, OrderListQuery, UpdateOrderStateInput, RegisterP
 import { cartCalculator } from '../cart/cart-calculator.service.js';
 import { eventBus } from '../../hooks/event-bus.js';
 import { stockService } from '../stock/stock.service.js';
+import { mailService } from '../mail/mail.service.js';
 import crypto from 'crypto';
 
 function generateReference(): string {
@@ -210,7 +211,14 @@ export const orderService = {
 
     await eventBus.emitAsync(HookName.AFTER_CREATE_ORDER, { order, userId });
 
-    return this.getById(order.id, userId);
+    const orderDetail = await this.getById(order.id, userId);
+
+    // Fire-and-forget: send confirmation email (don't block if email fails)
+    mailService.sendOrderConfirmation(orderDetail).catch((err) =>
+      console.error('[OrderService] Error sending order confirmation email:', err),
+    );
+
+    return orderDetail;
   },
 
   async list(userId: number, query: OrderListQuery) {
@@ -391,7 +399,14 @@ export const orderService = {
       }
     }
 
-    return this.getById(orderId);
+    const updatedOrder = await this.getById(orderId);
+
+    // Fire-and-forget: send status change email
+    mailService.sendOrderStatusChange(updatedOrder, state.name, state.color ?? undefined, input.comment ?? undefined).catch((err) =>
+      console.error('[OrderService] Error sending order status email:', err),
+    );
+
+    return updatedOrder;
   },
 
   async registerPayment(orderId: number, input: RegisterPaymentInput) {
