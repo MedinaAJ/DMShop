@@ -13,9 +13,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { CurrencyPipe } from '@angular/common';
+import { MatTableModule } from '@angular/material/table';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ApiService } from '../../../core/services/api.service';
 import { ProductImageService } from '../product-image.service';
+import { ProductStockService, StockMovement } from '../product-stock.service';
 import { environment } from '../../../../environments/environment';
 
 interface TranslationData {
@@ -55,7 +58,10 @@ interface ProductData {
     MatCheckboxModule,
     MatChipsModule,
     MatTooltipModule,
+    MatTableModule,
+    MatDialogModule,
     CurrencyPipe,
+    DatePipe,
   ],
   template: `
     <div class="flex items-center gap-4 mb-6">
@@ -341,6 +347,174 @@ interface ProductData {
             </div>
           </mat-tab>
 
+          <!-- TAB: Stock & Combinaciones -->
+          <mat-tab label="Stock">
+            <div class="pt-4 max-w-4xl space-y-6">
+              @if (combinations.length === 0) {
+                <!-- Sin combinaciones: stock simple -->
+                <div class="bg-white rounded-lg shadow p-6 space-y-4">
+                  <h3 class="text-lg font-semibold">Stock del producto</h3>
+                  <div class="flex items-end gap-4">
+                    <mat-form-field appearance="outline" class="w-48">
+                      <mat-label>Stock actual</mat-label>
+                      <input matInput type="number" [(ngModel)]="stockEditValue" name="stockEdit" min="0" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-48">
+                      <mat-label>Alerta stock bajo</mat-label>
+                      <input matInput type="number" [(ngModel)]="lowStockAlertValue" name="lowStockAlert" min="0" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="flex-1">
+                      <mat-label>Motivo del ajuste</mat-label>
+                      <input matInput [(ngModel)]="stockAdjustReason" name="stockReason" placeholder="Ej: Inventario físico" />
+                    </mat-form-field>
+                    <button mat-flat-button color="primary" (click)="saveProductStock()" class="!mb-6">
+                      <mat-icon>save</mat-icon> Guardar stock
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Movimientos recientes -->
+                <div class="bg-white rounded-lg shadow p-6">
+                  <h3 class="text-lg font-semibold mb-4">Últimos movimientos</h3>
+                  @if (stockMovements.length === 0) {
+                    <p class="text-gray-500">No hay movimientos registrados.</p>
+                  } @else {
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b text-left text-gray-500">
+                          <th class="pb-2 pr-4">Fecha</th>
+                          <th class="pb-2 pr-4">Tipo</th>
+                          <th class="pb-2 pr-4">Cantidad</th>
+                          <th class="pb-2 pr-4">Stock resultante</th>
+                          <th class="pb-2">Motivo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (m of stockMovements; track m.id) {
+                          <tr class="border-b even:bg-gray-50">
+                            <td class="py-2 pr-4">{{ m.created_at | date:'dd/MM/yy HH:mm' }}</td>
+                            <td class="py-2 pr-4">
+                              <span class="px-2 py-0.5 rounded text-xs font-medium"
+                                [class.bg-green-100]="m.movement_type === 'in' || m.movement_type === 'order_cancelled'"
+                                [class.text-green-800]="m.movement_type === 'in' || m.movement_type === 'order_cancelled'"
+                                [class.bg-red-100]="m.movement_type === 'out' || m.movement_type === 'order_reserved'"
+                                [class.text-red-800]="m.movement_type === 'out' || m.movement_type === 'order_reserved'"
+                                [class.bg-blue-100]="m.movement_type === 'adjustment'"
+                                [class.text-blue-800]="m.movement_type === 'adjustment'"
+                              >{{ movementTypeLabel(m.movement_type) }}</span>
+                            </td>
+                            <td class="py-2 pr-4">{{ m.quantity }}</td>
+                            <td class="py-2 pr-4">{{ m.stock_after }}</td>
+                            <td class="py-2">{{ m.reason || '—' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  }
+                </div>
+              } @else {
+                <!-- Con combinaciones: tabla de combinaciones + stock -->
+                <div class="bg-white rounded-lg shadow p-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Combinaciones y stock</h3>
+                    <button mat-flat-button color="primary" (click)="showAddCombinationForm = !showAddCombinationForm">
+                      <mat-icon>add</mat-icon> Añadir combinación
+                    </button>
+                  </div>
+
+                  <!-- Formulario añadir combinación -->
+                  @if (showAddCombinationForm) {
+                    <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h4 class="font-semibold mb-3">Nueva combinación</h4>
+                      @for (attr of allAttributes; track attr.id) {
+                        <mat-form-field appearance="outline" class="mr-4 mb-2">
+                          <mat-label>{{ attr.name }}</mat-label>
+                          <mat-select multiple [(ngModel)]="newCombAttrValues[attr.id]" [name]="'attr_' + attr.id">
+                            @for (v of attr.values; track v.id) {
+                              <mat-option [value]="v.id">{{ v.name }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      }
+                      <div class="flex gap-4 mt-2">
+                        <mat-form-field appearance="outline">
+                          <mat-label>Referencia</mat-label>
+                          <input matInput [(ngModel)]="newCombReference" name="newCombRef" />
+                        </mat-form-field>
+                        <mat-form-field appearance="outline">
+                          <mat-label>Precio adicional (€)</mat-label>
+                          <input matInput type="number" [(ngModel)]="newCombPriceImpact" name="newCombPrice" />
+                        </mat-form-field>
+                        <mat-form-field appearance="outline">
+                          <mat-label>Stock inicial</mat-label>
+                          <input matInput type="number" [(ngModel)]="newCombQuantity" name="newCombQty" min="0" />
+                        </mat-form-field>
+                      </div>
+                      <div class="flex gap-2 mt-2">
+                        <button mat-flat-button color="primary" (click)="addCombination()">Guardar</button>
+                        <button mat-button (click)="showAddCombinationForm = false">Cancelar</button>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Tabla de combinaciones -->
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="border-b text-left text-gray-500">
+                        <th class="pb-2 pr-4">Atributos</th>
+                        <th class="pb-2 pr-4">Referencia</th>
+                        <th class="pb-2 pr-4">Precio ±</th>
+                        <th class="pb-2 pr-4">Stock</th>
+                        <th class="pb-2 pr-4">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (comb of combinations; track comb.id) {
+                        <tr class="border-b even:bg-gray-50">
+                          <td class="py-2 pr-4">
+                            @for (av of comb.attributeValues || []; track av.id) {
+                              <mat-chip class="!text-xs mr-1">{{ av.translations?.[0]?.name || av.id }}</mat-chip>
+                            }
+                          </td>
+                          <td class="py-2 pr-4">{{ comb.reference || '—' }}</td>
+                          <td class="py-2 pr-4">{{ comb.price_impact | currency:'EUR' }}</td>
+                          <td class="py-2 pr-4">
+                            @if (editingCombId === comb.id) {
+                              <div class="flex items-center gap-2">
+                                <input class="border rounded px-2 py-1 w-20" type="number" [(ngModel)]="editingCombStock" [name]="'cstock_' + comb.id" min="0" />
+                                <button mat-icon-button color="primary" (click)="saveCombinationStock(comb.id)" matTooltip="Guardar">
+                                  <mat-icon class="!text-sm">check</mat-icon>
+                                </button>
+                                <button mat-icon-button (click)="editingCombId = null" matTooltip="Cancelar">
+                                  <mat-icon class="!text-sm">close</mat-icon>
+                                </button>
+                              </div>
+                            } @else {
+                              <span
+                                [class.text-red-600]="comb.quantity === 0"
+                                [class.text-orange-500]="comb.quantity > 0 && comb.quantity <= 5"
+                                [class.text-green-600]="comb.quantity > 5"
+                                class="font-semibold"
+                              >{{ comb.quantity }}</span>
+                              <button mat-icon-button class="!w-6 !h-6 ml-1" (click)="startEditCombStock(comb)" matTooltip="Editar stock">
+                                <mat-icon class="!text-sm">edit</mat-icon>
+                              </button>
+                            }
+                          </td>
+                          <td class="py-2 pr-4">
+                            <button mat-icon-button color="warn" (click)="removeCombination(comb.id)" matTooltip="Eliminar">
+                              <mat-icon class="!text-sm">delete</mat-icon>
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </mat-tab>
+
           <!-- TAB: Características -->
           <mat-tab label="Características">
             <div class="pt-4 max-w-3xl space-y-4">
@@ -412,6 +586,7 @@ interface ProductData {
 export class ProductFormComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly imageService = inject(ProductImageService);
+  private readonly stockService = inject(ProductStockService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
@@ -434,6 +609,22 @@ export class ProductFormComponent implements OnInit {
   newFeatureValueId: number | null = null;
   allCategories: Array<{ id: number; name: string; prefix: string }> = [];
   selectedCategories = new Set<number>();
+
+  // Stock & Combinations
+  stockMovements: StockMovement[] = [];
+  stockEditValue = 0;
+  lowStockAlertValue = 5;
+  stockAdjustReason = '';
+  // Combination stock inline edit
+  editingCombId: number | null = null;
+  editingCombStock = 0;
+  // Add combination form
+  showAddCombinationForm = false;
+  allAttributes: Array<{ id: number; name: string; values: Array<{ id: number; name: string }> }> = [];
+  newCombAttrValues: Record<number, number[]> = {};
+  newCombReference = '';
+  newCombPriceImpact = 0;
+  newCombQuantity = 0;
 
   product: ProductData = {
     price: 0,
@@ -476,6 +667,8 @@ export class ProductFormComponent implements OnInit {
             translations: (p.translations ||
               this.product.translations) as ProductData['translations'],
           };
+          this.stockEditValue = p.quantity;
+          this.lowStockAlertValue = p.lowStockAlert ?? 5;
           this.loading = false;
           this.loadSubResources();
         },
@@ -494,10 +687,16 @@ export class ProductFormComponent implements OnInit {
       .subscribe((r) => (this.images = r.data || []));
     this.api
       .get<any>(`/products/${this.productId}/combinations`)
-      .subscribe((r) => (this.combinations = r.data));
+      .subscribe((r) => {
+        this.combinations = r.data;
+        // Initialize stock edit value from product
+        this.stockEditValue = this.product.quantity;
+      });
     this.loadProductFeatures();
     this.api.get<any>('/features').subscribe((r) => (this.allFeatures = r.data));
     this.loadCategories();
+    this.loadStockData();
+    this.loadAllAttributes();
   }
 
   private loadProductFeatures(): void {
@@ -646,6 +845,112 @@ export class ProductFormComponent implements OnInit {
         this.snackBar.open('Imagen eliminada', 'OK', { duration: 2000 });
       },
       error: () => this.snackBar.open('Error al eliminar', 'Cerrar', { duration: 3000 }),
+    });
+  }
+
+  // --- Stock ---
+  private loadStockData(): void {
+    if (!this.productId) return;
+    this.stockService.getMovements(this.productId, 1, 10).subscribe({
+      next: (r) => (this.stockMovements = r.data),
+      error: () => {/* stock movements not critical */},
+    });
+  }
+
+  private loadAllAttributes(): void {
+    this.api.get<any>('/attributes').subscribe({
+      next: (r) => {
+        this.allAttributes = (r.data || []).map((a: any) => ({
+          id: a.id,
+          name: a.translations?.[0]?.name || `Atributo #${a.id}`,
+          values: (a.values || []).map((v: any) => ({
+            id: v.id,
+            name: v.translations?.[0]?.name || `#${v.id}`,
+          })),
+        }));
+        // Init newCombAttrValues
+        for (const attr of this.allAttributes) {
+          this.newCombAttrValues[attr.id] = [];
+        }
+      },
+    });
+  }
+
+  saveProductStock(): void {
+    if (!this.productId) return;
+    this.stockService.adjustProductStock(this.productId, this.stockEditValue, this.stockAdjustReason || 'Ajuste manual').subscribe({
+      next: () => {
+        this.snackBar.open('Stock actualizado', 'OK', { duration: 2000 });
+        this.product.quantity = this.stockEditValue;
+        this.stockAdjustReason = '';
+        this.loadStockData();
+      },
+      error: () => this.snackBar.open('Error al actualizar stock', 'Cerrar', { duration: 3000 }),
+    });
+
+    // Also save low_stock_alert via product update
+    this.api.put(`/products/${this.productId}`, { lowStockAlert: this.lowStockAlertValue }).subscribe();
+  }
+
+  movementTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      in: 'Entrada',
+      out: 'Salida',
+      adjustment: 'Ajuste',
+      order_reserved: 'Pedido',
+      order_cancelled: 'Cancelación',
+    };
+    return labels[type] ?? type;
+  }
+
+  startEditCombStock(comb: any): void {
+    this.editingCombId = comb.id;
+    this.editingCombStock = comb.quantity;
+  }
+
+  saveCombinationStock(combId: number): void {
+    if (!this.productId) return;
+    this.stockService.adjustCombinationStock(this.productId, combId, this.editingCombStock).subscribe({
+      next: () => {
+        const comb = this.combinations.find((c) => c.id === combId);
+        if (comb) comb.quantity = this.editingCombStock;
+        this.editingCombId = null;
+        this.snackBar.open('Stock de combinación actualizado', 'OK', { duration: 2000 });
+      },
+      error: () => this.snackBar.open('Error al actualizar stock', 'Cerrar', { duration: 3000 }),
+    });
+  }
+
+  addCombination(): void {
+    if (!this.productId) return;
+    // Gather selected attribute value IDs
+    const attributeValueIds: number[] = [];
+    for (const attr of this.allAttributes) {
+      const vals = this.newCombAttrValues[attr.id] ?? [];
+      attributeValueIds.push(...vals);
+    }
+    if (attributeValueIds.length === 0) {
+      this.snackBar.open('Selecciona al menos un valor de atributo', 'Cerrar', { duration: 3000 });
+      return;
+    }
+    this.api.post(`/products/${this.productId}/combinations`, {
+      reference: this.newCombReference || null,
+      priceImpact: this.newCombPriceImpact,
+      quantity: this.newCombQuantity,
+      attributeValueIds,
+    }).subscribe({
+      next: (r: any) => {
+        this.combinations = r.data;
+        this.showAddCombinationForm = false;
+        this.newCombReference = '';
+        this.newCombPriceImpact = 0;
+        this.newCombQuantity = 0;
+        for (const attr of this.allAttributes) {
+          this.newCombAttrValues[attr.id] = [];
+        }
+        this.snackBar.open('Combinación añadida', 'OK', { duration: 2000 });
+      },
+      error: () => this.snackBar.open('Error al añadir combinación', 'Cerrar', { duration: 3000 }),
     });
   }
 
