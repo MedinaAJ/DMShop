@@ -297,3 +297,115 @@ describe('discountService.applyCode', () => {
     expect(CartCartRule.create).toHaveBeenCalledWith({ id_cart: 1, id_cart_rule: 1 });
   });
 });
+
+// ── BLOQUE 6: validateRule ─────────────────────────────────────────────────
+
+import { Order } from '../../models/order.model.js';
+
+describe('discountService.validateRule', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('cupón con date_from en el futuro → lanza CART_RULE_INVALID', async () => {
+    const futureDate = new Date(Date.now() + 86400000); // +1 día
+    const rule = makeCartRule({ date_from: futureDate, date_to: null }) as any;
+
+    await expect(discountService.validateRule(rule, 1, 1)).rejects.toMatchObject({
+      statusCode: 400,
+    });
+  });
+
+  it('cupón con date_to en el pasado → lanza CART_RULE_EXPIRED', async () => {
+    const pastDate = new Date(Date.now() - 86400000); // -1 día
+    const rule = makeCartRule({ date_from: null, date_to: pastDate }) as any;
+
+    await expect(discountService.validateRule(rule, 1, 1)).rejects.toMatchObject({
+      statusCode: 400,
+    });
+  });
+
+  it('cupón sin fechas → válido (no lanza)', async () => {
+    const rule = makeCartRule({ date_from: null, date_to: null, quantity: 0, quantity_per_user: 0, id_customer: null }) as any;
+    vi.mocked(CartCartRule.count).mockResolvedValue(0 as any);
+    vi.mocked(Order.count).mockResolvedValue(0 as any);
+
+    await expect(discountService.validateRule(rule, 1, 1)).resolves.not.toThrow();
+  });
+
+  it('cupón con quantity=1 ya usado (count=1) → lanza CART_RULE_INVALID', async () => {
+    // quantity=1 → límite global de 1 uso; count=1 → 1>=1 → lanza
+    const rule = makeCartRule({ quantity: 1, quantity_per_user: 0, id_customer: null }) as any;
+    vi.mocked(CartCartRule.count).mockResolvedValue(1 as any);
+
+    await expect(discountService.validateRule(rule, 1, 1)).rejects.toMatchObject({
+      statusCode: 400,
+    });
+  });
+
+  it('cupón con quantity=0 (ilimitado) → no comprueba límite global', async () => {
+    // quantity=0 → no hay límite → nunca lanza por count
+    const rule = makeCartRule({ quantity: 0, quantity_per_user: 0, id_customer: null }) as any;
+    vi.mocked(CartCartRule.count).mockResolvedValue(9999 as any); // muchos usos
+    vi.mocked(Order.count).mockResolvedValue(0 as any);
+
+    await expect(discountService.validateRule(rule, 1, 1)).resolves.not.toThrow();
+    // count no debe haberse llamado porque quantity=0
+    expect(CartCartRule.count).not.toHaveBeenCalled();
+  });
+
+  it('cupón con id_customer diferente al userId → lanza CART_RULE_INVALID', async () => {
+    // id_customer=42, userId=99 → no es su cupón
+    const rule = makeCartRule({ id_customer: 42, quantity: 0, quantity_per_user: 0 }) as any;
+    vi.mocked(CartCartRule.count).mockResolvedValue(0 as any);
+    vi.mocked(Order.count).mockResolvedValue(0 as any);
+
+    await expect(discountService.validateRule(rule, 1, 99)).rejects.toMatchObject({
+      statusCode: 400,
+    });
+  });
+
+  it('cupón con id_customer igual al userId → válido', async () => {
+    // id_customer=42, userId=42 → es su cupón → válido
+    const rule = makeCartRule({ id_customer: 42, quantity: 0, quantity_per_user: 0 }) as any;
+    vi.mocked(CartCartRule.count).mockResolvedValue(0 as any);
+    vi.mocked(Order.count).mockResolvedValue(0 as any);
+
+    await expect(discountService.validateRule(rule, 1, 42)).resolves.not.toThrow();
+  });
+
+  it('cupón con quantity_per_user=1 ya usado por este user → lanza CART_RULE_INVALID', async () => {
+    // quantity_per_user=1, userOrderCount=1 → 1>=1 → lanza
+    const rule = makeCartRule({ quantity: 0, quantity_per_user: 1, id_customer: null }) as any;
+    vi.mocked(CartCartRule.count).mockResolvedValue(0 as any);
+    vi.mocked(Order.count).mockResolvedValue(1 as any);
+
+    await expect(discountService.validateRule(rule, 1, 42)).rejects.toMatchObject({
+      statusCode: 400,
+    });
+  });
+
+  it('cupón con quantity_per_user=0 (ilimitado por user) → no comprueba límite por user', async () => {
+    const rule = makeCartRule({ quantity: 0, quantity_per_user: 0, id_customer: null }) as any;
+    vi.mocked(CartCartRule.count).mockResolvedValue(0 as any);
+    vi.mocked(Order.count).mockResolvedValue(999 as any); // muchos pedidos del user
+
+    await expect(discountService.validateRule(rule, 1, 42)).resolves.not.toThrow();
+    // Order.count no debe llamarse porque quantity_per_user=0
+    expect(Order.count).not.toHaveBeenCalled();
+  });
+
+  it('cupón activo con fechas válidas (en rango) → válido', async () => {
+    const pastDate = new Date(Date.now() - 86400000);  // ayer
+    const futureDate = new Date(Date.now() + 86400000); // mañana
+    const rule = makeCartRule({
+      date_from: pastDate,
+      date_to: futureDate,
+      quantity: 0,
+      quantity_per_user: 0,
+      id_customer: null,
+    }) as any;
+    vi.mocked(CartCartRule.count).mockResolvedValue(0 as any);
+    vi.mocked(Order.count).mockResolvedValue(0 as any);
+
+    await expect(discountService.validateRule(rule, 1, 1)).resolves.not.toThrow();
+  });
+});

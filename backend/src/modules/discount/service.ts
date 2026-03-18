@@ -194,6 +194,8 @@ export const discountService = {
 
   /**
    * Get the best specific price for a product
+   * customerGroupId: primary group ID of the user (for matching group-specific prices)
+   * userGroupIds: all group IDs of the user (optional, for broader matching)
    */
   async getSpecificPrice(
     productId: number,
@@ -203,6 +205,7 @@ export const discountService = {
     currencyId: number | null,
     countryId: number | null,
     quantity: number,
+    userGroupIds?: number[],
   ): Promise<SpecificPrice | null> {
     const now = new Date();
 
@@ -218,6 +221,9 @@ export const discountService = {
     };
 
     const prices = await SpecificPrice.findAll({ where, order: [['from_quantity', 'DESC']] });
+
+    // All group IDs the user belongs to (for broader matching)
+    const allGroupIds = userGroupIds ?? (customerGroupId ? [customerGroupId] : []);
 
     // Score each specific price (more specific = higher score)
     let bestPrice: SpecificPrice | null = null;
@@ -238,10 +244,15 @@ export const discountService = {
         score += 8;
       }
 
-      // Check group match
+      // Check group match — give higher priority to prices matching user's group
       if (sp.id_customer_group) {
-        if (sp.id_customer_group !== customerGroupId) continue;
-        score += 4;
+        if (!allGroupIds.includes(sp.id_customer_group)) continue;
+        // Primary group match scores higher than secondary group
+        if (sp.id_customer_group === customerGroupId) {
+          score += 6;
+        } else {
+          score += 4;
+        }
       }
 
       // Check currency match

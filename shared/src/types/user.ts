@@ -38,6 +38,17 @@ export interface CustomerGroup {
   name: string;
   reduction: number;
   showPrices: boolean;
+  priceDisplayMethod: number;
+  memberCount?: number;
+}
+
+export interface CustomerGroupDto {
+  id: number;
+  name: string;
+  reduction: number;
+  showPrices: boolean;
+  priceDisplayMethod: number;
+  memberCount?: number;
 }
 
 export interface UserPublic {

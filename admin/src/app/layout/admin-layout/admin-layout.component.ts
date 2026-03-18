@@ -79,6 +79,10 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-icon matListItemIcon>people</mat-icon>
             <span>Clientes</span>
           </a>
+          <a mat-list-item routerLink="/customer-groups" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>group_work</mat-icon>
+            <span>Grupos de clientes</span>
+          </a>
           <a mat-list-item routerLink="/carriers" routerLinkActive="!bg-blue-50 !text-blue-700">
             <mat-icon matListItemIcon>airport_shuttle</mat-icon>
             <span>Transportistas</span>

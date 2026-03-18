@@ -200,6 +200,13 @@ export const routes: Routes = [
           import('./features/cms/cms-form.component').then((m) => m.CmsFormComponent),
       },
       {
+        path: 'customer-groups',
+        loadComponent: () =>
+          import('./features/customer-groups/customer-groups.component').then(
+            (m) => m.CustomerGroupsComponent,
+          ),
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',

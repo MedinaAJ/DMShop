@@ -37,6 +37,7 @@ export interface CartSummary {
   totalShippingTax: number;
   totalDiscounts: number;
   totalDiscountsTax: number;
+  groupDiscount?: number;
   totalPaid: number;
   itemCount: number;
 }

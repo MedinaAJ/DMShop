@@ -15,6 +15,17 @@ vi.mock('../../models/refresh-token.model.js', () => ({
     destroy: vi.fn(),
   },
 }));
+vi.mock('../../models/user-group.model.js', () => ({
+  UserGroup: {
+    create: vi.fn().mockResolvedValue({ id_user: 1, id_customer_group: 3 }),
+  },
+}));
+vi.mock('../../models/customer-group.model.js', () => ({
+  CustomerGroup: {},
+}));
+vi.mock('../../models/customer-group-lang.model.js', () => ({
+  CustomerGroupLang: {},
+}));
 vi.mock('../../hooks/event-bus.js', () => ({
   eventBus: {
     emitAsync: vi.fn().mockResolvedValue(undefined),

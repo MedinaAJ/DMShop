@@ -400,25 +400,39 @@ async function seed() {
     },
   ]);
 
-  // --- Customer Groups ---
+  // --- Customer Groups (PrestaShop-style: 1=Visitante, 2=Invitado, 3=Cliente) ---
   console.log('Seeding customer groups...');
-  const [groupVisitor, groupCustomer, groupVip] = await CustomerGroup.bulkCreate([
-    { reduction: 0, show_prices: true },
-    { reduction: 0, show_prices: true },
-    { reduction: 5, show_prices: true },
-  ]);
 
-  await CustomerGroupLang.bulkCreate([
-    { id_customer_group: groupVisitor.id, id_lang: 1, name: 'Visitante' },
-    { id_customer_group: groupVisitor.id, id_lang: 2, name: 'Visitor' },
-    { id_customer_group: groupCustomer.id, id_lang: 1, name: 'Cliente' },
-    { id_customer_group: groupCustomer.id, id_lang: 2, name: 'Customer' },
-    { id_customer_group: groupVip.id, id_lang: 1, name: 'VIP' },
-    { id_customer_group: groupVip.id, id_lang: 2, name: 'VIP' },
-  ]);
+  // Use findOrCreate to ensure fixed IDs (1=Visitante, 2=Invitado, 3=Cliente)
+  const defaultGroups = [
+    { id: 1, reduction: 0, price_display_method: 0, show_prices: true, deleted: false },
+    { id: 2, reduction: 0, price_display_method: 0, show_prices: true, deleted: false },
+    { id: 3, reduction: 0, price_display_method: 0, show_prices: true, deleted: false },
+  ];
+  for (const group of defaultGroups) {
+    await CustomerGroup.findOrCreate({ where: { id: group.id }, defaults: group });
+  }
 
-  // Assign admin to Customer group
-  await UserGroup.create({ id_user: adminUser.id, id_customer_group: groupCustomer.id });
+  const groupNames = [
+    { id_customer_group: 1, id_lang: 1, name: 'Visitante' },
+    { id_customer_group: 2, id_lang: 1, name: 'Invitado' },
+    { id_customer_group: 3, id_lang: 1, name: 'Cliente' },
+    { id_customer_group: 1, id_lang: 2, name: 'Visitor' },
+    { id_customer_group: 2, id_lang: 2, name: 'Guest' },
+    { id_customer_group: 3, id_lang: 2, name: 'Customer' },
+  ];
+  for (const gn of groupNames) {
+    await CustomerGroupLang.findOrCreate({
+      where: { id_customer_group: gn.id_customer_group, id_lang: gn.id_lang },
+      defaults: gn,
+    });
+  }
+
+  // Assign admin to Customer group (id=3)
+  await UserGroup.findOrCreate({
+    where: { id_user: adminUser.id, id_customer_group: 3 },
+    defaults: { id_user: adminUser.id, id_customer_group: 3 },
+  });
 
   // --- Carrier ---
   console.log('Seeding default carrier...');

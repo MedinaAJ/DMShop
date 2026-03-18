@@ -12,6 +12,8 @@ import { Carrier } from '../../models/carrier.model.js';
 import { CarrierRange } from '../../models/carrier-range.model.js';
 import { CarrierRangePrice } from '../../models/carrier-range-price.model.js';
 import { CarrierZone } from '../../models/carrier-zone.model.js';
+import { User } from '../../models/user.model.js';
+import { CustomerGroup } from '../../models/customer-group.model.js';
 import type { CartSummary, CartItemDetailed } from '@dmshop/shared';
 import { discountService } from '../discount/service.js';
 
@@ -67,6 +69,19 @@ export const cartCalculator = {
       }
     }
 
+    // Resolve user groups for specific price matching
+    let userGroupIds: number[] = [];
+    if (userId) {
+      const userForGroups = await User.findByPk(userId, {
+        include: [{ model: CustomerGroup, as: 'groups', through: { attributes: [] } }],
+      });
+      if (userForGroups?.groups?.length) {
+        userGroupIds = userForGroups.groups.map((g: CustomerGroup) => g.id);
+      }
+    }
+    // Primary group is the first (or highest-reduction) group
+    const primaryGroupId = userGroupIds.length > 0 ? userGroupIds[0] : null;
+
     const items: CartItemDetailed[] = [];
     let totalProducts = 0;
     let totalProductsTax = 0;
@@ -87,10 +102,10 @@ export const cartCalculator = {
         }
       }
 
-      // Apply specific price if available
+      // Apply specific price if available (pass user's group for priority matching)
       const specificPrice = await discountService.getSpecificPrice(
         product.id, cartItem.id_combination, userId ?? null,
-        null, null, countryId, cartItem.quantity,
+        primaryGroupId, null, countryId, cartItem.quantity,
       );
       if (specificPrice) {
         unitPrice = discountService.applySpecificPrice(unitPrice, specificPrice);
@@ -139,6 +154,28 @@ export const cartCalculator = {
       totalShippingTax = shippingResult.costWithTax;
     }
 
+    // Apply group discount (before cart rules)
+    let groupReduction = 0;
+    if (userId) {
+      const userWithGroups = await User.findByPk(userId, {
+        include: [{ model: CustomerGroup, as: 'groups', through: { attributes: [] } }],
+      });
+      if (userWithGroups?.groups?.length) {
+        groupReduction = Math.max(
+          ...userWithGroups.groups.map((g: CustomerGroup) => Number(g.reduction) || 0),
+        );
+      }
+    }
+
+    let totalGroupDiscount = 0;
+    let totalGroupDiscountTax = 0;
+    if (groupReduction > 0) {
+      totalGroupDiscount = round(totalProducts * (groupReduction / 100));
+      totalGroupDiscountTax = round(totalProductsTax * (groupReduction / 100));
+      totalProducts = totalProducts - totalGroupDiscount;
+      totalProductsTax = totalProductsTax - totalGroupDiscountTax;
+    }
+
     // Calculate cart rule discounts
     // Use average tax rate for discount calculation
     const avgTaxRate = totalProducts > 0 ? ((totalProductsTax / totalProducts) - 1) * 100 : 0;
@@ -162,10 +199,11 @@ export const cartCalculator = {
       totalShippingTax: round(totalShippingTax),
       totalDiscounts: round(discountResult.totalDiscounts),
       totalDiscountsTax: round(discountResult.totalDiscountsTax),
+      groupDiscount: round(totalGroupDiscount),
       totalPaid: round(Math.max(0, totalPaid)),
       itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
       appliedDiscounts: discountResult.discounts,
-    } as CartSummary & { appliedDiscounts: unknown[] };
+    } as CartSummary & { appliedDiscounts: unknown[]; groupDiscount: number };
   },
 
   async getTaxRate(taxRulesGroupId: number, countryId: number | null, stateId: number | null): Promise<number> {

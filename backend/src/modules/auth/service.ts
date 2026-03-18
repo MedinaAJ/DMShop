@@ -5,6 +5,9 @@ import { AppError } from '../../utils/app-error.js';
 import { ErrorCode } from '@dmshop/shared';
 import { User } from '../../models/user.model.js';
 import { RefreshToken } from '../../models/refresh-token.model.js';
+import { UserGroup } from '../../models/user-group.model.js';
+import { CustomerGroup } from '../../models/customer-group.model.js';
+import { CustomerGroupLang } from '../../models/customer-group-lang.model.js';
 import { eventBus } from '../../hooks/event-bus.js';
 import { HookName } from '@dmshop/shared';
 import type { JwtPayload } from '../../middleware/authenticate.js';
@@ -33,6 +36,11 @@ export const authService = {
     });
 
     const tokens = await this.generateTokens(user);
+
+    // Assign to default "Cliente" group (id=3) on registration
+    await UserGroup.create({ id_user: user.id, id_customer_group: 3 }).catch((err) =>
+      console.error('[AuthService] Error assigning default group:', err),
+    );
 
     await eventBus.emitAsync(HookName.ON_USER_REGISTER, { userId: user.id });
 
@@ -115,6 +123,14 @@ export const authService = {
   async getProfile(userId: number) {
     const user = await User.findByPk(userId, {
       attributes: { exclude: ['password'] },
+      include: [
+        {
+          model: CustomerGroup,
+          as: 'groups',
+          through: { attributes: [] },
+          include: [{ model: CustomerGroupLang, as: 'translations' }],
+        },
+      ],
     });
     if (!user) {
       throw AppError.notFound('Usuario no encontrado', ErrorCode.USER_NOT_FOUND);
