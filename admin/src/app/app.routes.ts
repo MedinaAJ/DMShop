@@ -161,6 +161,11 @@ export const routes: Routes = [
           import('./features/settings/payment-settings.component').then((m) => m.PaymentSettingsComponent),
       },
       {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./features/analytics/analytics.component').then((m) => m.AnalyticsComponent),
+      },
+      {
         path: 'email-settings',
         loadComponent: () =>
           import('./features/settings/email-settings.component').then((m) => m.EmailSettingsComponent),
