@@ -17,6 +17,7 @@ import { orderRouter } from '../modules/order/routes.js';
 import { discountRouter } from '../modules/discount/routes.js';
 import { paymentRouter } from '../modules/payment/routes.js';
 import { configurationRouter } from '../modules/configuration/routes.js';
+import { stockRouter } from '../modules/stock/routes.js';
 
 export const apiRouter = Router();
 
@@ -38,3 +39,4 @@ apiRouter.use('/discounts', discountRouter);
 apiRouter.use('/payment', paymentRouter);
 apiRouter.use('/configurations', configurationRouter);
 apiRouter.use('/search', searchRouter);
+apiRouter.use('/stock', stockRouter);

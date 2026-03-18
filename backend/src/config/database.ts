@@ -63,6 +63,8 @@ import {
   OrderCarrier,
   // Pricing
   SpecificPrice,
+  // Stock
+  StockMovement,
 } from '../models/index.js';
 
 const models = [
@@ -127,6 +129,8 @@ const models = [
   OrderCarrier,
   // Pricing
   SpecificPrice,
+  // Stock
+  StockMovement,
 ];
 
 export const sequelize = new Sequelize({

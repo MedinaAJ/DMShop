@@ -6,6 +6,7 @@ import { authorize } from '../../middleware/authorize.js';
 import { optionalAuth } from '../../middleware/authenticate.js';
 import { validate } from '../../middleware/validate.js';
 import { createProductSchema, updateProductSchema, paginationSchema } from '@dmshop/shared';
+import { stockController } from '../stock/controller.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -203,4 +204,18 @@ productRouter.put(
   authenticate,
   authorize('admin', 'employee'),
   asyncHandler(productController.setCategories),
+);
+
+// Stock adjustments
+productRouter.put(
+  '/:id/stock',
+  authenticate,
+  authorize('admin', 'employee'),
+  asyncHandler(stockController.adjustProductStock),
+);
+productRouter.put(
+  '/:id/combinations/:combId/stock',
+  authenticate,
+  authorize('admin', 'employee'),
+  asyncHandler(stockController.adjustCombinationStock),
 );

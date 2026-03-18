@@ -23,6 +23,7 @@ import { ErrorCode, OrderStateId, HookName } from '@dmshop/shared';
 import type { CreateOrderInput, OrderListQuery, UpdateOrderStateInput, RegisterPaymentInput, UpdateTrackingInput } from '@dmshop/shared';
 import { cartCalculator } from '../cart/cart-calculator.service.js';
 import { eventBus } from '../../hooks/event-bus.js';
+import { stockService } from '../stock/stock.service.js';
 import crypto from 'crypto';
 
 function generateReference(): string {
@@ -87,7 +88,7 @@ export const orderService = {
     await eventBus.emitAsync(HookName.BEFORE_CREATE_ORDER, { userId, cart, summary });
 
     const order = await sequelize.transaction(async (t) => {
-      // Validate stock and decrement
+      // Validate stock and create stock movements (order_reserved)
       for (const cartItem of cart.items) {
         const product = await Product.findByPk(cartItem.id_product, { transaction: t, lock: true });
         if (!product) {
@@ -102,7 +103,6 @@ export const orderService = {
               ErrorCode.PRODUCT_OUT_OF_STOCK,
             );
           }
-          await combination.update({ quantity: combination.quantity - cartItem.quantity }, { transaction: t });
         } else {
           if (product.quantity < cartItem.quantity) {
             throw AppError.badRequest(
@@ -110,7 +110,6 @@ export const orderService = {
               ErrorCode.PRODUCT_OUT_OF_STOCK,
             );
           }
-          await product.update({ quantity: product.quantity - cartItem.quantity }, { transaction: t });
         }
       }
 
@@ -189,6 +188,19 @@ export const orderService = {
         },
         { transaction: t },
       );
+
+      // Register stock movements (order_reserved) for each cart item
+      for (const cartItem of cart.items) {
+        await stockService.move({
+          id_product: cartItem.id_product,
+          id_combination: cartItem.id_combination ?? null,
+          movement_type: 'order_reserved',
+          quantity: cartItem.quantity,
+          id_order: newOrder.id,
+          reason: `Pedido #${newOrder.reference}`,
+          transaction: t,
+        });
+      }
 
       // Clear cart items
       await CartItem.destroy({ where: { id_cart: cart.id }, transaction: t });
@@ -348,6 +360,7 @@ export const orderService = {
       throw AppError.badRequest('Estado de pedido inválido', ErrorCode.ORDER_INVALID_STATE);
     }
 
+    const previousStateId = order.id_order_state;
     await order.update({ id_order_state: input.idOrderState });
 
     await OrderHistory.create({
@@ -356,6 +369,27 @@ export const orderService = {
       id_user: adminUserId,
       comment: input.comment ?? null,
     });
+
+    // If transitioning to "Cancelled" state (id 6), restore stock
+    const CANCELLED_STATE_ID = 6;
+    if (input.idOrderState === CANCELLED_STATE_ID && previousStateId !== CANCELLED_STATE_ID) {
+      const items = await OrderItem.findAll({ where: { id_order: orderId } });
+      for (const item of items) {
+        try {
+          await stockService.move({
+            id_product: item.id_product,
+            id_combination: item.id_combination ?? null,
+            movement_type: 'order_cancelled',
+            quantity: item.quantity,
+            id_order: orderId,
+            reason: `Pedido #${order.reference} cancelado`,
+          });
+        } catch (err) {
+          // Log but don't fail the state update if stock restoration fails
+          console.warn(`Could not restore stock for order item ${item.id}:`, err);
+        }
+      }
+    }
 
     return this.getById(orderId);
   },

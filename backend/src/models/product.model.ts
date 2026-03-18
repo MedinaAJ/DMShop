@@ -83,6 +83,10 @@ export class Product extends Model {
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false, field: 'is_virtual' })
   declare is_virtual: boolean;
 
+  // ALTER TABLE products ADD COLUMN low_stock_alert INT NOT NULL DEFAULT 5;
+  @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 5, field: 'low_stock_alert' })
+  declare low_stock_alert: number;
+
   @BelongsTo(() => Category, 'id_category_default')
   declare defaultCategory: Category;
 

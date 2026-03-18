@@ -3,6 +3,7 @@ import { CartItem } from '../../models/cart-item.model.js';
 import { Product } from '../../models/product.model.js';
 import { ProductLang } from '../../models/product-lang.model.js';
 import { ProductImage } from '../../models/product-image.model.js';
+import { ProductCombination } from '../../models/product-combination.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode, HookName } from '@dmshop/shared';
 import { eventBus } from '../../hooks/event-bus.js';
@@ -48,8 +49,27 @@ export const cartService = {
       throw AppError.notFound('Producto no encontrado', ErrorCode.PRODUCT_NOT_FOUND);
     }
 
-    if (product.quantity < quantity) {
-      throw AppError.badRequest('Stock insuficiente', ErrorCode.PRODUCT_OUT_OF_STOCK);
+    // Check stock: combination or product level
+    if (idCombination) {
+      const combination = await ProductCombination.findOne({
+        where: { id: idCombination, id_product: idProduct },
+      });
+      if (!combination) {
+        throw AppError.notFound('Combinación no encontrada', ErrorCode.COMBINATION_NOT_FOUND);
+      }
+      if (combination.quantity < quantity) {
+        throw AppError.badRequest(
+          `Stock insuficiente para la combinación seleccionada (disponible: ${combination.quantity})`,
+          ErrorCode.PRODUCT_OUT_OF_STOCK,
+        );
+      }
+    } else {
+      if (product.quantity < quantity) {
+        throw AppError.badRequest(
+          `Stock insuficiente (disponible: ${product.quantity})`,
+          ErrorCode.PRODUCT_OUT_OF_STOCK,
+        );
+      }
     }
 
     await eventBus.emitAsync(HookName.BEFORE_ADD_TO_CART, { userId, idProduct, quantity });

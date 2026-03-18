@@ -71,3 +71,6 @@ export { OrderCarrier } from './order-carrier.model.js';
 
 // Pricing
 export { SpecificPrice } from './specific-price.model.js';
+
+// Stock
+export { StockMovement } from './stock-movement.model.js';
