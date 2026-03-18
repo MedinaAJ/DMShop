@@ -74,3 +74,16 @@ export { SpecificPrice } from './specific-price.model.js';
 
 // Stock
 export { StockMovement } from './stock-movement.model.js';
+
+// Wishlist
+export { Wishlist } from './wishlist.model.js';
+export { WishlistItem } from './wishlist-item.model.js';
+
+// Reviews
+export { ProductReview } from './product-review.model.js';
+
+// CMS
+export { CmsCategory } from './cms-category.model.js';
+export { CmsCategoryLang } from './cms-category-lang.model.js';
+export { CmsPage } from './cms-page.model.js';
+export { CmsPageLang } from './cms-page-lang.model.js';

@@ -12,6 +12,7 @@ import { resolveLanguage } from './middleware/language.js';
 import { setupSwagger } from './config/swagger.js';
 import { apiRouter } from './routes/index.js';
 import { registerPaymentModules } from './modules/payment/index.js';
+import { cmsService } from './modules/cms/service.js';
 
 const app = express();
 
@@ -65,6 +66,9 @@ async function bootstrap() {
 
     registerPaymentModules();
     logger.info('Payment modules registered');
+
+    await cmsService.seedDefaultPages();
+    logger.info('CMS default pages seeded');
 
     app.listen(env.PORT, () => {
       logger.info(`DMShop API running on http://localhost:${env.PORT}`);

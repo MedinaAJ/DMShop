@@ -66,6 +66,13 @@ import {
   // Stock
   StockMovement,
 } from '../models/index.js';
+import { Wishlist } from '../models/wishlist.model.js';
+import { WishlistItem } from '../models/wishlist-item.model.js';
+import { ProductReview } from '../models/product-review.model.js';
+import { CmsCategory } from '../models/cms-category.model.js';
+import { CmsCategoryLang } from '../models/cms-category-lang.model.js';
+import { CmsPage } from '../models/cms-page.model.js';
+import { CmsPageLang } from '../models/cms-page-lang.model.js';
 
 const models = [
   // Core
@@ -131,6 +138,16 @@ const models = [
   SpecificPrice,
   // Stock
   StockMovement,
+  // Wishlist
+  Wishlist,
+  WishlistItem,
+  // Reviews
+  ProductReview,
+  // CMS
+  CmsCategory,
+  CmsCategoryLang,
+  CmsPage,
+  CmsPageLang,
 ];
 
 export const sequelize = new Sequelize({

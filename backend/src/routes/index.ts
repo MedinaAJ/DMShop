@@ -20,6 +20,9 @@ import { configurationRouter } from '../modules/configuration/routes.js';
 import { stockRouter } from '../modules/stock/routes.js';
 import { mailRouter } from '../modules/mail/mail.routes.js';
 import { invoiceController } from '../modules/invoice/invoice.controller.js';
+import { wishlistRouter } from '../modules/wishlist/routes.js';
+import { reviewRouter } from '../modules/review/routes.js';
+import { cmsRouter } from '../modules/cms/routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 
@@ -45,6 +48,9 @@ apiRouter.use('/configurations', configurationRouter);
 apiRouter.use('/search', searchRouter);
 apiRouter.use('/stock', stockRouter);
 apiRouter.use('/mail', mailRouter);
+apiRouter.use('/wishlist', wishlistRouter);
+apiRouter.use('/reviews', reviewRouter);
+apiRouter.use('/cms', cmsRouter);
 
 // Invoice download: GET /api/v1/orders/:id/invoice
 apiRouter.get('/orders/:id/invoice', authenticate, asyncHandler(invoiceController.downloadInvoice));
