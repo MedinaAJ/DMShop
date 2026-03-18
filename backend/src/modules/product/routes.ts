@@ -8,10 +8,16 @@ import { validate } from '../../middleware/validate.js';
 import { createProductSchema, updateProductSchema, paginationSchema } from '@dmshop/shared';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 
 const storage = multer.diskStorage({
-  destination: 'uploads/products',
+  destination: (req, _file, cb) => {
+    const productId = req.params.id || 'unknown';
+    const dir = path.join(process.cwd(), 'uploads', 'products', productId);
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${crypto.randomUUID()}${ext}`);
@@ -22,9 +28,8 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, allowed.includes(ext));
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    cb(null, allowed.includes(file.mimetype));
   },
 });
 
@@ -44,11 +49,32 @@ export const productRouter = Router();
  *         name: perPage
  *         schema: { type: integer }
  *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *         description: Busca en nombre, descripción corta y referencia
+ *       - in: query
  *         name: q
  *         schema: { type: string }
+ *         description: Alias de search
  *       - in: query
  *         name: idCategory
  *         schema: { type: integer }
+ *       - in: query
+ *         name: id_manufacturer
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: min_price
+ *         schema: { type: number }
+ *       - in: query
+ *         name: max_price
+ *         schema: { type: number }
+ *       - in: query
+ *         name: in_stock
+ *         schema: { type: boolean }
+ *       - in: query
+ *         name: attributes
+ *         schema: { type: string }
+ *         description: IDs de attribute_values separados por coma (ej. 1,3,7)
  *     responses:
  *       200: { description: Lista de productos }
  */
@@ -144,11 +170,25 @@ productRouter.post(
   upload.single('image'),
   asyncHandler(productController.uploadImage),
 );
+// Reorder images (must be before /:imageId routes to avoid conflict)
+productRouter.put(
+  '/:id/images/reorder',
+  authenticate,
+  authorize('admin', 'employee'),
+  asyncHandler(productController.reorderImages),
+);
 productRouter.put(
   '/:id/images/:imageId',
   authenticate,
   authorize('admin', 'employee'),
   asyncHandler(productController.updateImage),
+);
+// Set cover
+productRouter.put(
+  '/:id/images/:imageId/cover',
+  authenticate,
+  authorize('admin', 'employee'),
+  asyncHandler(productController.setCoverImage),
 );
 productRouter.delete(
   '/:id/images/:imageId',

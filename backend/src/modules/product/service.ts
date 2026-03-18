@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs';
 import { Product } from '../../models/product.model.js';
 import { ProductLang } from '../../models/product-lang.model.js';
 import { ProductImage } from '../../models/product-image.model.js';
@@ -13,14 +15,40 @@ import { Feature } from '../../models/feature.model.js';
 import { FeatureLang } from '../../models/feature-lang.model.js';
 import { FeatureValue } from '../../models/feature-value.model.js';
 import { FeatureValueLang } from '../../models/feature-value-lang.model.js';
-import { Category } from '../../models/category.model.js';
-import { CategoryLang } from '../../models/category-lang.model.js';
 import { Manufacturer } from '../../models/manufacturer.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode } from '@dmshop/shared';
 import type { PaginationMeta } from '@dmshop/shared';
 import type { CreateProductInput, UpdateProductInput } from '@dmshop/shared';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
+import { sequelize } from '../../config/database.js';
+import { env } from '../../config/env.js';
+
+// =============== HELPERS ===============
+
+function transformProductListItem(p: any, appUrl: string) {
+  const translations: any[] = Array.isArray(p.translations) ? p.translations : [];
+  const trans = translations[0] || {};
+  const images: any[] = Array.isArray(p.images) ? p.images : [];
+  const coverImg = images.find((img: any) => img.cover) || images[0];
+  const coverPath = coverImg?.path ?? null;
+
+  return {
+    id: p.id,
+    reference: p.reference ?? null,
+    price: Number(p.price),
+    quantity: p.quantity,
+    active: p.active,
+    name: trans.name ?? '',
+    slug: trans.slug ?? '',
+    descriptionShort: trans.description_short ?? null,
+    coverImage: coverPath
+      ? (coverPath.startsWith('http') ? coverPath : `${appUrl}/${coverPath.replace(/^\//, '')}`)
+      : null,
+    manufacturerName: p.manufacturer?.name ?? null,
+    categoryName: null,
+  };
+}
 
 export const productService = {
   async list(query: Record<string, unknown>) {
@@ -28,14 +56,100 @@ export const productService = {
     const perPage = Math.min(Number(query.perPage) || 20, 100);
     const offset = (page - 1) * perPage;
 
-    const where: Record<string, unknown> = { active: true };
+    const where: Record<string | symbol, unknown> = { active: true };
     if (query.idCategory) {
       where.id_category_default = Number(query.idCategory);
     }
+    if (query.id_manufacturer) {
+      where.id_manufacturer = Number(query.id_manufacturer);
+    }
+    if (query.min_price !== undefined || query.max_price !== undefined) {
+      const priceFilter: Record<symbol, number> = {};
+      if (query.min_price !== undefined) priceFilter[Op.gte] = Number(query.min_price);
+      if (query.max_price !== undefined) priceFilter[Op.lte] = Number(query.max_price);
+      where.price = priceFilter;
+    }
+    if (query.in_stock === 'true' || query.in_stock === true) {
+      where.quantity = { [Op.gt]: 0 };
+    }
 
-    const translationWhere: Record<string, unknown> = { id_lang: 1 };
-    if (query.q) {
-      translationWhere.name = { [Op.like]: `%${query.q}%` };
+    // Support both old `q` and new `search` params
+    const searchTerm = (query.search || query.q) as string | undefined;
+
+    // Attribute filter: ?attributes=1,3,7 → product must have combination with those attribute_value ids
+    const attributeIds = query.attributes
+      ? String(query.attributes).split(',').map(Number).filter(Boolean)
+      : [];
+
+    if (attributeIds.length > 0) {
+      // Find product IDs that have combinations with ALL requested attribute values
+      const placeholders = attributeIds.map(() => '?').join(', ');
+      const results = await sequelize.query<{ id_product: number }>(
+        `SELECT DISTINCT pc.id_product
+         FROM product_combinations pc
+         INNER JOIN combination_attribute_values cav ON cav.id_combination = pc.id
+         WHERE cav.id_attribute_value IN (${placeholders})
+         GROUP BY pc.id_product
+         HAVING COUNT(DISTINCT cav.id_attribute_value) = ?`,
+        {
+          replacements: [...attributeIds, attributeIds.length],
+          type: QueryTypes.SELECT,
+        },
+      );
+
+      if (results.length === 0) {
+        const meta: PaginationMeta = { page, perPage, total: 0, totalPages: 0 };
+        return { data: [], meta };
+      }
+
+      const productIds = results.map((r) => r.id_product);
+      // Merge with existing id filter if any
+      const existingIdFilter = where.id as { [Op.in]: number[] } | undefined;
+      if (existingIdFilter?.[Op.in]) {
+        const intersection = productIds.filter((id) => existingIdFilter[Op.in].includes(id));
+        if (intersection.length === 0) {
+          const meta: PaginationMeta = { page, perPage, total: 0, totalPages: 0 };
+          return { data: [], meta };
+        }
+        where.id = { [Op.in]: intersection };
+      } else {
+        where.id = { [Op.in]: productIds };
+      }
+    }
+
+    const translationWhere: Record<string | symbol, unknown> = { id_lang: 1 };
+    const hasTranslationSearch = !!searchTerm;
+
+    if (searchTerm) {
+      translationWhere[Op.or] = [
+        { name: { [Op.like]: `%${searchTerm}%` } },
+        { description_short: { [Op.like]: `%${searchTerm}%` } },
+      ];
+
+      // Also add reference search by including matching product IDs
+      const refMatches = await Product.findAll({
+        where: { reference: { [Op.like]: `%${searchTerm}%` } },
+        attributes: ['id'],
+      });
+      const refIds = refMatches.map((p) => p.id);
+
+      if (refIds.length > 0) {
+        // Get product IDs that match reference
+        const existingIdFilter = where.id as { [Op.in]: number[] } | undefined;
+        if (existingIdFilter?.[Op.in]) {
+          const attrFilteredIds = existingIdFilter[Op.in];
+          const refMatchingAttrIds = refIds.filter((id) => attrFilteredIds.includes(id));
+          if (refMatchingAttrIds.length > 0) {
+            where[Op.or] = [
+              { id: { [Op.in]: refMatchingAttrIds } },
+            ];
+          }
+        } else {
+          // We need products where EITHER reference matches OR translation matches
+          // Since translation filter is in include (not main where), we handle this via OR on id
+          where[Op.or] = [{ id: { [Op.in]: refIds } }];
+        }
+      }
     }
 
     const { count, rows } = await Product.findAndCountAll({
@@ -45,7 +159,9 @@ export const productService = {
           model: ProductLang,
           as: 'translations',
           where: translationWhere,
-          required: !!query.q,
+          // Required only when searching - but with OR via where[Op.or], we need to handle this carefully
+          // If we have ref matches via where[Op.or], don't require translation match
+          required: hasTranslationSearch && !(where[Op.or]),
         },
         {
           model: ProductImage,
@@ -53,10 +169,16 @@ export const productService = {
           where: { cover: true },
           required: false,
         },
+        {
+          model: Manufacturer,
+          as: 'manufacturer',
+          required: false,
+        },
       ],
       limit: perPage,
       offset,
       order: [['created_at', 'DESC']],
+      distinct: true,
     });
 
     const meta: PaginationMeta = {
@@ -66,10 +188,65 @@ export const productService = {
       totalPages: Math.ceil(count / perPage),
     };
 
-    return { data: rows, meta };
+    const data = rows.map((p) => transformProductListItem(p, env.APP_URL));
+    return { data, meta };
   },
 
-  async getById(id: number, lang?: string) {
+  async quickSearch(q: string, limit = 8) {
+    const searchTerm = q.trim();
+    if (!searchTerm) return [];
+
+    // Get IDs from reference matches
+    const refMatches = await Product.findAll({
+      where: { active: true, reference: { [Op.like]: `%${searchTerm}%` } },
+      attributes: ['id'],
+      limit: limit,
+    });
+    const refIds = refMatches.map((p) => p.id);
+
+    // Get IDs from translation name matches
+    const nameLangMatches = await ProductLang.findAll({
+      where: {
+        id_lang: 1,
+        [Op.or]: [
+          { name: { [Op.like]: `%${searchTerm}%` } },
+        ],
+      },
+      attributes: ['id_product'],
+      limit: limit,
+    });
+    const nameIds = nameLangMatches.map((pl) => pl.id_product);
+
+    const allIds = [...new Set([...refIds, ...nameIds])];
+    if (allIds.length === 0) return [];
+
+    const products = await Product.findAll({
+      where: {
+        active: true,
+        id: { [Op.in]: allIds },
+      },
+      include: [
+        {
+          model: ProductLang,
+          as: 'translations',
+          where: { id_lang: 1 },
+          required: false,
+        },
+        {
+          model: ProductImage,
+          as: 'images',
+          where: { cover: true },
+          required: false,
+        },
+      ],
+      limit: limit,
+      order: [['created_at', 'DESC']],
+    });
+
+    return products.map((p) => transformProductListItem(p, env.APP_URL));
+  },
+
+  async getById(id: number, _lang?: string) {
     const product = await Product.findByPk(id, {
       include: [
         { model: ProductLang, as: 'translations' },
@@ -104,7 +281,7 @@ export const productService = {
 
     // Create translations
     if (input.translations) {
-      for (const [langIso, trans] of Object.entries(input.translations)) {
+      for (const [_langIso, trans] of Object.entries(input.translations)) {
         // TODO: resolve lang id from iso code
         await ProductLang.create({
           id_product: product.id,
@@ -142,7 +319,7 @@ export const productService = {
     });
 
     if (input.translations) {
-      for (const [langIso, trans] of Object.entries(input.translations)) {
+      for (const [_langIso, trans] of Object.entries(input.translations)) {
         await ProductLang.upsert({
           id_product: id,
           id_lang: 1, // TODO: resolve lang id from iso
@@ -347,22 +524,31 @@ export const productService = {
     });
   },
 
-  async addImage(productId: number, path: string, cover: boolean) {
+  async addImage(productId: number, imagePath: string, cover: boolean) {
     await this.ensureProductExists(productId);
 
-    const maxPosition = await ProductImage.max<number, ProductImage>('position', {
+    const existingImages = await ProductImage.findAll({
       where: { id_product: productId },
     });
 
-    if (cover) {
+    const maxPosition =
+      existingImages.length > 0
+        ? Math.max(...existingImages.map((img) => img.position))
+        : -1;
+
+    // Auto-cover if it's the first image
+    const isFirstImage = existingImages.length === 0;
+    const shouldBeCover = cover || isFirstImage;
+
+    if (shouldBeCover) {
       await ProductImage.update({ cover: false }, { where: { id_product: productId } });
     }
 
     return ProductImage.create({
       id_product: productId,
-      path,
-      position: (maxPosition ?? -1) + 1,
-      cover,
+      path: imagePath,
+      position: maxPosition + 1,
+      cover: shouldBeCover,
     });
   },
 
@@ -390,6 +576,29 @@ export const productService = {
     return image;
   },
 
+  async setCoverImage(productId: number, imageId: number) {
+    const image = await ProductImage.findOne({
+      where: { id: imageId, id_product: productId },
+    });
+    if (!image) {
+      throw AppError.notFound('Imagen no encontrada', ErrorCode.NOT_FOUND);
+    }
+    await ProductImage.update({ cover: false }, { where: { id_product: productId } });
+    await image.update({ cover: true });
+    return image;
+  },
+
+  async reorderImages(productId: number, items: Array<{ id: number; position: number }>) {
+    await this.ensureProductExists(productId);
+    for (const item of items) {
+      await ProductImage.update(
+        { position: item.position },
+        { where: { id: item.id, id_product: productId } },
+      );
+    }
+    return this.listImages(productId);
+  },
+
   async removeImage(productId: number, imageId: number) {
     const image = await ProductImage.findOne({
       where: { id: imageId, id_product: productId },
@@ -397,7 +606,33 @@ export const productService = {
     if (!image) {
       throw AppError.notFound('Imagen no encontrada', ErrorCode.NOT_FOUND);
     }
+
+    const wasCover = image.cover;
+
+    // Delete file from disk
+    const imagePath = image.path;
+    // imagePath is like /uploads/products/1/uuid.jpg
+    const filePath = path.join(process.cwd(), imagePath.startsWith('/') ? imagePath.slice(1) : imagePath);
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (err) {
+      console.warn(`Could not delete image file: ${filePath}`, err);
+    }
+
     await image.destroy();
+
+    // If it was cover, promote the next image by position
+    if (wasCover) {
+      const nextImage = await ProductImage.findOne({
+        where: { id_product: productId },
+        order: [['position', 'ASC']],
+      });
+      if (nextImage) {
+        await nextImage.update({ cover: true });
+      }
+    }
   },
 
   // =============== CATEGORIES ===============

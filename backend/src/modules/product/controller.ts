@@ -83,7 +83,7 @@ export const productController = {
     }
     const image = await productService.addImage(
       Number(req.params.id),
-      `/uploads/products/${file.filename}`,
+      `/uploads/products/${req.params.id}/${file.filename}`,
       req.body.cover === 'true',
     );
     sendCreated(res, image);
@@ -96,6 +96,22 @@ export const productController = {
       req.body,
     );
     sendSuccess(res, image);
+  },
+
+  async setCoverImage(req: Request, res: Response) {
+    const image = await productService.setCoverImage(
+      Number(req.params.id),
+      Number(req.params.imageId),
+    );
+    sendSuccess(res, image);
+  },
+
+  async reorderImages(req: Request, res: Response) {
+    const images = await productService.reorderImages(
+      Number(req.params.id),
+      req.body,
+    );
+    sendSuccess(res, images);
   },
 
   async removeImage(req: Request, res: Response) {

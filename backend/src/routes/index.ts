@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authRouter } from '../modules/auth/routes.js';
 import { productRouter } from '../modules/product/routes.js';
+import { searchRouter } from '../modules/search/routes.js';
 import { categoryRouter } from '../modules/category/routes.js';
 import { cartRouter } from '../modules/cart/routes.js';
 import { userRouter } from '../modules/user/routes.js';
@@ -36,3 +37,4 @@ apiRouter.use('/orders', orderRouter);
 apiRouter.use('/discounts', discountRouter);
 apiRouter.use('/payment', paymentRouter);
 apiRouter.use('/configurations', configurationRouter);
+apiRouter.use('/search', searchRouter);
