@@ -23,6 +23,7 @@ import { analyticsRouter } from '../modules/analytics/routes.js';
 import { wishlistRouter } from '../modules/wishlist/routes.js';
 import { reviewRouter } from '../modules/review/routes.js';
 import { cmsRouter } from '../modules/cms/routes.js';
+import { returnRouter } from '../modules/return/routes.js';
 import { invoiceController } from '../modules/invoice/invoice.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { asyncHandler } from '../middleware/async-handler.js';
@@ -53,6 +54,7 @@ apiRouter.use('/analytics', analyticsRouter);
 apiRouter.use('/wishlist', wishlistRouter);
 apiRouter.use('/reviews', reviewRouter);
 apiRouter.use('/cms', cmsRouter);
+apiRouter.use('/returns', returnRouter);
 
 // Invoice download: GET /api/v1/orders/:id/invoice
 apiRouter.get('/orders/:id/invoice', authenticate, asyncHandler(invoiceController.downloadInvoice));

@@ -23,6 +23,9 @@ export class Wishlist extends Model {
   @Column({ type: DataType.STRING(64), allowNull: false, defaultValue: 'Mi lista de deseos' })
   declare name: string;
 
+  @Column({ type: DataType.STRING(64), allowNull: true, unique: true })
+  declare token: string | null;
+
   @CreatedAt
   @Column({ type: DataType.DATE, field: 'created_at' })
   declare created_at: Date;

@@ -5,6 +5,7 @@ import { ProductLang } from '../../models/product-lang.model.js';
 import { ProductImage } from '../../models/product-image.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { env } from '../../config/env.js';
+import crypto from 'crypto';
 
 function formatImageUrl(path: string | null): string | null {
   if (!path) return null;
@@ -126,5 +127,72 @@ export const wishlistService = {
     });
 
     return !!item;
+  },
+
+  /**
+   * Generate (or return existing) share token for a wishlist
+   */
+  async shareWishlist(userId: number, wishlistId: number): Promise<{ shareUrl: string }> {
+    const wishlist = await Wishlist.findOne({ where: { id: wishlistId, id_user: userId } });
+    if (!wishlist) throw AppError.notFound('Wishlist no encontrada');
+
+    let token = wishlist.token;
+    if (!token) {
+      token = crypto.randomBytes(32).toString('hex');
+      await wishlist.update({ token });
+    }
+
+    return { shareUrl: `/wishlist/shared/${token}` };
+  },
+
+  /**
+   * Get a shared wishlist by token (public, no auth needed)
+   */
+  async getSharedWishlist(token: string) {
+    const wishlist = await Wishlist.findOne({
+      where: { token },
+      include: [
+        {
+          model: WishlistItem,
+          include: [
+            {
+              model: Product,
+              include: [
+                { model: ProductLang },
+                { model: ProductImage, where: { cover: true }, required: false },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!wishlist) throw AppError.notFound('Lista compartida no encontrada');
+
+    // Return without user private data
+    const items = ((wishlist as any).items ?? []).map((item: any) => {
+      const product = item.product;
+      const lang = product?.translations?.[0] ?? {};
+      const coverImage = product?.images?.[0] ?? null;
+      return {
+        id_product: item.id_product,
+        id_combination: item.id_combination ?? null,
+        product: {
+          id: product?.id,
+          name: lang.name ?? '',
+          slug: lang.slug ?? '',
+          price: Number(product?.price ?? 0),
+          quantity: product?.quantity ?? 0,
+          active: product?.active ?? false,
+          coverImage: coverImage ? formatImageUrl(coverImage.path) : null,
+        },
+      };
+    });
+
+    return {
+      id: wishlist.id,
+      name: wishlist.name,
+      items,
+    };
   },
 };

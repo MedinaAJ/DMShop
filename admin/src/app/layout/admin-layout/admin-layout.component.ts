@@ -103,6 +103,14 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-icon matListItemIcon>rate_review</mat-icon>
             <span>Reseñas</span>
           </a>
+          <a mat-list-item routerLink="/order-states" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>flag</mat-icon>
+            <span>Estados pedido</span>
+          </a>
+          <a mat-list-item routerLink="/returns" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>assignment_return</mat-icon>
+            <span>Devoluciones</span>
+          </a>
           <a mat-list-item routerLink="/cms" routerLinkActive="!bg-blue-50 !text-blue-700">
             <mat-icon matListItemIcon>article</mat-icon>
             <span>Páginas CMS</span>

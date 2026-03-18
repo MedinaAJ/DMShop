@@ -22,4 +22,18 @@ export class OrderState extends Model {
 
   @Column({ type: DataType.STRING(64), allowNull: true })
   declare template: string | null;
+
+  // --- New fields (Mejora 2: configuración estilo PrestaShop) ---
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false, field: 'send_email' })
+  declare send_email: boolean;
+
+  @Column({ type: DataType.STRING(50), allowNull: true })
+  declare icon: string | null;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false })
+  declare invoice: boolean;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false })
+  declare deleted: boolean;
 }

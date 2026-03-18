@@ -401,10 +401,12 @@ export const orderService = {
 
     const updatedOrder = await this.getById(orderId);
 
-    // Fire-and-forget: send status change email
-    mailService.sendOrderStatusChange(updatedOrder, state.name, state.color ?? undefined, input.comment ?? undefined).catch((err) =>
-      console.error('[OrderService] Error sending order status email:', err),
-    );
+    // Send email if new state has send_email=true
+    if (state.send_email) {
+      mailService.sendOrderStatusChange(updatedOrder, state.name, state.color ?? undefined, input.comment ?? undefined).catch((err) =>
+        console.error('[OrderService] Error sending order status email:', err),
+      );
+    }
 
     return updatedOrder;
   },
@@ -454,6 +456,57 @@ export const orderService = {
 
   async getStates() {
     return OrderState.findAll({ order: [['id', 'ASC']] });
+  },
+
+  async createState(input: {
+    name: string;
+    color?: string;
+    paid?: boolean;
+    shipped?: boolean;
+    send_email?: boolean;
+    invoice?: boolean;
+    icon?: string;
+  }) {
+    return OrderState.create({
+      name: input.name,
+      color: input.color ?? '#777777',
+      paid: input.paid ?? false,
+      shipped: input.shipped ?? false,
+      send_email: input.send_email ?? false,
+      invoice: input.invoice ?? false,
+      icon: input.icon ?? null,
+      deleted: false,
+    });
+  },
+
+  async updateStateConfig(stateId: number, input: {
+    name?: string;
+    color?: string;
+    paid?: boolean;
+    shipped?: boolean;
+    send_email?: boolean;
+    invoice?: boolean;
+    icon?: string;
+  }) {
+    const state = await OrderState.findByPk(stateId);
+    if (!state) throw AppError.notFound('Estado no encontrado', ErrorCode.NOT_FOUND);
+    await state.update({
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.color !== undefined && { color: input.color }),
+      ...(input.paid !== undefined && { paid: input.paid }),
+      ...(input.shipped !== undefined && { shipped: input.shipped }),
+      ...(input.send_email !== undefined && { send_email: input.send_email }),
+      ...(input.invoice !== undefined && { invoice: input.invoice }),
+      ...(input.icon !== undefined && { icon: input.icon }),
+    });
+    return state;
+  },
+
+  async deleteState(stateId: number) {
+    const state = await OrderState.findByPk(stateId);
+    if (!state) throw AppError.notFound('Estado no encontrado', ErrorCode.NOT_FOUND);
+    // Soft delete
+    await state.update({ deleted: true });
   },
 };
 

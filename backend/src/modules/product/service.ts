@@ -16,6 +16,7 @@ import { FeatureLang } from '../../models/feature-lang.model.js';
 import { FeatureValue } from '../../models/feature-value.model.js';
 import { FeatureValueLang } from '../../models/feature-value-lang.model.js';
 import { Manufacturer } from '../../models/manufacturer.model.js';
+import { SpecificPrice } from '../../models/specific-price.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode } from '@dmshop/shared';
 import type { PaginationMeta } from '@dmshop/shared';
@@ -258,7 +259,34 @@ export const productService = {
       throw AppError.notFound('Producto no encontrado', ErrorCode.PRODUCT_NOT_FOUND);
     }
 
-    return product;
+    // Fetch available specific prices for this product (for front-end display)
+    const now = new Date();
+    const specificPrices = await SpecificPrice.findAll({
+      where: {
+        id_product: id,
+        [Op.or]: [
+          { date_from: null, date_to: null },
+          { date_from: { [Op.lte]: now }, date_to: null },
+          { date_from: null, date_to: { [Op.gte]: now } },
+          { date_from: { [Op.lte]: now }, date_to: { [Op.gte]: now } },
+        ],
+      },
+      order: [['from_quantity', 'ASC']],
+    });
+
+    const productData = product.toJSON() as any;
+    productData.specificPrices = specificPrices.map((sp) => ({
+      id: sp.id,
+      id_combination: sp.id_combination,
+      from_quantity: sp.from_quantity,
+      price: Number(sp.price),
+      reduction: Number(sp.reduction),
+      reduction_type: sp.reduction_type,
+      date_from: sp.date_from,
+      date_to: sp.date_to,
+    }));
+
+    return productData;
   },
 
   async create(input: CreateProductInput) {

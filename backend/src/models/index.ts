@@ -82,6 +82,10 @@ export { WishlistItem } from './wishlist-item.model.js';
 // Reviews
 export { ProductReview } from './product-review.model.js';
 
+// Returns / RMA
+export { OrderReturn } from './order-return.model.js';
+export { OrderReturnItem } from './order-return-item.model.js';
+
 // CMS
 export { CmsCategory } from './cms-category.model.js';
 export { CmsCategoryLang } from './cms-category-lang.model.js';

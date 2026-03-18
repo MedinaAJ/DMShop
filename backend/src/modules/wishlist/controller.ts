@@ -31,4 +31,17 @@ export const wishlistController = {
     const inWishlist = await wishlistService.checkItem(req.user.userId, idProduct);
     sendSuccess(res, { inWishlist });
   },
+
+  async shareWishlist(req: Request, res: Response) {
+    if (!req.user) throw AppError.unauthorized();
+    const wishlistId = Number(req.params.id);
+    const result = await wishlistService.shareWishlist(req.user.userId, wishlistId);
+    sendSuccess(res, result);
+  },
+
+  async getSharedWishlist(req: Request, res: Response) {
+    const token = req.params.token;
+    const wishlist = await wishlistService.getSharedWishlist(token);
+    sendSuccess(res, wishlist);
+  },
 };

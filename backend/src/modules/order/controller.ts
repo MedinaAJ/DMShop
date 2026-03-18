@@ -90,4 +90,24 @@ export const orderController = {
     const order = await orderService.updateTracking(Number(req.params.id), req.body);
     sendSuccess(res, order);
   },
+
+  // --- Admin: Order State management ---
+
+  // POST /orders/admin/states
+  async adminCreateState(req: Request, res: Response) {
+    const state = await orderService.createState(req.body);
+    sendCreated(res, state);
+  },
+
+  // PUT /orders/admin/states/:id
+  async adminUpdateState2(req: Request, res: Response) {
+    const state = await orderService.updateStateConfig(Number(req.params.id), req.body);
+    sendSuccess(res, state);
+  },
+
+  // DELETE /orders/admin/states/:id
+  async adminDeleteState(req: Request, res: Response) {
+    await orderService.deleteState(Number(req.params.id));
+    sendSuccess(res, { deleted: true });
+  },
 };

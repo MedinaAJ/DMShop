@@ -84,9 +84,25 @@ import { environment } from '../../../environments/environment';
             }
 
             @if (product.showPrice) {
-              <p class="text-3xl font-bold text-blue-600 mb-6">
-                {{ product.price | currency: 'EUR' }}
-              </p>
+              <div class="mb-6">
+                @if (activeSpecificPrice) {
+                  <div class="flex items-center gap-3">
+                    <p class="text-3xl font-bold text-blue-600">
+                      {{ discountedPrice | currency: 'EUR' }}
+                    </p>
+                    <p class="text-xl text-gray-400 line-through">
+                      {{ product.price | currency: 'EUR' }}
+                    </p>
+                    <span class="bg-red-100 text-red-700 text-sm font-semibold px-2 py-1 rounded">
+                      {{ discountLabel }}
+                    </span>
+                  </div>
+                } @else {
+                  <p class="text-3xl font-bold text-blue-600">
+                    {{ product.price | currency: 'EUR' }}
+                  </p>
+                }
+              </div>
             }
 
             @if (product.quantity > 0) {
@@ -385,6 +401,37 @@ export class ProductDetailComponent implements OnInit {
   get effectiveStock(): number {
     if (this.selectedCombination) return this.selectedCombination.quantity;
     return this.product?.quantity ?? 0;
+  }
+
+  /** Active specific price for current product (no combination, qty=1) */
+  get activeSpecificPrice(): any | null {
+    const prices: any[] = this.product?.specificPrices ?? [];
+    if (!prices.length) return null;
+    // Find best price for qty=1, no combination filter
+    const eligible = prices.filter((sp: any) => sp.from_quantity <= 1 && !sp.id_combination);
+    if (!eligible.length) return null;
+    return eligible[0];
+  }
+
+  /** Discounted price based on active specific price */
+  get discountedPrice(): number {
+    const sp = this.activeSpecificPrice;
+    const base = Number(this.product?.price ?? 0);
+    if (!sp) return base;
+    if (sp.price >= 0) return sp.price;
+    if (sp.reduction_type === 'percentage') {
+      return Math.round(base * (1 - sp.reduction / 100) * 100) / 100;
+    }
+    return Math.max(0, Math.round((base - sp.reduction) * 100) / 100);
+  }
+
+  /** Human-readable discount label */
+  get discountLabel(): string {
+    const sp = this.activeSpecificPrice;
+    if (!sp) return '';
+    if (sp.price >= 0) return 'Precio especial';
+    if (sp.reduction_type === 'percentage') return `-${sp.reduction}%`;
+    return `-${sp.reduction} €`;
   }
 
   ngOnInit(): void {

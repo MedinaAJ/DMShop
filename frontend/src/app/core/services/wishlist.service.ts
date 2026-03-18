@@ -126,6 +126,20 @@ export class WishlistService {
     }
   }
 
+  async share(wishlistId: number): Promise<string> {
+    const res = await firstValueFrom(
+      this.api.post<{ success: boolean; data: { shareUrl: string } }>(`/wishlist/${wishlistId}/share`, {}),
+    );
+    return res.data.shareUrl;
+  }
+
+  async getShared(token: string): Promise<WishlistData> {
+    const res = await firstValueFrom(
+      this.api.get<{ success: boolean; data: WishlistData }>(`/wishlist/shared/${token}`),
+    );
+    return res.data;
+  }
+
   clear(): void {
     this._wishlist.set(null);
     this._checkedProducts.set(new Map());

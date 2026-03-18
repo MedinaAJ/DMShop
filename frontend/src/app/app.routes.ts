@@ -115,6 +115,13 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'wishlist/shared/:token',
+        loadComponent: () =>
+          import('./features/account/wishlist/shared-wishlist.component').then(
+            (m) => m.SharedWishlistComponent,
+          ),
+      },
+      {
         path: 'paginas/:slug',
         loadComponent: () =>
           import('./features/cms/cms-page.component').then((m) => m.CmsPageComponent),

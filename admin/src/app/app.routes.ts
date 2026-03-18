@@ -176,6 +176,20 @@ export const routes: Routes = [
           import('./features/reviews/reviews-list.component').then((m) => m.ReviewsListComponent),
       },
       {
+        path: 'order-states',
+        loadComponent: () =>
+          import('./features/order-states/order-states.component').then(
+            (m) => m.OrderStatesComponent,
+          ),
+      },
+      {
+        path: 'returns',
+        loadComponent: () =>
+          import('./features/returns/returns-list.component').then(
+            (m) => m.ReturnsListComponent,
+          ),
+      },
+      {
         path: 'cms',
         loadComponent: () =>
           import('./features/cms/cms-list.component').then((m) => m.CmsListComponent),
