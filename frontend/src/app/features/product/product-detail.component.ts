@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,10 +8,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTableModule } from '@angular/material/table';
-import { CurrencyPipe } from '@angular/common';
+import { MatInputModule } from '@angular/material/input';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
+import { ReviewService, ReviewStats } from '../../core/services/review.service';
+import { WishlistService } from '../../core/services/wishlist.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -27,7 +31,9 @@ import { environment } from '../../../environments/environment';
     MatSelectModule,
     MatFormFieldModule,
     MatTableModule,
+    MatInputModule,
     CurrencyPipe,
+    DatePipe,
   ],
   template: `
     @if (loading) {
@@ -213,6 +219,110 @@ import { environment } from '../../../environments/environment';
             </table>
           </div>
         }
+
+        <!-- Reviews section -->
+        <div class="mt-10 border-t pt-8">
+          <h3 class="text-2xl font-bold mb-6">Reseñas de clientes</h3>
+
+          @if (reviewsLoading()) {
+            <mat-spinner diameter="32" />
+          } @else if (reviewStats()) {
+            <!-- Rating summary -->
+            <div class="flex flex-col sm:flex-row gap-6 mb-8">
+              <div class="text-center">
+                <div class="text-5xl font-bold text-blue-600">{{ reviewStats()!.avgRating }}</div>
+                <div class="flex justify-center my-1">
+                  @for (star of [1,2,3,4,5]; track star) {
+                    <mat-icon class="!text-xl" [class.text-yellow-400]="star <= reviewStats()!.avgRating" [class.text-gray-200]="star > reviewStats()!.avgRating">
+                      star
+                    </mat-icon>
+                  }
+                </div>
+                <div class="text-sm text-gray-500">{{ reviewStats()!.totalReviews }} reseñas</div>
+              </div>
+              <div class="flex-1 space-y-1">
+                @for (star of [5,4,3,2,1]; track star) {
+                  <div class="flex items-center gap-2 text-sm">
+                    <span class="w-4 text-right text-gray-600">{{ star }}</span>
+                    <mat-icon class="!text-sm text-yellow-400">star</mat-icon>
+                    <div class="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        class="bg-yellow-400 h-2 rounded-full transition-all"
+                        [style.width.%]="reviewStats()!.totalReviews > 0 ? (reviewStats()!.distribution[star] / reviewStats()!.totalReviews * 100) : 0"
+                      ></div>
+                    </div>
+                    <span class="w-6 text-gray-500">{{ reviewStats()!.distribution[star] ?? 0 }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Review list -->
+            @if (reviewStats()!.reviews.length === 0) {
+              <p class="text-gray-500 italic">Todavía no hay reseñas para este producto.</p>
+            } @else {
+              <div class="space-y-4 mb-8">
+                @for (review of reviewStats()!.reviews; track review.id) {
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-2 mb-1">
+                      @for (star of [1,2,3,4,5]; track star) {
+                        <mat-icon class="!text-sm" [class.text-yellow-400]="star <= review.rating" [class.text-gray-200]="star > review.rating">star</mat-icon>
+                      }
+                      <span class="font-semibold ml-1">{{ review.user.firstName }}</span>
+                      <span class="text-gray-400 text-sm ml-auto">{{ review.created_at | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+                    <h4 class="font-semibold text-gray-800">{{ review.title }}</h4>
+                    <p class="text-gray-600 text-sm mt-1">{{ review.content }}</p>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Review form -->
+          @if (authService.isAuthenticated()) {
+            @if (reviewSubmitted()) {
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700">
+                <mat-icon class="align-middle mr-2">check_circle</mat-icon>
+                Tu reseña está pendiente de aprobación. ¡Gracias por tu opinión!
+              </div>
+            } @else {
+              <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 class="text-lg font-semibold mb-4">Deja tu reseña</h4>
+                <div class="flex gap-1 mb-4">
+                  @for (star of [1,2,3,4,5]; track star) {
+                    <button type="button" (click)="reviewRating.set(star)">
+                      <mat-icon [class.text-yellow-400]="star <= reviewRating()" [class.text-gray-300]="star > reviewRating()">star</mat-icon>
+                    </button>
+                  }
+                </div>
+                <mat-form-field appearance="outline" class="w-full mb-3">
+                  <mat-label>Título</mat-label>
+                  <input matInput [(ngModel)]="reviewTitle" maxlength="128" placeholder="Resume tu experiencia" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full mb-4">
+                  <mat-label>Comentario</mat-label>
+                  <textarea matInput [(ngModel)]="reviewContent" rows="4" placeholder="Comparte tu experiencia con el producto..."></textarea>
+                </mat-form-field>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  [disabled]="reviewRating() === 0 || !reviewTitle.trim() || !reviewContent.trim() || reviewSubmitting()"
+                  (click)="submitReview()"
+                >
+                  @if (reviewSubmitting()) {
+                    <mat-spinner diameter="20" class="inline-block mr-2" />
+                  }
+                  Enviar reseña
+                </button>
+              </div>
+            }
+          } @else {
+            <p class="text-sm text-gray-500 mt-4">
+              <a routerLink="/auth/login" class="text-blue-600 hover:underline">Inicia sesión</a> para dejar una reseña.
+            </p>
+          }
+        </div>
       </div>
     } @else {
       <div class="max-w-7xl mx-auto px-4 py-20 text-center">
@@ -229,6 +339,9 @@ export class ProductDetailComponent implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly api = inject(ApiService);
+  readonly authService = inject(AuthService);
+  private readonly reviewService = inject(ReviewService);
+  readonly wishlistService = inject(WishlistService);
 
   product: any = null;
   loading = true;
@@ -244,6 +357,15 @@ export class ProductDetailComponent implements OnInit {
   }> = [];
   selectedCombination: any = null;
   productFeatures: Array<{ featureName: string; valueName: string }> = [];
+
+  // Reviews
+  readonly reviewStats = signal<ReviewStats | null>(null);
+  readonly reviewsLoading = signal(false);
+  readonly reviewRating = signal(0);
+  readonly reviewSubmitted = signal(false);
+  readonly reviewSubmitting = signal(false);
+  reviewTitle = '';
+  reviewContent = '';
 
   get productName(): string {
     if (!this.product?.translations) return '';
@@ -272,6 +394,7 @@ export class ProductDetailComponent implements OnInit {
           this.product = product;
           this.loading = false;
           this.loadSubResources(id);
+          this.loadReviews(id);
         },
         error: () => {
           this.product = null;
@@ -295,6 +418,35 @@ export class ProductDetailComponent implements OnInit {
           '',
       }));
     });
+  }
+
+  private async loadReviews(productId: number): Promise<void> {
+    this.reviewsLoading.set(true);
+    try {
+      const stats = await this.reviewService.getProductReviews(productId);
+      this.reviewStats.set(stats);
+    } catch {
+      // ignore
+    } finally {
+      this.reviewsLoading.set(false);
+    }
+  }
+
+  async submitReview(): Promise<void> {
+    if (!this.product) return;
+    this.reviewSubmitting.set(true);
+    try {
+      await this.reviewService.submitReview(this.product.id, {
+        rating: this.reviewRating(),
+        title: this.reviewTitle,
+        content: this.reviewContent,
+      });
+      this.reviewSubmitted.set(true);
+    } catch {
+      this.snackBar.open('Error al enviar la reseña', 'Cerrar', { duration: 3000 });
+    } finally {
+      this.reviewSubmitting.set(false);
+    }
   }
 
   private buildAttributeGroups(): void {
