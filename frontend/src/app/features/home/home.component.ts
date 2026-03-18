@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService } from '../../core/services/category.service';
+import { SeoService } from '../../core/seo.service';
 import { ProductCardComponent } from '../../shared/components/product-card/product-card.component';
 
 @Component({
@@ -58,11 +59,18 @@ import { ProductCardComponent } from '../../shared/components/product-card/produ
 export class HomeComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly categoryService = inject(CategoryService);
+  private readonly seoService = inject(SeoService);
 
   products: any[] = [];
   categories: any[] = [];
 
   ngOnInit(): void {
+    // SEO for home page
+    this.seoService.setHomeMeta({
+      shopName: 'DMShop',
+      tagline: 'Tu tienda online de confianza. Encuentra los mejores productos al mejor precio.',
+    });
+
     this.productService.list({ perPage: 8 }).subscribe((res) => {
       this.products = res.data;
     });

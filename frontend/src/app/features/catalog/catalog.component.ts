@@ -15,6 +15,7 @@ import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductService, ProductFilters } from '../../core/services/product.service';
 import { CategoryService } from '../../core/services/category.service';
 import { ApiService } from '../../core/services/api.service';
+import { SeoService } from '../../core/seo.service';
 import { ProductCardComponent } from '../../shared/components/product-card/product-card.component';
 
 @Component({
@@ -197,6 +198,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
   private readonly productService = inject(ProductService);
   private readonly categoryService = inject(CategoryService);
   private readonly api = inject(ApiService);
+  private readonly seoService = inject(SeoService);
   private readonly destroy$ = new Subject<void>();
   private readonly filterChange$ = new Subject<void>();
 
@@ -242,9 +244,16 @@ export class CatalogComponent implements OnInit, OnDestroy {
         this.categoryService.getById(this.categoryId).subscribe((cat) => {
           const lang = Object.keys(cat.translations || {})[0];
           this.categoryName = lang ? cat.translations[lang].name : '';
+          // SEO
+          this.seoService.setCategoryMeta({
+            name: this.categoryName,
+            description: lang ? cat.translations[lang].description : undefined,
+            url: typeof window !== 'undefined' ? window.location.href : undefined,
+          });
         });
       } else {
         this.categoryName = '';
+        this.seoService.setCategoryMeta({ name: 'Catálogo' });
       }
     });
 

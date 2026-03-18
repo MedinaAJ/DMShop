@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeHtml, Title, Meta } from '@angular/platform-browser';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CmsService, CmsPageFull } from '../../core/services/cms.service';
+import { SeoService } from '../../core/seo.service';
 
 @Component({
   selector: 'app-cms-page',
@@ -33,6 +34,7 @@ export class CmsPageComponent implements OnInit {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly titleService = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly seoService = inject(SeoService);
 
   readonly loading = signal(true);
   readonly page = signal<CmsPageFull | null>(null);
@@ -52,11 +54,13 @@ export class CmsPageComponent implements OnInit {
         this.sanitizer.bypassSecurityTrustHtml(data.content ?? ''),
       );
 
-      // SEO
-      this.titleService.setTitle(data.meta_title ?? data.title);
-      if (data.meta_description) {
-        this.meta.updateTag({ name: 'description', content: data.meta_description });
-      }
+      // SEO — use SeoService for complete og tags + canonical
+      this.seoService.setCmsPageMeta({
+        title: data.meta_title ?? data.title,
+        description: data.meta_description ?? null,
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
+      // Fallback legacy Title/Meta already set via SeoService above
     } catch {
       // page not found - leave page() as null
     } finally {

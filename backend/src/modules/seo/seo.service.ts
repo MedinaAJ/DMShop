@@ -4,6 +4,8 @@ import { CategoryLang } from '../../models/category-lang.model.js';
 import { Product } from '../../models/product.model.js';
 import { ProductLang } from '../../models/product-lang.model.js';
 import { Lang } from '../../models/lang.model.js';
+import { CmsPage } from '../../models/cms-page.model.js';
+import { CmsPageLang } from '../../models/cms-page-lang.model.js';
 
 async function getShopUrl(): Promise<string> {
   const config = await Configuration.findOne({ where: { key: 'SHOP_URL' } });
@@ -92,6 +94,35 @@ export const seoService = {
           lastmod: formatDate(product.updated_at ?? new Date()),
         });
       }
+    }
+
+    // Active CMS pages
+    try {
+      const cmsPages = await CmsPage.findAll({
+        where: { active: true },
+        include: [
+          {
+            model: CmsPageLang,
+            as: 'translations',
+            where: { id_lang: defaultLangId },
+            required: false,
+          },
+        ],
+      });
+
+      for (const page of cmsPages) {
+        const translation = page.translations?.[0];
+        if (translation?.slug) {
+          urls.push({
+            loc: `${baseUrl}/paginas/${escapeXml(translation.slug)}`,
+            changefreq: 'monthly',
+            priority: '0.5',
+            lastmod: formatDate(page.updated_at ?? new Date()),
+          });
+        }
+      }
+    } catch {
+      // CMS pages optional — skip if table doesn't exist yet
     }
 
     const urlElements = urls

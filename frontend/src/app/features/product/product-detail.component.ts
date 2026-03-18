@@ -16,6 +16,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ReviewService, ReviewStats } from '../../core/services/review.service';
 import { WishlistService } from '../../core/services/wishlist.service';
+import { SeoService } from '../../core/seo.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -342,6 +343,7 @@ export class ProductDetailComponent implements OnInit {
   readonly authService = inject(AuthService);
   private readonly reviewService = inject(ReviewService);
   readonly wishlistService = inject(WishlistService);
+  private readonly seoService = inject(SeoService);
 
   product: any = null;
   loading = true;
@@ -395,6 +397,20 @@ export class ProductDetailComponent implements OnInit {
           this.loading = false;
           this.loadSubResources(id);
           this.loadReviews(id);
+          // SEO meta tags
+          const translations = product?.translations || {};
+          const langKey = Object.keys(translations)[0];
+          const trans = langKey ? translations[langKey] : null;
+          const coverImg = product?.images?.find((img: any) => img.cover);
+          const imageUrl = coverImg
+            ? this.getImageUrl(coverImg.path)
+            : undefined;
+          this.seoService.setProductMeta({
+            name: trans?.name ?? product?.name ?? 'Producto',
+            description: trans?.description_short ?? trans?.description ?? null,
+            image: imageUrl,
+            url: typeof window !== 'undefined' ? window.location.href : undefined,
+          });
         },
         error: () => {
           this.product = null;
