@@ -11,7 +11,7 @@ import { CurrencyPipe } from '@angular/common';
   imports: [RouterLink, MatCardModule, MatButtonModule, MatIconModule, CurrencyPipe],
   template: `
     <mat-card class="h-full flex flex-col hover:shadow-lg transition-shadow">
-      <a [routerLink]="['/product', product.id]" class="block">
+      <a [routerLink]="['/product', product.id]" class="block relative">
         @if (product.coverImage) {
           <img
             mat-card-image
@@ -23,6 +23,16 @@ import { CurrencyPipe } from '@angular/common';
           <div class="aspect-[4/3] bg-gray-100 flex items-center justify-center">
             <mat-icon class="!text-4xl text-gray-300">image</mat-icon>
           </div>
+        }
+        <!-- Stock badge -->
+        @if (product.quantity === 0) {
+          <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded">
+            Agotado
+          </span>
+        } @else if (product.quantity <= 5) {
+          <span class="absolute top-2 left-2 bg-orange-400 text-white text-xs font-semibold px-2 py-0.5 rounded">
+            Últimas unidades
+          </span>
         }
       </a>
       <mat-card-content class="flex-1 pt-4">
@@ -55,6 +65,7 @@ export class ProductCardComponent {
     id: number;
     name: string;
     price: number;
+    quantity: number;
     coverImage: string | null;
     descriptionShort: string | null;
     categoryName: string | null;

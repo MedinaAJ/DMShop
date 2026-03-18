@@ -83,13 +83,20 @@ import { environment } from '../../../environments/environment';
             }
 
             @if (product.quantity > 0) {
-              <p class="text-green-600 mb-2">
-                <mat-icon class="!text-base align-middle">check_circle</mat-icon>
-                En stock
-              </p>
+              @if (product.quantity <= 5) {
+                <p class="text-orange-500 mb-2 flex items-center gap-1">
+                  <mat-icon class="!text-base">warning</mat-icon>
+                  Últimas unidades ({{ product.quantity }})
+                </p>
+              } @else {
+                <p class="text-green-600 mb-2 flex items-center gap-1">
+                  <mat-icon class="!text-base">check_circle</mat-icon>
+                  En stock
+                </p>
+              }
             } @else {
-              <p class="text-red-500 mb-2">
-                <mat-icon class="!text-base align-middle">cancel</mat-icon>
+              <p class="text-red-500 mb-2 flex items-center gap-1">
+                <mat-icon class="!text-base">cancel</mat-icon>
                 Agotado
               </p>
             }
@@ -107,7 +114,7 @@ import { environment } from '../../../environments/environment';
                 <button
                   mat-icon-button
                   (click)="increaseQty()"
-                  [disabled]="qty >= product.quantity"
+                  [disabled]="qty >= effectiveStock"
                 >
                   <mat-icon>add</mat-icon>
                 </button>
@@ -116,11 +123,11 @@ import { environment } from '../../../environments/environment';
                 mat-flat-button
                 color="primary"
                 (click)="addToCart()"
-                [disabled]="!product.availableForOrder || product.quantity <= 0 || addingToCart"
+                [disabled]="!product.availableForOrder || effectiveStock <= 0 || addingToCart"
                 class="!px-8"
               >
                 <mat-icon>add_shopping_cart</mat-icon>
-                Añadir al carrito
+                {{ effectiveStock <= 0 ? 'Agotado' : 'Añadir al carrito' }}
               </button>
             </div>
 
@@ -161,17 +168,19 @@ import { environment } from '../../../environments/environment';
                     {{ product.price + selectedCombination.price_impact | currency: 'EUR' }}
                   </span>
                 }
-                <span
-                  class="text-sm"
-                  [class.text-green-600]="selectedCombination.quantity > 0"
-                  [class.text-red-500]="selectedCombination.quantity <= 0"
-                >
-                  {{
-                    selectedCombination.quantity > 0
-                      ? 'En stock (' + selectedCombination.quantity + ')'
-                      : 'Agotado'
-                  }}
-                </span>
+                @if (selectedCombination.quantity > 5) {
+                  <span class="flex items-center gap-1 text-sm text-green-600">
+                    <mat-icon class="!text-sm">check_circle</mat-icon> En stock
+                  </span>
+                } @else if (selectedCombination.quantity > 0) {
+                  <span class="flex items-center gap-1 text-sm text-orange-500">
+                    <mat-icon class="!text-sm">warning</mat-icon> Últimas unidades ({{ selectedCombination.quantity }})
+                  </span>
+                } @else {
+                  <span class="flex items-center gap-1 text-sm text-red-500">
+                    <mat-icon class="!text-sm">cancel</mat-icon> Agotado
+                  </span>
+                }
                 @if (selectedCombination.reference) {
                   <span class="text-sm text-gray-400"
                     >Ref: {{ selectedCombination.reference }}</span
@@ -248,6 +257,12 @@ export class ProductDetailComponent implements OnInit {
     return lang ? this.product.translations[lang].description || '' : '';
   }
 
+  /** Stock efectivo: usa la combinación si está seleccionada, sino el producto */
+  get effectiveStock(): number {
+    if (this.selectedCombination) return this.selectedCombination.quantity;
+    return this.product?.quantity ?? 0;
+  }
+
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       const id = +params['id'];
@@ -318,7 +333,7 @@ export class ProductDetailComponent implements OnInit {
   }
 
   increaseQty(): void {
-    if (this.qty < this.product.quantity) this.qty++;
+    if (this.qty < this.effectiveStock) this.qty++;
   }
 
   getImageUrl(path: string): string {
