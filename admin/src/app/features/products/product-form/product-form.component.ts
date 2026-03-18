@@ -12,8 +12,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CurrencyPipe } from '@angular/common';
 import { ApiService } from '../../../core/services/api.service';
+import { ProductImageService } from '../product-image.service';
 import { environment } from '../../../../environments/environment';
 
 interface TranslationData {
@@ -52,6 +54,7 @@ interface ProductData {
     MatSelectModule,
     MatCheckboxModule,
     MatChipsModule,
+    MatTooltipModule,
     CurrencyPipe,
   ],
   template: `
@@ -210,43 +213,103 @@ interface ProductData {
         @if (!isNew) {
           <mat-tab label="Imágenes">
             <div class="pt-4 max-w-3xl">
+              @if (images.length === 0) {
+                <p class="text-gray-500 mb-4">No hay imágenes. Sube la primera imagen.</p>
+              }
               <div class="flex flex-wrap gap-4 mb-6">
-                @for (img of images; track img.id) {
-                  <div class="relative group rounded-lg overflow-hidden shadow w-40 h-40">
-                    <img [src]="getImageUrl(img.path)" class="w-full h-full object-cover" />
+                @for (img of images; track img.id; let i = $index) {
+                  <div class="relative group rounded-lg overflow-hidden shadow border-2 w-40 h-auto"
+                    [class.border-blue-500]="img.cover"
+                    [class.border-gray-200]="!img.cover"
+                  >
+                    <img [src]="getImageUrl(img.path)" class="w-full h-32 object-cover" />
                     @if (img.cover) {
                       <span
-                        class="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded"
-                        >Portada</span
+                        class="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1"
                       >
+                        <mat-icon class="!text-xs">star</mat-icon> Portada
+                      </span>
                     }
-                    <div
-                      class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
-                    >
-                      @if (!img.cover) {
-                        <button mat-icon-button class="!text-white" (click)="setCover(img.id)">
-                          <mat-icon>star</mat-icon>
+                    <div class="p-1 bg-white flex items-center justify-between gap-1">
+                      <!-- Reorder buttons -->
+                      <div class="flex gap-1">
+                        <button
+                          mat-icon-button
+                          [disabled]="i === 0"
+                          (click)="moveImageUp(i)"
+                          matTooltip="Mover arriba"
+                          class="!w-7 !h-7"
+                        >
+                          <mat-icon class="!text-sm">arrow_back</mat-icon>
                         </button>
-                      }
-                      <button mat-icon-button class="!text-white" (click)="removeImage(img.id)">
-                        <mat-icon>delete</mat-icon>
-                      </button>
+                        <button
+                          mat-icon-button
+                          [disabled]="i === images.length - 1"
+                          (click)="moveImageDown(i)"
+                          matTooltip="Mover abajo"
+                          class="!w-7 !h-7"
+                        >
+                          <mat-icon class="!text-sm">arrow_forward</mat-icon>
+                        </button>
+                      </div>
+                      <!-- Cover & delete -->
+                      <div class="flex gap-1">
+                        @if (!img.cover) {
+                          <button
+                            mat-icon-button
+                            color="primary"
+                            (click)="setCover(img.id)"
+                            matTooltip="Marcar como portada"
+                            class="!w-7 !h-7"
+                          >
+                            <mat-icon class="!text-sm">star_border</mat-icon>
+                          </button>
+                        }
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="removeImage(img.id)"
+                          matTooltip="Eliminar imagen"
+                          class="!w-7 !h-7"
+                        >
+                          <mat-icon class="!text-sm">delete</mat-icon>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 }
               </div>
-              <div>
-                <input
-                  type="file"
-                  #fileInput
-                  accept="image/*"
-                  (change)="uploadImage($event)"
-                  hidden
-                />
-                <button mat-flat-button color="primary" (click)="fileInput.click()">
-                  <mat-icon>upload</mat-icon> Subir imagen
-                </button>
+              <!-- Upload zone -->
+              <div
+                class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                (click)="fileInput.click()"
+                (dragover)="$event.preventDefault()"
+                (drop)="onDrop($event)"
+              >
+                <mat-icon class="!text-4xl text-gray-300 mb-2">cloud_upload</mat-icon>
+                <p class="text-gray-500 text-sm">Arrastra imágenes aquí o <span class="text-blue-600 font-medium">haz click para seleccionar</span></p>
+                <p class="text-xs text-gray-400 mt-1">JPEG, PNG, WebP · Máx. 5MB</p>
               </div>
+              <input
+                type="file"
+                #fileInput
+                accept="image/jpeg,image/png,image/webp"
+                (change)="uploadImage($event)"
+                hidden
+              />
+              <!-- Upload preview -->
+              @if (uploadPreview) {
+                <div class="mt-4 flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                  <img [src]="uploadPreview" class="w-16 h-16 object-cover rounded" />
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-700">{{ uploadFileName }}</p>
+                    <p class="text-xs text-gray-400">Listo para subir</p>
+                  </div>
+                  <button mat-icon-button (click)="clearUploadPreview()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              }
             </div>
           </mat-tab>
 
@@ -348,6 +411,7 @@ interface ProductData {
 })
 export class ProductFormComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly imageService = inject(ProductImageService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
@@ -360,6 +424,8 @@ export class ProductFormComponent implements OnInit {
   manufacturers: any[] = [];
   suppliers: any[] = [];
   images: any[] = [];
+  uploadPreview: string | null = null;
+  uploadFileName = '';
   combinations: any[] = [];
   productFeatures: any[] = [];
   allFeatures: any[] = [];
@@ -423,9 +489,9 @@ export class ProductFormComponent implements OnInit {
 
   private loadSubResources(): void {
     if (!this.productId) return;
-    this.api
-      .get<any>(`/products/${this.productId}/images`)
-      .subscribe((r) => (this.images = r.data));
+    this.imageService
+      .getImages(this.productId)
+      .subscribe((r) => (this.images = r.data || []));
     this.api
       .get<any>(`/products/${this.productId}/combinations`)
       .subscribe((r) => (this.combinations = r.data));
@@ -471,7 +537,7 @@ export class ProductFormComponent implements OnInit {
 
   getImageUrl(path: string): string {
     if (path.startsWith('http')) return path;
-    return environment.apiUrl.replace('/api/v1', '') + '/' + path;
+    return environment.apiUrl.replace('/api/v1', '') + '/' + path.replace(/^\//, '');
   }
 
   onSubmit(): void {
@@ -501,29 +567,85 @@ export class ProductFormComponent implements OnInit {
   uploadImage(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.uploadPreview = e.target?.result as string;
+      this.uploadFileName = file.name;
+    };
+    reader.readAsDataURL(file);
+
     const fd = new FormData();
     fd.append('image', file);
-    this.api.upload<any>(`/products/${this.productId}/images`, fd).subscribe({
+    this.imageService.uploadImage(this.productId!, fd).subscribe({
       next: () => {
         this.snackBar.open('Imagen subida', 'OK', { duration: 2000 });
-        this.api
-          .get<any>(`/products/${this.productId}/images`)
-          .subscribe((r) => (this.images = r.data));
+        this.uploadPreview = null;
+        this.uploadFileName = '';
+        this.imageService
+          .getImages(this.productId!)
+          .subscribe((r) => (this.images = r.data || []));
       },
       error: () => this.snackBar.open('Error al subir imagen', 'Cerrar', { duration: 3000 }),
     });
   }
 
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    const file = event.dataTransfer?.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const inputEvent = { target: { files: [file] } } as any;
+    this.uploadImage(inputEvent);
+  }
+
+  clearUploadPreview(): void {
+    this.uploadPreview = null;
+    this.uploadFileName = '';
+  }
+
   setCover(imageId: number): void {
-    this.api.put(`/products/${this.productId}/images/${imageId}`, { cover: true }).subscribe(() => {
-      this.images.forEach((i) => (i.cover = i.id === imageId));
+    this.imageService.setCover(this.productId!, imageId).subscribe({
+      next: () => {
+        this.images.forEach((i) => (i.cover = i.id === imageId));
+        this.snackBar.open('Portada actualizada', 'OK', { duration: 2000 });
+      },
+      error: () => this.snackBar.open('Error', 'Cerrar', { duration: 3000 }),
+    });
+  }
+
+  moveImageUp(index: number): void {
+    if (index === 0) return;
+    const arr = [...this.images];
+    [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+    this.images = arr;
+    this.saveOrder();
+  }
+
+  moveImageDown(index: number): void {
+    if (index === this.images.length - 1) return;
+    const arr = [...this.images];
+    [arr[index + 1], arr[index]] = [arr[index], arr[index + 1]];
+    this.images = arr;
+    this.saveOrder();
+  }
+
+  private saveOrder(): void {
+    const items = this.images.map((img, idx) => ({ id: img.id, position: idx }));
+    this.imageService.reorderImages(this.productId!, items).subscribe({
+      next: (r) => (this.images = r.data || []),
+      error: () => this.snackBar.open('Error al reordenar', 'Cerrar', { duration: 3000 }),
     });
   }
 
   removeImage(imageId: number): void {
     if (!confirm('¿Eliminar esta imagen?')) return;
-    this.api.delete(`/products/${this.productId}/images/${imageId}`).subscribe(() => {
-      this.images = this.images.filter((i) => i.id !== imageId);
+    this.imageService.deleteImage(this.productId!, imageId).subscribe({
+      next: () => {
+        this.images = this.images.filter((i) => i.id !== imageId);
+        this.snackBar.open('Imagen eliminada', 'OK', { duration: 2000 });
+      },
+      error: () => this.snackBar.open('Error al eliminar', 'Cerrar', { duration: 3000 }),
     });
   }
 
