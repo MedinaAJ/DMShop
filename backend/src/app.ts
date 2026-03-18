@@ -11,6 +11,7 @@ import { errorHandler } from './middleware/error-handler.js';
 import { resolveLanguage } from './middleware/language.js';
 import { setupSwagger } from './config/swagger.js';
 import { apiRouter } from './routes/index.js';
+import { seoRouter } from './modules/seo/seo.routes.js';
 import { registerPaymentModules } from './modules/payment/index.js';
 import { cmsService } from './modules/cms/service.js';
 
@@ -49,6 +50,9 @@ app.use(resolveLanguage);
 
 // --- API routes ---
 app.use('/api/v1', apiRouter);
+
+// --- SEO routes (sitemap.xml, robots.txt) ---
+app.use('/', seoRouter);
 
 // --- Health check ---
 app.get('/health', (_req, res) => {
