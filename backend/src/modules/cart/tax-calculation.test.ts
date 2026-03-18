@@ -49,7 +49,11 @@ function makeTaxRule(rate: number) {
 // ── Tests ──────────────────────────────────────────────────────────────────
 
 describe('cartCalculator.getTaxRate', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Reset TaxRule.findOne mock fully so no leftover queue from previous tests
+    vi.mocked(TaxRule.findOne).mockReset();
+  });
 
   it('sin countryId (null) → devuelve 0', async () => {
     // Cuando countryId es null, getTaxRate retorna 0 sin consultar la BD

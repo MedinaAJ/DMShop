@@ -165,7 +165,11 @@ describe('cartCalculator — múltiples IVAs', () => {
       makeCartItem(2, p2, 2),
       makeCartItem(3, p3, 1),
     ];
-    vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, items) as any);
+    vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, items, null, 10) as any);
+    // Address with countryId=6, stateId=null, zoneId=1 — REQUIRED for getTaxRate to work
+    vi.mocked(Address.findByPk).mockResolvedValue({
+      id_country: 6, id_state: null, country: { id_zone: 1 },
+    } as any);
 
     // Mock getTaxRate: group 1 → 21%, group 2 → 10%, group 3 → 4%
     vi.mocked(TaxRule.findOne).mockImplementation((opts: any) => {
@@ -176,7 +180,7 @@ describe('cartCalculator — múltiples IVAs', () => {
       return Promise.resolve(null);
     });
 
-    const result = await cartCalculator.calculate(1);
+    const result = await cartCalculator.calculate(1, 10);
 
     expect(result.totalProducts).toBe(400);
     expect(result.totalProductsTax).toBe(439);   // 121 + 110 + 208
@@ -274,7 +278,11 @@ describe('cartCalculator — descuento porcentual con IVA', () => {
     // totalPaid = 121 - 18.15 = 102.85
     const product = makeProduct(1, 100, 1);
     const item = makeCartItem(1, product, 1);
-    vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, [item]) as any);
+    vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, [item], null, 10) as any);
+    // Address needed so countryId is set → getTaxRate queries DB
+    vi.mocked(Address.findByPk).mockResolvedValue({
+      id_country: 6, id_state: null, country: { id_zone: 1 },
+    } as any);
     vi.mocked(TaxRule.findOne).mockResolvedValue(makeTaxRuleWithRate(21) as any);
 
     vi.mocked(discountService.calculateCartDiscounts).mockResolvedValue({
@@ -284,7 +292,7 @@ describe('cartCalculator — descuento porcentual con IVA', () => {
       freeShipping: false,
     });
 
-    const result = await cartCalculator.calculate(1);
+    const result = await cartCalculator.calculate(1, 10);
 
     expect(result.totalProducts).toBe(100);
     expect(result.totalProductsTax).toBe(121);
@@ -304,7 +312,10 @@ describe('cartCalculator — descuento importe fijo con IVA', () => {
     // totalPaid = 181.5 - 24.20 = 157.30
     const product = makeProduct(1, 150, 1);
     const item = makeCartItem(1, product, 1);
-    vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, [item]) as any);
+    vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, [item], null, 10) as any);
+    vi.mocked(Address.findByPk).mockResolvedValue({
+      id_country: 6, id_state: null, country: { id_zone: 1 },
+    } as any);
     vi.mocked(TaxRule.findOne).mockResolvedValue(makeTaxRuleWithRate(21) as any);
 
     vi.mocked(discountService.calculateCartDiscounts).mockResolvedValue({
@@ -314,7 +325,7 @@ describe('cartCalculator — descuento importe fijo con IVA', () => {
       freeShipping: false,
     });
 
-    const result = await cartCalculator.calculate(1);
+    const result = await cartCalculator.calculate(1, 10);
 
     expect(result.totalProducts).toBe(150);
     expect(result.totalProductsTax).toBe(181.5);
@@ -335,7 +346,10 @@ describe('cartCalculator — dos cart rules apiladas', () => {
     // totalPaid = 242 - 30.25 = 211.75
     const product = makeProduct(1, 200, 1);
     const item = makeCartItem(1, product, 1);
-    vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, [item]) as any);
+    vi.mocked(Cart.findByPk).mockResolvedValue(makeCart(1, [item], null, 10) as any);
+    vi.mocked(Address.findByPk).mockResolvedValue({
+      id_country: 6, id_state: null, country: { id_zone: 1 },
+    } as any);
     vi.mocked(TaxRule.findOne).mockResolvedValue(makeTaxRuleWithRate(21) as any);
 
     vi.mocked(discountService.calculateCartDiscounts).mockResolvedValue({
@@ -348,7 +362,7 @@ describe('cartCalculator — dos cart rules apiladas', () => {
       freeShipping: false,
     });
 
-    const result = await cartCalculator.calculate(1);
+    const result = await cartCalculator.calculate(1, 10);
 
     expect(result.totalProductsTax).toBe(242);
     expect(result.totalDiscountsTax).toBe(30.25);
