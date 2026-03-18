@@ -36,3 +36,8 @@ coverage/
 # Temporales
 tmp/
 temp/
+
+# Keep uploads structure but ignore files
+backend/uploads/**
+!backend/uploads/.gitkeep
+!backend/uploads/products/.gitkeep
