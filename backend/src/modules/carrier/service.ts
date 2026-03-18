@@ -68,6 +68,7 @@ export const carrierService = {
       max_weight: input.maxWeight ?? 0,
       grade: input.grade ?? 0,
       delay: input.delay ?? 0,
+      free_shipping_starts_at: (input as any).freeShippingStartsAt ?? null,
     });
 
     // Assign zones
@@ -118,6 +119,7 @@ export const carrierService = {
       ...(input.maxWeight !== undefined && { max_weight: input.maxWeight }),
       ...(input.grade !== undefined && { grade: input.grade }),
       ...(input.delay !== undefined && { delay: input.delay }),
+      ...((input as any).freeShippingStartsAt !== undefined && { free_shipping_starts_at: (input as any).freeShippingStartsAt }),
     });
 
     // Update zones if provided

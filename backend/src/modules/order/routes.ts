@@ -29,6 +29,7 @@ orderRouter.delete('/admin/states/:id', authenticate, authorize('admin'), asyncH
 
 // --- Admin: Order management (must be before /:id) ---
 orderRouter.get('/admin/list', authenticate, authorize('admin'), validate(orderListQuerySchema, 'query'), asyncHandler(orderController.adminList));
+orderRouter.patch('/admin/bulk-state', authenticate, authorize('admin'), asyncHandler(orderController.adminBulkUpdateState));
 orderRouter.get('/admin/:id', authenticate, authorize('admin'), asyncHandler(orderController.adminGetById));
 orderRouter.put('/admin/:id/state', authenticate, authorize('admin'), validate(updateOrderStateSchema), asyncHandler(orderController.adminUpdateState));
 orderRouter.post('/admin/:id/payment', authenticate, authorize('admin'), validate(registerPaymentSchema), asyncHandler(orderController.adminRegisterPayment));

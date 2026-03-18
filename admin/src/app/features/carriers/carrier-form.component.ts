@@ -125,6 +125,12 @@ import { ApiService } from '../../core/services/api.service';
           </mat-slide-toggle>
         </div>
 
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Envío gratuito a partir de (€) — deja vacío para desactivar</mat-label>
+          <input matInput type="number" [(ngModel)]="item.freeShippingStartsAt" name="freeShippingStartsAt" min="0" step="0.01" />
+          <mat-hint>Si el total del pedido supera este importe, el envío será gratuito.</mat-hint>
+        </mat-form-field>
+
         <div class="flex gap-3 pt-4">
           <button mat-flat-button color="primary" type="submit" [disabled]="saving">
             {{ isNew ? 'Crear' : 'Guardar' }}
@@ -161,6 +167,7 @@ export class CarrierFormComponent implements OnInit {
     maxWeight: 0,
     active: true,
     isFree: false,
+    freeShippingStartsAt: null,
   };
 
   ngOnInit(): void {
@@ -187,6 +194,7 @@ export class CarrierFormComponent implements OnInit {
             maxWeight: parseFloat(c.max_weight || c.maxWeight || 0),
             active: c.active,
             isFree: c.is_free || c.isFree || false,
+            freeShippingStartsAt: c.free_shipping_starts_at != null ? parseFloat(c.free_shipping_starts_at) : null,
           };
           (c.zones || []).forEach((z: any) => this.selectedZones.add(z.id));
           this.loading = false;

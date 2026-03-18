@@ -79,9 +79,20 @@ export const orderController = {
     sendSuccess(res, order);
   },
 
+  // PATCH /orders/admin/bulk-state
+  async adminBulkUpdateState(req: Request, res: Response) {
+    const { orderIds, stateId } = req.body;
+    if (!Array.isArray(orderIds) || orderIds.length === 0 || !stateId) {
+      res.status(400).json({ success: false, message: 'orderIds (array) and stateId are required' });
+      return;
+    }
+    await orderService.bulkUpdateState(orderIds.map(Number), Number(stateId), req.user!.userId);
+    sendSuccess(res, { updated: orderIds.length });
+  },
+
   // POST /admin/orders/:id/payment
   async adminRegisterPayment(req: Request, res: Response) {
-    const order = await orderService.registerPayment(Number(req.params.id), req.body);
+    const order = await orderService.registerPayment(Number(req.params.id), req.body, req.user!.userId);
     sendSuccess(res, order);
   },
 

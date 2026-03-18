@@ -18,6 +18,11 @@ interface PaymentConfig {
   stripePublicKey: string;
   stripeSecretKey: string;
   stripeWebhookSecret: string;
+  // Cash on delivery extras
+  codSurchargeAmount: string;
+  codAllowedCountries: string;
+  // Bank transfer extras
+  bankTransferAllowedCountries: string;
 }
 
 @Component({
@@ -42,10 +47,17 @@ interface PaymentConfig {
             <mat-card-title>Transferencia bancaria</mat-card-title>
             <mat-card-subtitle>Los clientes pagan mediante transferencia y el admin confirma manualmente.</mat-card-subtitle>
           </mat-card-header>
-          <mat-card-content class="pt-4">
+          <mat-card-content class="pt-4 space-y-4">
             <mat-slide-toggle [(ngModel)]="config.bankTransferEnabled">
               Habilitado
             </mat-slide-toggle>
+            @if (config.bankTransferEnabled) {
+              <mat-form-field class="w-full">
+                <mat-label>Países permitidos (códigos ISO separados por coma)</mat-label>
+                <input matInput [(ngModel)]="config.bankTransferAllowedCountries" placeholder="ES, PT, FR" />
+                <mat-hint>Deja vacío para permitir en todos los países.</mat-hint>
+              </mat-form-field>
+            }
           </mat-card-content>
         </mat-card>
 
@@ -56,10 +68,22 @@ interface PaymentConfig {
             <mat-card-title>Contra reembolso</mat-card-title>
             <mat-card-subtitle>El cliente paga al recibir el pedido.</mat-card-subtitle>
           </mat-card-header>
-          <mat-card-content class="pt-4">
+          <mat-card-content class="pt-4 space-y-4">
             <mat-slide-toggle [(ngModel)]="config.cashOnDeliveryEnabled">
               Habilitado
             </mat-slide-toggle>
+            @if (config.cashOnDeliveryEnabled) {
+              <mat-form-field class="w-full">
+                <mat-label>Recargo fijo (€) — deja 0 para sin recargo</mat-label>
+                <input matInput type="number" [(ngModel)]="config.codSurchargeAmount" min="0" step="0.01" placeholder="0.00" />
+                <mat-hint>Importe adicional que se sumará al total del pedido.</mat-hint>
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Países permitidos (códigos ISO separados por coma)</mat-label>
+                <input matInput [(ngModel)]="config.codAllowedCountries" placeholder="ES, PT, FR" />
+                <mat-hint>Deja vacío para permitir en todos los países.</mat-hint>
+              </mat-form-field>
+            }
           </mat-card-content>
         </mat-card>
 
@@ -116,6 +140,9 @@ export class PaymentSettingsComponent implements OnInit {
     stripePublicKey: '',
     stripeSecretKey: '',
     stripeWebhookSecret: '',
+    codSurchargeAmount: '0',
+    codAllowedCountries: '',
+    bankTransferAllowedCountries: '',
   };
 
   private readonly KEY_MAP: Record<keyof PaymentConfig, string> = {
@@ -125,6 +152,9 @@ export class PaymentSettingsComponent implements OnInit {
     stripePublicKey: 'STRIPE_PUBLIC_KEY',
     stripeSecretKey: 'STRIPE_SECRET_KEY',
     stripeWebhookSecret: 'STRIPE_WEBHOOK_SECRET',
+    codSurchargeAmount: 'PAYMENT_COD_SURCHARGE_AMOUNT',
+    codAllowedCountries: 'PAYMENT_COD_ALLOWED_COUNTRIES',
+    bankTransferAllowedCountries: 'PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES',
   };
 
   ngOnInit(): void {
@@ -138,6 +168,9 @@ export class PaymentSettingsComponent implements OnInit {
         this.config.stripePublicKey = map.get('STRIPE_PUBLIC_KEY') ?? '';
         this.config.stripeSecretKey = map.get('STRIPE_SECRET_KEY') ?? '';
         this.config.stripeWebhookSecret = map.get('STRIPE_WEBHOOK_SECRET') ?? '';
+        this.config.codSurchargeAmount = map.get('PAYMENT_COD_SURCHARGE_AMOUNT') ?? '0';
+        this.config.codAllowedCountries = map.get('PAYMENT_COD_ALLOWED_COUNTRIES') ?? '';
+        this.config.bankTransferAllowedCountries = map.get('PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES') ?? '';
         this.loading = false;
       },
       error: () => { this.loading = false; },
@@ -153,6 +186,9 @@ export class PaymentSettingsComponent implements OnInit {
       { key: 'STRIPE_PUBLIC_KEY', value: this.config.stripePublicKey },
       { key: 'STRIPE_SECRET_KEY', value: this.config.stripeSecretKey },
       { key: 'STRIPE_WEBHOOK_SECRET', value: this.config.stripeWebhookSecret },
+      { key: 'PAYMENT_COD_SURCHARGE_AMOUNT', value: this.config.codSurchargeAmount },
+      { key: 'PAYMENT_COD_ALLOWED_COUNTRIES', value: this.config.codAllowedCountries },
+      { key: 'PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES', value: this.config.bankTransferAllowedCountries },
     ];
     this.api.put('/configurations', { configs }).subscribe({
       next: () => {

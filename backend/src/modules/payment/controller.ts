@@ -2,14 +2,37 @@ import { Request, Response } from 'express';
 import { paymentRegistry } from './payment-registry.js';
 import { orderService } from '../order/service.js';
 import { Order } from '../../models/order.model.js';
+import { Address } from '../../models/address.model.js';
+import { Country } from '../../models/country.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { sendSuccess } from '../../utils/response.js';
 import { OrderStateId } from '@dmshop/shared';
 
 export const paymentController = {
-  /** GET /payment/methods — list available payment methods */
-  async listMethods(_req: Request, res: Response) {
-    const methods = await paymentRegistry.getAvailable();
+  /** GET /payment/methods — list available payment methods, filtered by delivery country if known */
+  async listMethods(req: Request, res: Response) {
+    const userId = req.user!.userId;
+
+    // Try to resolve the user's delivery country for country filtering
+    let deliveryCountryIso: string | null = null;
+    const idAddress = Number(req.query.idAddress) || null;
+    if (idAddress) {
+      const address = await Address.findOne({
+        where: { id: idAddress, id_user: userId },
+        include: [{ model: Country, as: 'country' }],
+      });
+      deliveryCountryIso = (address as any)?.country?.iso_code ?? null;
+    }
+
+    const allMethods = await paymentRegistry.getAvailable();
+
+    // Filter by allowedCountries if the module defines restrictions
+    const methods = allMethods.filter((m) => {
+      if (!m.allowedCountries || m.allowedCountries.length === 0) return true;
+      if (!deliveryCountryIso) return true; // No address yet — show all
+      return m.allowedCountries.includes(deliveryCountryIso.toUpperCase());
+    });
+
     sendSuccess(
       res,
       methods.map((m) => ({
@@ -17,6 +40,8 @@ export const paymentController = {
         displayName: m.displayName,
         description: m.description,
         icon: m.icon,
+        surchargePercent: m.surchargePercent ?? 0,
+        surchargeAmount: m.surchargeAmount ?? 0,
       })),
     );
   },

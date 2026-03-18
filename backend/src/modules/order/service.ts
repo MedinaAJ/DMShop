@@ -190,7 +190,7 @@ export const orderService = {
         { transaction: t },
       );
 
-      // Register stock movements (order_reserved) for each cart item
+    // Register stock movements (order_reserved) for each cart item
       for (const cartItem of cart.items) {
         await stockService.move({
           id_product: cartItem.id_product,
@@ -411,7 +411,7 @@ export const orderService = {
     return updatedOrder;
   },
 
-  async registerPayment(orderId: number, input: RegisterPaymentInput) {
+  async registerPayment(orderId: number, input: RegisterPaymentInput, adminUserId?: number) {
     const order = await Order.findByPk(orderId);
     if (!order) {
       throw AppError.notFound('Pedido no encontrado', ErrorCode.ORDER_NOT_FOUND);
@@ -432,7 +432,7 @@ export const orderService = {
       await OrderHistory.create({
         id_order: orderId,
         id_order_state: OrderStateId.PAYMENT_ACCEPTED,
-        id_user: null,
+        id_user: adminUserId ?? null,
         comment: 'Pago completo registrado',
       });
     }
@@ -507,6 +507,21 @@ export const orderService = {
     if (!state) throw AppError.notFound('Estado no encontrado', ErrorCode.NOT_FOUND);
     // Soft delete
     await state.update({ deleted: true });
+  },
+
+  async bulkUpdateState(orderIds: number[], stateId: number, adminUserId: number): Promise<void> {
+    const state = await OrderState.findByPk(stateId);
+    if (!state) {
+      throw AppError.badRequest('Estado de pedido inválido', ErrorCode.ORDER_INVALID_STATE);
+    }
+
+    await Promise.all(
+      orderIds.map((orderId) =>
+        this.updateState(orderId, { idOrderState: stateId }, adminUserId).catch((err) => {
+          console.warn(`[bulkUpdateState] Failed for order ${orderId}:`, err.message);
+        }),
+      ),
+    );
   },
 };
 

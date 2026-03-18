@@ -62,6 +62,9 @@ export class Carrier extends Model {
   @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 0 })
   declare delay: number;
 
+  @Column({ type: DataType.DECIMAL(10, 2), allowNull: true, field: 'free_shipping_starts_at' })
+  declare free_shipping_starts_at: number | null;
+
   @BelongsTo(() => TaxRulesGroup, 'id_tax_rules_group')
   declare taxRulesGroup: TaxRulesGroup | null;
 

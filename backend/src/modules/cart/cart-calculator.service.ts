@@ -251,6 +251,11 @@ export const cartCalculator = {
 
     if (carrier.is_free) return { cost: 0, costWithTax: 0 };
 
+    // Free shipping threshold: if order total >= free_shipping_starts_at, shipping is free
+    if (carrier.free_shipping_starts_at != null && cartTotal >= Number(carrier.free_shipping_starts_at)) {
+      return { cost: 0, costWithTax: 0 };
+    }
+
     const delimiter = carrier.shipping_method === 'weight' ? cartWeight : cartTotal;
 
     // Find matching range
@@ -280,7 +285,7 @@ export const cartCalculator = {
     return { cost: round(shippingCost), costWithTax: round(shippingCostWithTax) };
   },
 
-  async getAvailableCarriers(idAddressDelivery: number) {
+  async getAvailableCarriers(idAddressDelivery: number, cartWeight: number = 0) {
     const address = await Address.findByPk(idAddressDelivery, {
       include: [{ model: Country, as: 'country' }],
     });
@@ -299,6 +304,11 @@ export const cartCalculator = {
     const carriers = await Carrier.findAll({
       where: { id: { [Op.in]: carrierIds }, active: true },
     });
+
+    // Filter by max_weight: max_weight=0 means no limit
+    if (cartWeight > 0) {
+      return carriers.filter((c) => Number(c.max_weight) === 0 || Number(c.max_weight) >= cartWeight);
+    }
 
     return carriers;
   },

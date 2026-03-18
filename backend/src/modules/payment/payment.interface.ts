@@ -30,6 +30,24 @@ export interface PaymentModule {
   requiresConfig: boolean;
 
   /**
+   * Countries where this method is available (ISO-3166 alpha-2 codes, e.g. ['ES', 'PT']).
+   * Empty array or undefined means available in all countries.
+   */
+  allowedCountries?: string[];
+
+  /**
+   * Surcharge applied as a percentage of the order total (e.g. 3 = 3%).
+   * Only applied when > 0.
+   */
+  surchargePercent?: number;
+
+  /**
+   * Surcharge applied as a fixed amount added to the order total (in the store currency).
+   * Only applied when > 0.
+   */
+  surchargeAmount?: number;
+
+  /**
    * Check whether this payment method is currently available
    * (e.g. Stripe API key configured, module enabled in admin)
    */
@@ -53,3 +71,4 @@ export interface PaymentModule {
     success: boolean;
   }>;
 }
+
