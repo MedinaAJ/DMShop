@@ -105,7 +105,19 @@ export const routes: Routes = [
                 (m) => m.OrderDetailComponent,
               ),
           },
+          {
+            path: 'wishlist',
+            loadComponent: () =>
+              import('./features/account/wishlist/wishlist.component').then(
+                (m) => m.WishlistComponent,
+              ),
+          },
         ],
+      },
+      {
+        path: 'paginas/:slug',
+        loadComponent: () =>
+          import('./features/cms/cms-page.component').then((m) => m.CmsPageComponent),
       },
       {
         path: '**',

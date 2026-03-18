@@ -39,6 +39,10 @@ import { AuthService } from '../../core/services/auth.service';
               <mat-icon matListItemIcon>location_on</mat-icon>
               <span>Direcciones</span>
             </a>
+            <a mat-list-item routerLink="/account/wishlist" routerLinkActive="!bg-blue-50">
+              <mat-icon matListItemIcon>favorite</mat-icon>
+              <span>Lista de deseos</span>
+            </a>
             <a mat-list-item routerLink="/account/profile" routerLinkActive="!bg-blue-50">
               <mat-icon matListItemIcon>person</mat-icon>
               <span>Perfil</span>

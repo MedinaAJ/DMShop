@@ -12,6 +12,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { CartService } from '../../core/services/cart.service';
+import { WishlistService } from '../../core/services/wishlist.service';
 import { ProductService } from '../../core/services/product.service';
 import { environment } from '../../../environments/environment';
 
@@ -119,6 +120,18 @@ import { environment } from '../../../environments/environment';
       </a>
 
       @if (authService.isAuthenticated()) {
+        <a mat-icon-button routerLink="/account/wishlist" title="Lista de deseos">
+          <mat-icon
+            [matBadge]="wishlistService.itemCount() > 0 ? wishlistService.itemCount() : null"
+            matBadgeColor="accent"
+            matBadgeSize="small"
+          >
+            favorite
+          </mat-icon>
+        </a>
+      }
+
+      @if (authService.isAuthenticated()) {
         <button mat-icon-button [matMenuTriggerFor]="userMenu">
           <mat-icon>person</mat-icon>
         </button>
@@ -169,6 +182,7 @@ import { environment } from '../../../environments/environment';
 export class HeaderComponent {
   readonly authService = inject(AuthService);
   readonly cartService = inject(CartService);
+  readonly wishlistService = inject(WishlistService);
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
