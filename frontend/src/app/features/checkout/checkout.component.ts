@@ -97,7 +97,9 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                         <p class="font-semibold">{{ c.name }}</p>
                         <p class="text-sm text-gray-500">Entrega en {{ c.delay }} días</p>
                       </div>
-                      <span class="font-semibold">{{ c.is_free ? 'Gratis' : 'Calculando...' }}</span>
+                      <span class="font-semibold text-blue-700">
+                        {{ getCarrierPriceLabel(c) }}
+                      </span>
                     </div>
                   </div>
                 }
@@ -258,6 +260,14 @@ export class CheckoutComponent implements OnInit {
       this.summary = res.data;
     } catch { /* empty */ }
     this.loadingSummary.set(false);
+  }
+
+  getCarrierPriceLabel(carrier: CarrierOption): string {
+    if (carrier.isFreeShipping || carrier.is_free) return 'Gratis';
+    if (carrier.estimatedCostWithTax !== undefined) {
+      return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(carrier.estimatedCostWithTax);
+    }
+    return '—';
   }
 
   async placeOrder(): Promise<void> {

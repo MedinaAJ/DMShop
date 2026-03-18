@@ -60,6 +60,9 @@ export interface CarrierOption {
   name: string;
   is_free: boolean;
   delay: number;
+  estimatedCost?: number;
+  estimatedCostWithTax?: number;
+  isFreeShipping?: boolean;
 }
 
 export interface CartSummaryResponse {

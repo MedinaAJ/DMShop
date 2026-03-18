@@ -50,7 +50,7 @@ interface OrderAddress {
 }
 
 interface OrderCarrier {
-  id: number; carrierName: string; trackingNumber: string | null;
+  id: number; carrierName: string; carrierUrl: string | null; trackingNumber: string | null;
   weight: number; shippingCost: number; shippingCostTax: number;
 }
 

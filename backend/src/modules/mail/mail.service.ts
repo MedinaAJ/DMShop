@@ -3,7 +3,11 @@ import { env } from '../../config/env.js';
 import { configurationService } from '../configuration/service.js';
 import { orderConfirmationTemplate } from './templates/order-confirmation.template.js';
 import { orderStatusTemplate } from './templates/order-status.template.js';
+import { orderShippedTemplate } from './templates/order-shipped.template.js';
+import { orderDeliveredTemplate } from './templates/order-delivered.template.js';
+import { orderCancelledTemplate } from './templates/order-cancelled.template.js';
 import { welcomeTemplate } from './templates/welcome.template.js';
+import type { OrderState } from '../../models/order-state.model.js';
 
 interface SmtpConfig {
   host: string;
@@ -123,21 +127,97 @@ export const mailService = {
     await this.send(order.customerEmail, `Confirmación de pedido #${order.reference}`, html);
   },
 
-  async sendOrderStatusChange(order: any, newStateName: string, stateColor?: string, comment?: string): Promise<void> {
+  /**
+   * Send an order status change email using the appropriate template based on
+   * the OrderState.template field. Falls back to the generic template when
+   * state.template is null/unknown.
+   */
+  async sendOrderStatusChange(
+    order: any,
+    state: Pick<OrderState, 'name' | 'color' | 'template'>,
+    comment?: string,
+    trackingUrl?: string,
+  ): Promise<void> {
     const shopName = await getShopName();
     const shopUrl = await getShopUrl();
+    const orderUrl = `${shopUrl}/account/orders/${order.id}`;
+    const stateColor = state.color ?? order.stateColor ?? '#1a56db';
+    const trackingNumber: string | null = order.carrier?.trackingNumber ?? null;
 
-    const html = orderStatusTemplate({
+    let html: string;
+
+    switch (state.template) {
+      case 'shipped':
+        html = orderShippedTemplate({
+          reference: order.reference,
+          customerName: order.customerName,
+          stateColor,
+          trackingNumber,
+          trackingUrl,
+          orderUrl,
+          shopName,
+          comment,
+        });
+        break;
+
+      case 'delivered':
+        html = orderDeliveredTemplate({
+          reference: order.reference,
+          customerName: order.customerName,
+          stateColor,
+          orderUrl,
+          shopName,
+          comment,
+        });
+        break;
+
+      case 'cancelled':
+        html = orderCancelledTemplate({
+          reference: order.reference,
+          customerName: order.customerName,
+          stateColor,
+          orderUrl,
+          shopName,
+          comment,
+        });
+        break;
+
+      default:
+        // Generic fallback template
+        html = orderStatusTemplate({
+          reference: order.reference,
+          customerName: order.customerName,
+          newStateName: state.name,
+          stateColor,
+          comment: comment ?? null,
+          orderUrl,
+          shopName,
+        });
+        break;
+    }
+
+    await this.send(order.customerEmail, `Actualización de tu pedido #${order.reference}`, html);
+  },
+
+  /**
+   * Send a tracking number notification email to the customer.
+   */
+  async sendTrackingUpdate(order: any, trackingNumber: string, trackingUrl?: string): Promise<void> {
+    const shopName = await getShopName();
+    const shopUrl = await getShopUrl();
+    const orderUrl = `${shopUrl}/account/orders/${order.id}`;
+
+    const html = orderShippedTemplate({
       reference: order.reference,
       customerName: order.customerName,
-      newStateName,
-      stateColor: stateColor || order.stateColor || '#1a56db',
-      comment: comment ?? null,
-      orderUrl: `${shopUrl}/account/orders/${order.id}`,
+      stateColor: order.stateColor ?? '#1a56db',
+      trackingNumber,
+      trackingUrl,
+      orderUrl,
       shopName,
     });
 
-    await this.send(order.customerEmail, `Actualización de tu pedido #${order.reference}`, html);
+    await this.send(order.customerEmail, `Número de seguimiento para tu pedido #${order.reference}`, html);
   },
 
   async sendWelcome(user: { email: string; first_name: string }): Promise<void> {

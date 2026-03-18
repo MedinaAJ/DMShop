@@ -403,7 +403,26 @@ export const orderService = {
 
     // Send email if new state has send_email=true
     if (state.send_email) {
-      mailService.sendOrderStatusChange(updatedOrder, state.name, state.color ?? undefined, input.comment ?? undefined).catch((err) =>
+      // Build tracking URL if state is "shipped" and there's a tracking number
+      let trackingUrl: string | undefined;
+      const orderCarrierForEmail = await OrderCarrier.findOne({
+        where: { id_order: orderId },
+        include: [{ model: Carrier, as: 'carrier' }],
+      });
+      const trackingNumber = orderCarrierForEmail?.tracking_number ?? undefined;
+      if (trackingNumber && (orderCarrierForEmail as any)?.carrier?.url) {
+        const carrierUrl = (orderCarrierForEmail as any).carrier.url as string;
+        if (carrierUrl.includes('@')) {
+          trackingUrl = carrierUrl.replace('@', encodeURIComponent(trackingNumber));
+        }
+      }
+
+      mailService.sendOrderStatusChange(
+        updatedOrder,
+        state,
+        input.comment ?? undefined,
+        trackingUrl,
+      ).catch((err) =>
         console.error('[OrderService] Error sending order status email:', err),
       );
     }
@@ -441,7 +460,9 @@ export const orderService = {
   },
 
   async updateTracking(orderId: number, input: UpdateTrackingInput) {
-    const order = await Order.findByPk(orderId);
+    const order = await Order.findByPk(orderId, {
+      include: [{ model: Carrier, as: 'carrier' }],
+    });
     if (!order) {
       throw AppError.notFound('Pedido no encontrado', ErrorCode.ORDER_NOT_FOUND);
     }
@@ -451,7 +472,23 @@ export const orderService = {
       await orderCarrier.update({ tracking_number: input.trackingNumber });
     }
 
-    return this.getById(orderId);
+    // Build tracking URL if carrier has a URL with @ placeholder
+    const carrier = order.carrier;
+    let trackingUrl: string | undefined;
+    if (carrier?.url && carrier.url.includes('@') && input.trackingNumber) {
+      trackingUrl = carrier.url.replace('@', encodeURIComponent(input.trackingNumber));
+    }
+
+    const updatedOrder = await this.getById(orderId);
+
+    // Send tracking email to customer (fire-and-forget)
+    if (input.trackingNumber) {
+      mailService.sendTrackingUpdate(updatedOrder, input.trackingNumber, trackingUrl).catch((err) =>
+        console.error('[OrderService] Error sending tracking email:', err),
+      );
+    }
+
+    return updatedOrder;
   },
 
   async getStates() {
@@ -565,6 +602,7 @@ function mapOrderDetail(order: Order, orderCarrier: OrderCarrier | null) {
       ? {
           id: orderCarrier.id,
           carrierName: order.carrier?.name ?? '',
+          carrierUrl: order.carrier?.url ?? null,
           trackingNumber: orderCarrier.tracking_number,
           weight: Number(orderCarrier.weight),
           shippingCost: Number(orderCarrier.shipping_cost),

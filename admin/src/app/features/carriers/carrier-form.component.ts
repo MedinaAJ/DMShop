@@ -10,7 +10,20 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { CurrencyPipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
+
+interface RangePrice {
+  idZone: number;
+  zoneName: string;
+  price: number;
+}
+
+interface CarrierRange {
+  delimiter1: number;
+  delimiter2: number;
+  prices: RangePrice[];
+}
 
 @Component({
   selector: 'app-carrier-form',
@@ -27,6 +40,7 @@ import { ApiService } from '../../core/services/api.service';
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatCheckboxModule,
+    CurrencyPipe,
   ],
   template: `
     <div class="flex items-center gap-4 mb-6">
@@ -39,7 +53,7 @@ import { ApiService } from '../../core/services/api.service';
     @if (loading) {
       <div class="flex justify-center py-12"><mat-spinner diameter="48" /></div>
     } @else {
-      <form (ngSubmit)="onSubmit()" class="max-w-2xl space-y-4">
+      <form (ngSubmit)="onSubmit()" class="max-w-3xl space-y-4">
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Nombre</mat-label>
           <input matInput [(ngModel)]="item.name" name="name" required />
@@ -69,12 +83,12 @@ import { ApiService } from '../../core/services/api.service';
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>URL Tracking</mat-label>
+            <mat-label>URL Tracking (usa @ para el número)</mat-label>
             <input
               matInput
               [(ngModel)]="item.url"
               name="url"
-              placeholder="https://tracking.com/@@"
+              placeholder="https://tracking.correos.es/?tracking=@"
             />
           </mat-form-field>
         </div>
@@ -131,6 +145,46 @@ import { ApiService } from '../../core/services/api.service';
           <mat-hint>Si el total del pedido supera este importe, el envío será gratuito.</mat-hint>
         </mat-form-field>
 
+        <!-- Rangos de precio -->
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">Rangos de precio por zona</h3>
+            <button mat-stroked-button type="button" (click)="addRange()">
+              <mat-icon>add</mat-icon> Añadir rango
+            </button>
+          </div>
+
+          @if (ranges.length === 0) {
+            <p class="text-gray-500 text-sm py-2">Sin rangos definidos. El transportista usará precio libre o gratuito.</p>
+          }
+
+          @for (range of ranges; track $index) {
+            <div class="border rounded-lg p-4 mb-3 bg-gray-50">
+              <div class="flex items-center gap-4 mb-3">
+                <mat-form-field appearance="outline" class="w-32">
+                  <mat-label>Desde ({{ item.shippingMethod === 'weight' ? 'kg' : '€' }})</mat-label>
+                  <input matInput type="number" [(ngModel)]="range.delimiter1" [name]="'d1_' + $index" step="0.01" min="0" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="w-32">
+                  <mat-label>Hasta ({{ item.shippingMethod === 'weight' ? 'kg' : '€' }})</mat-label>
+                  <input matInput type="number" [(ngModel)]="range.delimiter2" [name]="'d2_' + $index" step="0.01" min="0" />
+                </mat-form-field>
+                <button mat-icon-button type="button" color="warn" (click)="removeRange($index)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                @for (price of range.prices; track price.idZone) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ price.zoneName }} (€)</mat-label>
+                    <input matInput type="number" [(ngModel)]="price.price" [name]="'p_' + $index + '_' + price.idZone" step="0.01" min="0" />
+                  </mat-form-field>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
         <div class="flex gap-3 pt-4">
           <button mat-flat-button color="primary" type="submit" [disabled]="saving">
             {{ isNew ? 'Crear' : 'Guardar' }}
@@ -154,6 +208,7 @@ export class CarrierFormComponent implements OnInit {
   allZones: any[] = [];
   taxGroups: any[] = [];
   selectedZones = new Set<number>();
+  ranges: CarrierRange[] = [];
 
   item: any = {
     name: '',
@@ -171,7 +226,9 @@ export class CarrierFormComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.api.get<any>('/geo/zones').subscribe((res) => (this.allZones = res.data));
+    this.api.get<any>('/geo/zones').subscribe((res) => {
+      this.allZones = res.data;
+    });
     this.api.get<any>('/tax/groups').subscribe((res) => (this.taxGroups = res.data));
 
     const id = this.route.snapshot.params['id'];
@@ -197,6 +254,11 @@ export class CarrierFormComponent implements OnInit {
             freeShippingStartsAt: c.free_shipping_starts_at != null ? parseFloat(c.free_shipping_starts_at) : null,
           };
           (c.zones || []).forEach((z: any) => this.selectedZones.add(z.id));
+
+          // Populate ranges from existing carrier data
+          // After zones are loaded, build ranges with zone prices
+          this.populateRanges(c.ranges || []);
+
           this.loading = false;
         },
         error: () => {
@@ -207,14 +269,85 @@ export class CarrierFormComponent implements OnInit {
     }
   }
 
+  private populateRanges(serverRanges: any[]): void {
+    // Wait for allZones to be available; if not yet, retry after a tick
+    if (this.allZones.length === 0 && serverRanges.length > 0) {
+      setTimeout(() => this.populateRanges(serverRanges), 100);
+      return;
+    }
+
+    this.ranges = serverRanges.map((r: any) => {
+      const serverPrices: any[] = r.prices || [];
+      const prices: RangePrice[] = this.buildZonePrices(serverPrices);
+      return {
+        delimiter1: Number(r.delimiter1),
+        delimiter2: Number(r.delimiter2),
+        prices,
+      };
+    });
+  }
+
+  private buildZonePrices(serverPrices: any[]): RangePrice[] {
+    return this.allZones
+      .filter((z) => this.selectedZones.size === 0 || this.selectedZones.has(z.id))
+      .map((z) => {
+        const existing = serverPrices.find(
+          (p: any) => (p.id_zone || p.idZone) === z.id,
+        );
+        return {
+          idZone: z.id,
+          zoneName: z.name,
+          price: existing ? Number(existing.price) : 0,
+        };
+      });
+  }
+
   toggleZone(id: number, checked: boolean): void {
     if (checked) this.selectedZones.add(id);
     else this.selectedZones.delete(id);
+    // Rebuild zone prices in all ranges to include/exclude this zone
+    this.syncRangeZones();
+  }
+
+  private syncRangeZones(): void {
+    for (const range of this.ranges) {
+      const existingPriceMap = new Map(range.prices.map((p) => [p.idZone, p.price]));
+      range.prices = this.allZones
+        .filter((z) => this.selectedZones.has(z.id))
+        .map((z) => ({
+          idZone: z.id,
+          zoneName: z.name,
+          price: existingPriceMap.get(z.id) ?? 0,
+        }));
+    }
+  }
+
+  addRange(): void {
+    const lastRange = this.ranges[this.ranges.length - 1];
+    const from = lastRange ? lastRange.delimiter2 : 0;
+    const prices: RangePrice[] = Array.from(this.selectedZones).map((zoneId) => {
+      const zone = this.allZones.find((z) => z.id === zoneId);
+      return { idZone: zoneId, zoneName: zone?.name ?? `Zona ${zoneId}`, price: 0 };
+    });
+    this.ranges.push({ delimiter1: from, delimiter2: from + 100, prices });
+  }
+
+  removeRange(index: number): void {
+    this.ranges.splice(index, 1);
   }
 
   onSubmit(): void {
     this.saving = true;
-    const body = { ...this.item, zones: Array.from(this.selectedZones), ranges: [] };
+    const serializedRanges = this.ranges.map((r) => ({
+      delimiter1: Number(r.delimiter1),
+      delimiter2: Number(r.delimiter2),
+      prices: r.prices.map((p) => ({
+        idZone: p.idZone,
+        price: Number(p.price),
+      })),
+    }));
+
+    const body = { ...this.item, zones: Array.from(this.selectedZones), ranges: serializedRanges };
     const obs = this.isNew
       ? this.api.post('/carriers', body)
       : this.api.put(`/carriers/${this.itemId}`, body);

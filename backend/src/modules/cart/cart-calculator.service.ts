@@ -287,7 +287,7 @@ export const cartCalculator = {
     return { cost: round(shippingCost), costWithTax: round(shippingCostWithTax) };
   },
 
-  async getAvailableCarriers(idAddressDelivery: number, cartWeight: number = 0) {
+  async getAvailableCarriers(idAddressDelivery: number, cartTotal?: number, cartWeight: number = 0) {
     const address = await Address.findByPk(idAddressDelivery, {
       include: [{ model: Country, as: 'country' }],
     });
@@ -303,13 +303,28 @@ export const cartCalculator = {
     if (carrierIds.length === 0) return [];
 
     const { Op } = await import('sequelize');
-    const carriers = await Carrier.findAll({
+    let carriers = await Carrier.findAll({
       where: { id: { [Op.in]: carrierIds }, active: true },
     });
 
     // Filter by max_weight: max_weight=0 means no limit
     if (cartWeight > 0) {
-      return carriers.filter((c) => Number(c.max_weight) === 0 || Number(c.max_weight) >= cartWeight);
+      carriers = carriers.filter((c) => Number(c.max_weight) === 0 || Number(c.max_weight) >= cartWeight);
+    }
+
+    // If cart totals are provided, enrich each carrier with estimated shipping cost
+    if (cartTotal !== undefined) {
+      const enriched = await Promise.all(
+        carriers.map(async (carrier) => {
+          const result = await this.getShippingCost(carrier.id, zoneId, cartTotal, cartWeight);
+          return Object.assign({}, carrier.toJSON(), {
+            estimatedCost: result.cost,
+            estimatedCostWithTax: result.costWithTax,
+            isFreeShipping: carrier.is_free || result.cost === 0,
+          });
+        }),
+      );
+      return enriched;
     }
 
     return carriers;

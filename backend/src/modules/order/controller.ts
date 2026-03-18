@@ -51,7 +51,26 @@ export const orderController = {
   // GET /orders/carriers — get available carriers for address
   async getCarriers(req: Request, res: Response) {
     const idAddressDelivery = Number(req.query.idAddressDelivery);
-    const carriers = await cartCalculator.getAvailableCarriers(idAddressDelivery);
+    const userId = req.user!.userId;
+
+    // Try to get cart totals to estimate shipping cost
+    let cartTotal: number | undefined;
+    let cartWeight: number | undefined;
+    try {
+      const cart = await Cart.findOne({
+        where: { id_user: userId },
+        order: [['created_at', 'DESC']],
+      });
+      if (cart) {
+        const summary = await cartCalculator.calculate(cart.id, idAddressDelivery, undefined, userId);
+        cartTotal = summary.totalProducts;
+        cartWeight = 0; // weight calculation could be added in the future
+      }
+    } catch {
+      // If we can't get the cart, just return carriers without cost estimate
+    }
+
+    const carriers = await cartCalculator.getAvailableCarriers(idAddressDelivery, cartTotal, cartWeight);
     sendSuccess(res, carriers);
   },
 
