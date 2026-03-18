@@ -41,20 +41,20 @@ import { environment } from '../../../environments/environment';
           <div>
             @if (product.images?.length) {
               <img
-                [src]="selectedImage || getImageUrl(product.images[0].path)"
+                [src]="selectedImage || getImageUrl(getCoverImage(product.images))"
                 [alt]="productName"
                 class="w-full rounded-lg shadow-md object-cover aspect-square"
               />
               @if (product.images.length > 1) {
-                <div class="flex gap-2 mt-4 overflow-x-auto">
+                <div class="flex gap-2 mt-4 overflow-x-auto pb-1">
                   @for (img of product.images; track img.id) {
                     <img
                       [src]="getImageUrl(img.path)"
                       [alt]="productName"
                       (click)="selectedImage = getImageUrl(img.path)"
-                      class="w-20 h-20 rounded cursor-pointer object-cover border-2 transition-colors"
-                      [class.border-blue-500]="selectedImage === img.path"
-                      [class.border-transparent]="selectedImage !== img.path"
+                      class="w-20 h-20 rounded cursor-pointer object-cover border-2 transition-colors shrink-0"
+                      [class.border-blue-500]="selectedImage === getImageUrl(img.path) || (!selectedImage && img.cover)"
+                      [class.border-transparent]="selectedImage !== getImageUrl(img.path) && (selectedImage || !img.cover)"
                     />
                   }
                 </div>
@@ -323,7 +323,12 @@ export class ProductDetailComponent implements OnInit {
 
   getImageUrl(path: string): string {
     if (path.startsWith('http')) return path;
-    return environment.apiUrl.replace('/api/v1', '') + '/' + path;
+    return environment.apiUrl.replace('/api/v1', '') + '/' + path.replace(/^\//, '');
+  }
+
+  getCoverImage(images: Array<{ id: number; path: string; cover: boolean }>): string {
+    const cover = images.find((img) => img.cover);
+    return cover ? cover.path : images[0]?.path || '';
   }
 
   decreaseQty(): void {

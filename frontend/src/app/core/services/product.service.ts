@@ -49,14 +49,34 @@ interface SingleResponse<T> {
   data: T;
 }
 
+export interface ProductFilters {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  idCategory?: number;
+  id_manufacturer?: number;
+  min_price?: number;
+  max_price?: number;
+  in_stock?: boolean;
+  attributes?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly api = inject(ApiService);
 
   list(
-    params?: Record<string, string | number | boolean>,
+    params?: ProductFilters,
   ): Observable<PaginatedResponse<ProductListItem>> {
-    return this.api.get<PaginatedResponse<ProductListItem>>('/products', params);
+    const cleanParams: Record<string, string | number | boolean> = {};
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null && value !== '') {
+          cleanParams[key] = value as string | number | boolean;
+        }
+      }
+    }
+    return this.api.get<PaginatedResponse<ProductListItem>>('/products', cleanParams);
   }
 
   getById(id: number): Observable<ProductDetail> {
@@ -67,15 +87,18 @@ export class ProductService {
 
   getByCategory(
     categoryId: number,
-    params?: Record<string, string | number | boolean>,
+    params?: ProductFilters,
   ): Observable<PaginatedResponse<ProductListItem>> {
     return this.list({ ...params, idCategory: categoryId });
   }
 
-  search(
+  quickSearch(
     query: string,
-    params?: Record<string, string | number | boolean>,
-  ): Observable<PaginatedResponse<ProductListItem>> {
-    return this.list({ ...params, q: query });
+    limit = 8,
+  ): Observable<{ success: boolean; data: ProductListItem[] }> {
+    return this.api.get<{ success: boolean; data: ProductListItem[] }>('/search', {
+      q: query,
+      limit,
+    });
   }
 }
