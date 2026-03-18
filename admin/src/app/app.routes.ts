@@ -166,6 +166,21 @@ export const routes: Routes = [
           import('./features/settings/email-settings.component').then((m) => m.EmailSettingsComponent),
       },
       {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./features/reviews/reviews-list.component').then((m) => m.ReviewsListComponent),
+      },
+      {
+        path: 'cms',
+        loadComponent: () =>
+          import('./features/cms/cms-list.component').then((m) => m.CmsListComponent),
+      },
+      {
+        path: 'cms/:id',
+        loadComponent: () =>
+          import('./features/cms/cms-form.component').then((m) => m.CmsFormComponent),
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',

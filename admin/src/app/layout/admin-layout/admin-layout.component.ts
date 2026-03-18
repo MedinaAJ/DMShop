@@ -95,6 +95,14 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-icon matListItemIcon>email</mat-icon>
             <span>Email (SMTP)</span>
           </a>
+          <a mat-list-item routerLink="/reviews" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>rate_review</mat-icon>
+            <span>Reseñas</span>
+          </a>
+          <a mat-list-item routerLink="/cms" routerLinkActive="!bg-blue-50 !text-blue-700">
+            <mat-icon matListItemIcon>article</mat-icon>
+            <span>Páginas CMS</span>
+          </a>
         </mat-nav-list>
       </mat-sidenav>
 
