@@ -6,7 +6,6 @@ import { OrderItem } from '../../models/order-item.model.js';
 import { User } from '../../models/user.model.js';
 import { OrderState } from '../../models/order-state.model.js';
 import { AppError } from '../../utils/app-error.js';
-import { ErrorCode } from '@dmshop/shared';
 
 export const returnService = {
   /**
@@ -116,7 +115,7 @@ export const returnService = {
       data: rows,
       meta: {
         page,
-        limit,
+        perPage: limit,
         total: count,
         totalPages: Math.ceil(count / limit),
       },

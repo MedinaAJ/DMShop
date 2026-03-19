@@ -453,8 +453,8 @@ export class ProductDetailComponent implements OnInit {
             ? this.getImageUrl(coverImg.path)
             : undefined;
           this.seoService.setProductMeta({
-            name: trans?.name ?? product?.name ?? 'Producto',
-            description: trans?.description_short ?? trans?.description ?? null,
+            name: trans?.name ?? 'Producto',
+            description: trans?.descriptionShort ?? trans?.description ?? null,
             image: imageUrl,
             url: typeof window !== 'undefined' ? window.location.href : undefined,
           });

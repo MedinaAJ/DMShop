@@ -15,7 +15,6 @@ import { User } from '../../models/user.model.js';
 import { Address } from '../../models/address.model.js';
 import { Carrier } from '../../models/carrier.model.js';
 import { Currency } from '../../models/currency.model.js';
-import { Lang } from '../../models/lang.model.js';
 import { Country } from '../../models/country.model.js';
 import { State } from '../../models/state.model.js';
 import { AppError } from '../../utils/app-error.js';
@@ -226,7 +225,7 @@ export const orderService = {
     if (query.state) where.id_order_state = query.state;
 
     if (query.dateFrom || query.dateTo) {
-      const dateFilter: Record<string, unknown> = {};
+      const dateFilter: Record<string | symbol, unknown> = {};
       if (query.dateFrom) dateFilter[Op.gte] = new Date(query.dateFrom);
       if (query.dateTo) dateFilter[Op.lte] = new Date(query.dateTo);
       where.created_at = dateFilter;
@@ -251,7 +250,7 @@ export const orderService = {
       data: rows.map(mapOrderListItem),
       meta: {
         page: query.page,
-        limit: query.limit,
+        perPage: query.limit,
         total: count,
         totalPages: Math.ceil(count / query.limit),
       },
@@ -263,8 +262,9 @@ export const orderService = {
     if (query.state) where.id_order_state = query.state;
     if (query.userId) where.id_user = query.userId;
 
+
     if (query.dateFrom || query.dateTo) {
-      const dateFilter: Record<string, unknown> = {};
+      const dateFilter: Record<string | symbol, unknown> = {};
       if (query.dateFrom) dateFilter[Op.gte] = new Date(query.dateFrom);
       if (query.dateTo) dateFilter[Op.lte] = new Date(query.dateTo);
       where.created_at = dateFilter;
@@ -293,7 +293,7 @@ export const orderService = {
       data: rows.map(mapOrderListItem),
       meta: {
         page: query.page,
-        limit: query.limit,
+        perPage: query.limit,
         total: count,
         totalPages: Math.ceil(count / query.limit),
       },

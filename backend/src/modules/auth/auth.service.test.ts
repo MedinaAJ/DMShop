@@ -103,7 +103,7 @@ describe('authService.register', () => {
     vi.mocked(User.findOne).mockResolvedValue(makeUser() as any);
 
     await expect(
-      authService.register({ email: 'test@example.com', password: '123456', firstName: 'Test', lastName: 'User' }),
+      authService.register({ email: 'test@example.com', password: '123456', firstName: 'Test', lastName: 'User', newsletter: false }),
     ).rejects.toMatchObject({ statusCode: 409 });
   });
 
@@ -121,6 +121,7 @@ describe('authService.register', () => {
       password: 'password123',
       firstName: 'Nuevo',
       lastName: 'Usuario',
+      newsletter: false,
     });
 
     expect(User.create).toHaveBeenCalled();

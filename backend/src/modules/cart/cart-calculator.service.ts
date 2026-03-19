@@ -133,7 +133,7 @@ export const cartCalculator = {
         productPrice: round(unitPrice),
         productPriceWithTax: round(unitPriceWithTax),
         combinationName,
-        coverImage: coverImage?.url ?? null,
+        coverImage: coverImage?.path ?? null,
         totalPrice: round(lineTotal),
         totalPriceWithTax: round(lineTotalWithTax),
         createdAt: cartItem.created_at,

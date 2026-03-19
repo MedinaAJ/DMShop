@@ -49,10 +49,7 @@ import { OrderState } from '../../models/order-state.model.js';
 import { OrderHistory } from '../../models/order-history.model.js';
 import { Cart } from '../../models/cart.model.js';
 import { Address } from '../../models/address.model.js';
-import { Carrier } from '../../models/carrier.model.js';
-import { cartCalculator } from '../cart/cart-calculator.service.js';
 import { mailService } from '../mail/mail.service.js';
-import { stockService } from '../stock/stock.service.js';
 import { sequelize } from '../../config/database.js';
 import { orderService } from './service.js';
 
@@ -75,7 +72,7 @@ function makeOrder(overrides: object = {}) {
 describe('orderService.checkout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}));
+    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}) as any);
   });
 
   it('carrito vacío → lanza CART_EMPTY', async () => {

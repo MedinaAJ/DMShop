@@ -3,7 +3,6 @@ import { User } from '../../models/user.model.js';
 import { Product } from '../../models/product.model.js';
 import { ProductLang } from '../../models/product-lang.model.js';
 import { AppError } from '../../utils/app-error.js';
-import { Op } from 'sequelize';
 import type { PaginationMeta } from '@dmshop/shared';
 
 export const reviewService = {

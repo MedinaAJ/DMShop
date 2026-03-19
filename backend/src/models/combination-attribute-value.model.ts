@@ -1,4 +1,4 @@
-import { Table, Column, Model, DataType, ForeignKey, Index } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, ForeignKey } from 'sequelize-typescript';
 import { ProductCombination } from './product-combination.model.js';
 import { AttributeValue } from './attribute-value.model.js';
 

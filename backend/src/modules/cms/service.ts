@@ -2,7 +2,6 @@ import { CmsPage } from '../../models/cms-page.model.js';
 import { CmsPageLang } from '../../models/cms-page-lang.model.js';
 import { CmsCategory } from '../../models/cms-category.model.js';
 import { CmsCategoryLang } from '../../models/cms-category-lang.model.js';
-import { Lang } from '../../models/lang.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { logger } from '../../config/logger.js';
 import type { PaginationMeta } from '@dmshop/shared';

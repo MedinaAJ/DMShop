@@ -72,7 +72,7 @@ describe('stockService.move — sin combinación', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Make sequelize.transaction call the callback directly with a fake transaction
-    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}));
+    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}) as any);
   });
 
   it('movement_type=out → decrementa stock del producto', async () => {
@@ -143,7 +143,7 @@ describe('stockService.move — sin combinación', () => {
 describe('stockService.move — con combinación', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}));
+    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}) as any);
   });
 
   it('movement_type=out → decrementa stock de la combinación', async () => {
@@ -189,7 +189,7 @@ describe('stockService.move — con combinación', () => {
 describe('stockService.adjustStock', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}));
+    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}) as any);
   });
 
   it('ajuste de producto sin combinación → fija cantidad absoluta', async () => {
@@ -222,7 +222,7 @@ describe('stockService.adjustStock', () => {
 describe('decrementStock — casos de precisión', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}));
+    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}) as any);
   });
 
   it('decrementar stock a exactamente 0 → no lanza error', async () => {
@@ -295,7 +295,7 @@ describe('decrementStock — casos de precisión', () => {
 describe('adjustStock — casos adicionales', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}));
+    vi.mocked(sequelize.transaction).mockImplementation(async (cb: Function) => cb({}) as any);
   });
 
   it('ajuste directo a una cantidad específica (diferente del actual)', async () => {

@@ -17,7 +17,7 @@ export class AppError extends Error {
     return new AppError(400, code, message, field);
   }
 
-  static unauthorized(message = 'No autorizado', code = ErrorCode.AUTH_INVALID_CREDENTIALS) {
+  static unauthorized(message = 'No autorizado', code: string = ErrorCode.AUTH_INVALID_CREDENTIALS) {
     return new AppError(401, code, message);
   }
 

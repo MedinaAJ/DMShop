@@ -162,7 +162,7 @@ describe('returnService.updateState', () => {
     const ret = makeOrderReturn({ state: 'waiting' });
     vi.mocked(OrderReturn.findByPk).mockResolvedValue(ret as any);
 
-    const result = await returnService.updateState(1, { state: 'confirmed' });
+    await returnService.updateState(1, { state: 'confirmed' });
 
     expect(ret.update).toHaveBeenCalledWith(expect.objectContaining({ state: 'confirmed' }));
   });

@@ -83,12 +83,12 @@ interface CarrierRange {
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>URL Tracking (usa @ para el número)</mat-label>
+            <mat-label>URL Tracking (usa &#64; para el número)</mat-label>
             <input
               matInput
               [(ngModel)]="item.url"
               name="url"
-              placeholder="https://tracking.correos.es/?tracking=@"
+              placeholder="https://tracking.correos.es/?tracking=&#64;"
             />
           </mat-form-field>
         </div>

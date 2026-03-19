@@ -5,7 +5,7 @@ import { AppError } from '../../utils/app-error.js';
 
 export const cmsController = {
   // Public
-  async listPages(req: Request, res: Response) {
+  async listPages(_req: Request, res: Response) {
     const pages = await cmsService.listPublic();
     sendSuccess(res, pages);
   },

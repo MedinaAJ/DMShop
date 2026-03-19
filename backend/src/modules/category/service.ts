@@ -62,7 +62,7 @@ export const categoryService = {
     });
 
     if (input.translations) {
-      for (const [langIso, trans] of Object.entries(input.translations)) {
+      for (const [_langIso, trans] of Object.entries(input.translations)) {
         await CategoryLang.create({
           id_category: category.id,
           id_lang: 1, // TODO: resolve lang id
@@ -91,7 +91,7 @@ export const categoryService = {
     });
 
     if (input.translations) {
-      for (const [langIso, trans] of Object.entries(input.translations)) {
+      for (const [_langIso, trans] of Object.entries(input.translations)) {
         await CategoryLang.upsert({
           id_category: id,
           id_lang: 1,

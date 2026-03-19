@@ -146,11 +146,11 @@ export const authService = {
     };
 
     const accessToken = jwt.sign(jwtPayload, env.JWT_ACCESS_SECRET, {
-      expiresIn: env.JWT_ACCESS_EXPIRATION,
+      expiresIn: env.JWT_ACCESS_EXPIRATION as any,
     });
 
     const refreshToken = jwt.sign(jwtPayload, env.JWT_REFRESH_SECRET, {
-      expiresIn: env.JWT_REFRESH_EXPIRATION,
+      expiresIn: env.JWT_REFRESH_EXPIRATION as any,
     });
 
     // Store refresh token in DB

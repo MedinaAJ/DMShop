@@ -40,4 +40,5 @@ export interface CartSummary {
   groupDiscount?: number;
   totalPaid: number;
   itemCount: number;
+  appliedDiscounts?: unknown[];
 }
