@@ -9,7 +9,6 @@ import { OrderState } from '../../models/order-state.model.js';
 import { Cart } from '../../models/cart.model.js';
 import { CartItem } from '../../models/cart-item.model.js';
 import { Product } from '../../models/product.model.js';
-import { ProductLang } from '../../models/product-lang.model.js';
 import { ProductCombination } from '../../models/product-combination.model.js';
 import { User } from '../../models/user.model.js';
 import { Address } from '../../models/address.model.js';
@@ -17,6 +16,7 @@ import { Carrier } from '../../models/carrier.model.js';
 import { Currency } from '../../models/currency.model.js';
 import { Country } from '../../models/country.model.js';
 import { State } from '../../models/state.model.js';
+import { ProductLang } from '../../models/product-lang.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode, OrderStateId, HookName } from '@dmshop/shared';
 import type { CreateOrderInput, OrderListQuery, UpdateOrderStateInput, RegisterPaymentInput, UpdateTrackingInput } from '@dmshop/shared';
@@ -225,7 +225,7 @@ export const orderService = {
     if (query.state) where.id_order_state = query.state;
 
     if (query.dateFrom || query.dateTo) {
-      const dateFilter: Record<string | symbol, unknown> = {};
+      const dateFilter: any = {};
       if (query.dateFrom) dateFilter[Op.gte] = new Date(query.dateFrom);
       if (query.dateTo) dateFilter[Op.lte] = new Date(query.dateTo);
       where.created_at = dateFilter;
@@ -262,9 +262,8 @@ export const orderService = {
     if (query.state) where.id_order_state = query.state;
     if (query.userId) where.id_user = query.userId;
 
-
     if (query.dateFrom || query.dateTo) {
-      const dateFilter: Record<string | symbol, unknown> = {};
+      const dateFilter: any = {};
       if (query.dateFrom) dateFilter[Op.gte] = new Date(query.dateFrom);
       if (query.dateTo) dateFilter[Op.lte] = new Date(query.dateTo);
       where.created_at = dateFilter;
@@ -403,26 +402,7 @@ export const orderService = {
 
     // Send email if new state has send_email=true
     if (state.send_email) {
-      // Build tracking URL if state is "shipped" and there's a tracking number
-      let trackingUrl: string | undefined;
-      const orderCarrierForEmail = await OrderCarrier.findOne({
-        where: { id_order: orderId },
-        include: [{ model: Carrier, as: 'carrier' }],
-      });
-      const trackingNumber = orderCarrierForEmail?.tracking_number ?? undefined;
-      if (trackingNumber && (orderCarrierForEmail as any)?.carrier?.url) {
-        const carrierUrl = (orderCarrierForEmail as any).carrier.url as string;
-        if (carrierUrl.includes('@')) {
-          trackingUrl = carrierUrl.replace('@', encodeURIComponent(trackingNumber));
-        }
-      }
-
-      mailService.sendOrderStatusChange(
-        updatedOrder,
-        state,
-        input.comment ?? undefined,
-        trackingUrl,
-      ).catch((err) =>
+      mailService.sendOrderStatusChange(updatedOrder, state.name, state.color ?? undefined, input.comment ?? undefined).catch((err) =>
         console.error('[OrderService] Error sending order status email:', err),
       );
     }
@@ -460,9 +440,7 @@ export const orderService = {
   },
 
   async updateTracking(orderId: number, input: UpdateTrackingInput) {
-    const order = await Order.findByPk(orderId, {
-      include: [{ model: Carrier, as: 'carrier' }],
-    });
+    const order = await Order.findByPk(orderId);
     if (!order) {
       throw AppError.notFound('Pedido no encontrado', ErrorCode.ORDER_NOT_FOUND);
     }
@@ -472,23 +450,7 @@ export const orderService = {
       await orderCarrier.update({ tracking_number: input.trackingNumber });
     }
 
-    // Build tracking URL if carrier has a URL with @ placeholder
-    const carrier = order.carrier;
-    let trackingUrl: string | undefined;
-    if (carrier?.url && carrier.url.includes('@') && input.trackingNumber) {
-      trackingUrl = carrier.url.replace('@', encodeURIComponent(input.trackingNumber));
-    }
-
-    const updatedOrder = await this.getById(orderId);
-
-    // Send tracking email to customer (fire-and-forget)
-    if (input.trackingNumber) {
-      mailService.sendTrackingUpdate(updatedOrder, input.trackingNumber, trackingUrl).catch((err) =>
-        console.error('[OrderService] Error sending tracking email:', err),
-      );
-    }
-
-    return updatedOrder;
+    return this.getById(orderId);
   },
 
   async getStates() {
@@ -602,7 +564,6 @@ function mapOrderDetail(order: Order, orderCarrier: OrderCarrier | null) {
       ? {
           id: orderCarrier.id,
           carrierName: order.carrier?.name ?? '',
-          carrierUrl: order.carrier?.url ?? null,
           trackingNumber: orderCarrier.tracking_number,
           weight: Number(orderCarrier.weight),
           shippingCost: Number(orderCarrier.shipping_cost),

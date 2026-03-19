@@ -4,7 +4,6 @@ import { sendSuccess, sendNoContent, sendCreated } from '../../utils/response.js
 import { AppError } from '../../utils/app-error.js';
 
 export const cmsController = {
-  // Public
   async listPages(_req: Request, res: Response) {
     const pages = await cmsService.listPublic();
     sendSuccess(res, pages);
@@ -15,7 +14,6 @@ export const cmsController = {
     sendSuccess(res, page);
   },
 
-  // Admin
   async listAdmin(req: Request, res: Response) {
     const result = await cmsService.listAdmin(req.query);
     res.json({ success: true, data: result.pages, meta: result.meta });
@@ -26,7 +24,6 @@ export const cmsController = {
     if (!title) throw AppError.badRequest('El título es obligatorio');
     if (!slug) throw AppError.badRequest('El slug es obligatorio');
     if (!content) throw AppError.badRequest('El contenido es obligatorio');
-
     const page = await cmsService.createPage({ title, content, slug, active, id_cms_category });
     sendCreated(res, page);
   },
