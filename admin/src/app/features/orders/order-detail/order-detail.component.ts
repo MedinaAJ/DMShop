@@ -51,6 +51,7 @@ interface OrderAddress {
 
 interface OrderCarrier {
   id: number; carrierName: string; carrierUrl: string | null; trackingNumber: string | null;
+  trackingUrl: string | null;
   weight: number; shippingCost: number; shippingCostTax: number;
 }
 
@@ -232,6 +233,12 @@ interface OrderState { id: number; name: string; color: string; }
                   <button mat-stroked-button (click)="updateTracking()" class="w-full">
                     <mat-icon>local_shipping</mat-icon> Actualizar tracking
                   </button>
+                  @if (order.carrier.trackingUrl) {
+                    <a [href]="order.carrier.trackingUrl" target="_blank" rel="noopener noreferrer"
+                       mat-stroked-button color="primary" class="w-full mt-2">
+                      <mat-icon>open_in_new</mat-icon> Ver seguimiento
+                    </a>
+                  }
                 </div>
               </mat-card-content>
             </mat-card>

@@ -14,6 +14,7 @@ import { apiRouter } from './routes/index.js';
 import { seoRouter } from './modules/seo/seo.routes.js';
 import { registerPaymentModules } from './modules/payment/index.js';
 import { cmsService } from './modules/cms/service.js';
+import { OrderState } from './models/order-state.model.js';
 
 const app = express();
 
@@ -63,6 +64,45 @@ app.get('/health', (_req, res) => {
 app.use(errorHandler);
 
 // --- Start server ---
+async function seedPaymentOrderStates(): Promise<void> {
+  const paymentStates = [
+    {
+      id: 10,
+      name: 'En espera de confirmación de pago',
+      color: '#F39C12',
+      paid: false,
+      shipped: false,
+      delivery: false,
+      send_email: true,
+      invoice: false,
+      deleted: false,
+      template: null,
+      icon: null,
+    },
+    {
+      id: 11,
+      name: 'En espera de contra reembolso',
+      color: '#16A085',
+      paid: false,
+      shipped: false,
+      delivery: false,
+      send_email: true,
+      invoice: false,
+      deleted: false,
+      template: null,
+      icon: null,
+    },
+  ];
+
+  for (const state of paymentStates) {
+    const existing = await OrderState.findByPk(state.id);
+    if (!existing) {
+      await OrderState.create(state as any);
+      logger.info(`Created order state id=${state.id}: ${state.name}`);
+    }
+  }
+}
+
 async function bootstrap() {
   try {
     await initDatabase();
@@ -73,6 +113,10 @@ async function bootstrap() {
 
     await cmsService.seedDefaultPages();
     logger.info('CMS default pages seeded');
+
+    // Ensure payment-specific order states exist (ids 10 and 11)
+    await seedPaymentOrderStates();
+    logger.info('Payment order states ensured');
 
     app.listen(env.PORT, () => {
       logger.info(`DMShop API running on http://localhost:${env.PORT}`);

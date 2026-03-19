@@ -398,6 +398,26 @@ async function seed() {
       delivery: false,
       template: 'on_hold',
     },
+    {
+      id: 10,
+      name: 'En espera de confirmación de pago',
+      color: '#F39C12',
+      paid: false,
+      shipped: false,
+      delivery: false,
+      send_email: true,
+      template: null,
+    },
+    {
+      id: 11,
+      name: 'En espera de contra reembolso',
+      color: '#16A085',
+      paid: false,
+      shipped: false,
+      delivery: false,
+      send_email: true,
+      template: null,
+    },
   ]);
 
   // --- Customer Groups (PrestaShop-style: 1=Visitante, 2=Invitado, 3=Cliente) ---

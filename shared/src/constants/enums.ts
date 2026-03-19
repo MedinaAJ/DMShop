@@ -14,6 +14,8 @@ export enum OrderStateId {
   REFUNDED = 7,
   PAYMENT_ERROR = 8,
   ON_HOLD = 9,
+  AWAITING_BANK_TRANSFER = 10,
+  AWAITING_CASH_ON_DELIVERY = 11,
 }
 
 export enum ShippingMethod {

@@ -1,6 +1,11 @@
 import { Configuration } from '../../../models/configuration.model.js';
+import { Order } from '../../../models/order.model.js';
+import { OrderHistory } from '../../../models/order-history.model.js';
+import { OrderStateId } from '@dmshop/shared';
 import type { PaymentModule, PaymentResult } from '../payment.interface.js';
-import type { Order } from '../../../models/order.model.js';
+
+/** State id for "Awaiting bank transfer confirmation" */
+const BANK_TRANSFER_STATE_ID = OrderStateId.AWAITING_BANK_TRANSFER; // 10
 
 export const bankTransferModule: PaymentModule = {
   name: 'bank_transfer',
@@ -15,8 +20,20 @@ export const bankTransferModule: PaymentModule = {
     return config ? config.value === '1' : true;
   },
 
-  async process(_order: Order): Promise<PaymentResult> {
-    // Bank transfer is an offline method — order stays in "Awaiting payment"
+  async process(order: Order): Promise<PaymentResult> {
+    // Update order state to "Awaiting bank transfer confirmation"
+    try {
+      await order.update({ id_order_state: BANK_TRANSFER_STATE_ID });
+      await OrderHistory.create({
+        id_order: order.id,
+        id_order_state: BANK_TRANSFER_STATE_ID,
+        id_user: null,
+        comment: 'Esperando confirmación de transferencia bancaria',
+      });
+    } catch (err) {
+      console.warn('[BankTransfer] Could not update order state:', err);
+    }
+
     return {
       status: 'pending',
       metadata: {
@@ -25,3 +42,4 @@ export const bankTransferModule: PaymentModule = {
     };
   },
 };
+

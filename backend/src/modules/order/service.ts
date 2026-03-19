@@ -402,7 +402,8 @@ export const orderService = {
 
     // Send email if new state has send_email=true
     if (state.send_email) {
-      mailService.sendOrderStatusChange(updatedOrder, state.name, state.color ?? undefined, input.comment ?? undefined).catch((err) =>
+      const trackingUrl = updatedOrder.carrier?.trackingUrl ?? undefined;
+      mailService.sendOrderStatusChange(updatedOrder, state, input.comment ?? undefined, trackingUrl).catch((err) =>
         console.error('[OrderService] Error sending order status email:', err),
       );
     }
@@ -564,7 +565,11 @@ function mapOrderDetail(order: Order, orderCarrier: OrderCarrier | null) {
       ? {
           id: orderCarrier.id,
           carrierName: order.carrier?.name ?? '',
+          carrierUrl: order.carrier?.url ?? null,
           trackingNumber: orderCarrier.tracking_number,
+          trackingUrl: (order.carrier?.url && orderCarrier.tracking_number)
+            ? order.carrier.url.replace('@', encodeURIComponent(orderCarrier.tracking_number))
+            : null,
           weight: Number(orderCarrier.weight),
           shippingCost: Number(orderCarrier.shipping_cost),
           shippingCostTax: Number(orderCarrier.shipping_cost_tax),

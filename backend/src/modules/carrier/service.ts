@@ -130,8 +130,8 @@ export const carrierService = {
       }
     }
 
-    // Update ranges if provided
-    if (input.ranges !== undefined) {
+    // Update ranges if provided AND non-empty (empty array = no change, to prevent accidental data loss)
+    if (input.ranges !== undefined && input.ranges.length > 0) {
       const existingRanges = await CarrierRange.findAll({ where: { id_carrier: id } });
       for (const range of existingRanges) {
         await CarrierRangePrice.destroy({ where: { id_carrier_range: range.id } });
