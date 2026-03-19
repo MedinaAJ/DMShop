@@ -46,6 +46,11 @@ export const env = {
   SMTP_FROM_NAME: optionalEnv('SMTP_FROM_NAME', 'DMShop'),
   SMTP_FROM_EMAIL: optionalEnv('SMTP_FROM_EMAIL', 'noreply@dmshop.com'),
 
+  // PayPal
+  PAYPAL_CLIENT_ID: optionalEnv('PAYPAL_CLIENT_ID', ''),
+  PAYPAL_CLIENT_SECRET: optionalEnv('PAYPAL_CLIENT_SECRET', ''),
+  PAYPAL_MODE: optionalEnv('PAYPAL_MODE', 'sandbox'),
+
   UPLOAD_DIR: optionalEnv('UPLOAD_DIR', 'uploads'),
   MAX_FILE_SIZE: parseInt(optionalEnv('MAX_FILE_SIZE', '10485760'), 10),
 

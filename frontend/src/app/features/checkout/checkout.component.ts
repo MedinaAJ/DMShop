@@ -185,7 +185,11 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                   @if (placing()) {
                     <mat-spinner diameter="20" class="inline-block mr-2" />
                   }
-                  Confirmar pedido
+                  @if (paymentMethod === 'paypal') {
+                    <mat-icon>account_balance_wallet</mat-icon> Pagar con PayPal
+                  } @else {
+                    Confirmar pedido
+                  }
                 </button>
               </div>
             </div>

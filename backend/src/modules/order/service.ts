@@ -441,7 +441,9 @@ export const orderService = {
   },
 
   async updateTracking(orderId: number, input: UpdateTrackingInput) {
-    const order = await Order.findByPk(orderId);
+    const order = await Order.findByPk(orderId, {
+      include: [{ model: Carrier, as: 'carrier' }],
+    });
     if (!order) {
       throw AppError.notFound('Pedido no encontrado', ErrorCode.ORDER_NOT_FOUND);
     }
@@ -451,7 +453,20 @@ export const orderService = {
       await orderCarrier.update({ tracking_number: input.trackingNumber });
     }
 
-    return this.getById(orderId);
+    const updatedOrder = await this.getById(orderId);
+
+    // Send tracking email if tracking number is set and carrier has a tracking URL template
+    if (input.trackingNumber) {
+      const carrierUrl: string | null = (order as any).carrier?.url ?? null;
+      const trackingUrl = carrierUrl && carrierUrl.includes('@')
+        ? carrierUrl.replace('@', encodeURIComponent(input.trackingNumber))
+        : null;
+
+      mailService.sendTrackingUpdate(updatedOrder, input.trackingNumber, trackingUrl ?? undefined)
+        .catch((err) => console.error('[OrderService] Error sending tracking email:', err));
+    }
+
+    return updatedOrder;
   },
 
   async getStates() {
