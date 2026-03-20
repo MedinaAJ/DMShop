@@ -33,4 +33,12 @@ export const carrierController = {
     const carriers = await carrierService.getAvailable(idZone);
     sendSuccess(res, carriers);
   },
+
+  async upsertTranslation(req: Request, res: Response) {
+    const idCarrier = Number(req.params.id);
+    const idLang = Number(req.params.idLang);
+    const { name, delay } = req.body;
+    const record = await carrierService.upsertTranslation(idCarrier, idLang, name, delay);
+    sendSuccess(res, record);
+  },
 };

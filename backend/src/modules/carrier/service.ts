@@ -1,4 +1,5 @@
 import { Carrier } from '../../models/carrier.model.js';
+import { CarrierLang } from '../../models/carrier-lang.model.js';
 import { CarrierZone } from '../../models/carrier-zone.model.js';
 import { CarrierRange } from '../../models/carrier-range.model.js';
 import { CarrierRangePrice } from '../../models/carrier-range-price.model.js';
@@ -6,6 +7,19 @@ import { Zone } from '../../models/zone.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode } from '@dmshop/shared';
 import type { PaginationMeta, CreateCarrierInput, UpdateCarrierInput } from '@dmshop/shared';
+
+/** Resolve carrier name and delay text for a given language, falling back to carrier defaults */
+export function resolveCarrierTranslation(
+  carrier: Carrier,
+  idLang: number,
+): { name: string; delayText: string } {
+  const translations = (carrier as any).translations as CarrierLang[] | undefined;
+  const trans = translations?.find((t) => t.id_lang === idLang);
+  return {
+    name: trans?.name ?? carrier.name,
+    delayText: trans?.delay ?? String(carrier.delay),
+  };
+}
 
 export const carrierService = {
   async list(query: Record<string, unknown>) {
@@ -18,7 +32,10 @@ export const carrierService = {
 
     const { count, rows } = await Carrier.findAndCountAll({
       where,
-      include: [{ model: Zone, as: 'zones' }],
+      include: [
+        { model: Zone, as: 'zones' },
+        { model: CarrierLang, as: 'translations' },
+      ],
       limit: perPage,
       offset,
       order: [['grade', 'ASC']],
@@ -39,6 +56,7 @@ export const carrierService = {
     const carrier = await Carrier.findByPk(id, {
       include: [
         { model: Zone, as: 'zones' },
+        { model: CarrierLang, as: 'translations' },
         {
           model: CarrierRange,
           as: 'ranges',
@@ -164,6 +182,18 @@ export const carrierService = {
       throw AppError.notFound('Transportista no encontrado', ErrorCode.CARRIER_NOT_FOUND);
     }
     await carrier.destroy();
+  },
+
+  /** Upsert a carrier translation for a specific language */
+  async upsertTranslation(idCarrier: number, idLang: number, name: string, delay?: string) {
+    const [record] = await CarrierLang.findOrCreate({
+      where: { id_carrier: idCarrier, id_lang: idLang },
+      defaults: { id_carrier: idCarrier, id_lang: idLang, name, delay: delay ?? null },
+    });
+    if (record.name !== name || record.delay !== (delay ?? null)) {
+      await record.update({ name, delay: delay ?? null });
+    }
+    return record;
   },
 
   async getAvailable(idZone?: number) {

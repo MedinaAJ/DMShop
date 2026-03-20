@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTabsModule } from '@angular/material/tabs';
 import { CurrencyPipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
 
@@ -23,6 +24,12 @@ interface CarrierRange {
   delimiter1: number;
   delimiter2: number;
   prices: RangePrice[];
+}
+
+interface LangTranslation {
+  idLang: number;
+  name: string;
+  delay: string;
 }
 
 @Component({
@@ -40,6 +47,7 @@ interface CarrierRange {
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatCheckboxModule,
+    MatTabsModule,
     CurrencyPipe,
   ],
   template: `
@@ -55,9 +63,39 @@ interface CarrierRange {
     } @else {
       <form (ngSubmit)="onSubmit()" class="max-w-3xl space-y-4">
         <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Nombre</mat-label>
+          <mat-label>Nombre (por defecto)</mat-label>
           <input matInput [(ngModel)]="item.name" name="name" required />
+          <mat-hint>Nombre de reserva si no hay traducción para el idioma del usuario.</mat-hint>
         </mat-form-field>
+
+        <!-- Translations by language -->
+        @if (availableLangs.length > 0) {
+          <div class="border rounded-lg p-4 bg-blue-50">
+            <h3 class="font-semibold mb-3 text-blue-800">🌍 Traducciones por idioma</h3>
+            <mat-tab-group>
+              @for (lang of availableLangs; track lang.id) {
+                <mat-tab [label]="lang.name">
+                  <div class="pt-4 space-y-3">
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-label>Nombre en {{ lang.name }}</mat-label>
+                      <input matInput
+                             [(ngModel)]="getTranslation(lang.id).name"
+                             [name]="'trans_name_' + lang.id" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-label>Texto de plazo en {{ lang.name }}</mat-label>
+                      <input matInput
+                             [(ngModel)]="getTranslation(lang.id).delay"
+                             [name]="'trans_delay_' + lang.id"
+                             placeholder="3-5 días laborables" />
+                      <mat-hint>Texto libre (p.ej: "Entrega en 24h", "3-5 días laborables")</mat-hint>
+                    </mat-form-field>
+                  </div>
+                </mat-tab>
+              }
+            </mat-tab-group>
+          </div>
+        }
 
         <div class="grid grid-cols-2 gap-4">
           <mat-form-field appearance="outline">
@@ -209,6 +247,8 @@ export class CarrierFormComponent implements OnInit {
   taxGroups: any[] = [];
   selectedZones = new Set<number>();
   ranges: CarrierRange[] = [];
+  availableLangs: { id: number; name: string; iso: string }[] = [];
+  translations: Map<number, LangTranslation> = new Map();
 
   item: any = {
     name: '',
@@ -225,11 +265,28 @@ export class CarrierFormComponent implements OnInit {
     freeShippingStartsAt: null,
   };
 
+  getTranslation(idLang: number): LangTranslation {
+    if (!this.translations.has(idLang)) {
+      this.translations.set(idLang, { idLang, name: '', delay: '' });
+    }
+    return this.translations.get(idLang)!;
+  }
+
   ngOnInit(): void {
     this.api.get<any>('/geo/zones').subscribe((res) => {
       this.allZones = res.data;
     });
     this.api.get<any>('/tax/groups').subscribe((res) => (this.taxGroups = res.data));
+    // Load available languages
+    this.api.get<any>('/langs').subscribe({
+      next: (res) => {
+        this.availableLangs = (res.data || []).map((l: any) => ({
+          id: l.id,
+          name: l.name,
+          iso: l.iso_code || l.isoCode,
+        }));
+      },
+    });
 
     const id = this.route.snapshot.params['id'];
     if (id && id !== 'new') {
@@ -254,6 +311,15 @@ export class CarrierFormComponent implements OnInit {
             freeShippingStartsAt: c.free_shipping_starts_at != null ? parseFloat(c.free_shipping_starts_at) : null,
           };
           (c.zones || []).forEach((z: any) => this.selectedZones.add(z.id));
+
+          // Load existing translations
+          (c.translations || []).forEach((t: any) => {
+            this.translations.set(t.id_lang || t.idLang, {
+              idLang: t.id_lang || t.idLang,
+              name: t.name || '',
+              delay: t.delay || '',
+            });
+          });
 
           // Populate ranges from existing carrier data
           // After zones are loaded, build ranges with zone prices
@@ -353,13 +419,25 @@ export class CarrierFormComponent implements OnInit {
       : this.api.put(`/carriers/${this.itemId}`, body);
 
     obs.subscribe({
-      next: () => {
-        this.snackBar.open(
-          this.isNew ? 'Transportista creado' : 'Transportista actualizado',
-          'OK',
-          { duration: 3000 },
-        );
-        this.router.navigate(['/carriers']);
+      next: (res: any) => {
+        const savedId = res?.data?.id ?? this.itemId;
+        // Save translations
+        const transPromises = Array.from(this.translations.values())
+          .filter((t) => t.name.trim())
+          .map((t) =>
+            this.api.put(`/carriers/${savedId}/translations/${t.idLang}`, {
+              name: t.name,
+              delay: t.delay || null,
+            }).toPromise().catch(() => null),
+          );
+        Promise.all(transPromises).then(() => {
+          this.snackBar.open(
+            this.isNew ? 'Transportista creado' : 'Transportista actualizado',
+            'OK',
+            { duration: 3000 },
+          );
+          this.router.navigate(['/carriers']);
+        });
       },
       error: () => {
         this.snackBar.open('Error al guardar', 'Cerrar', { duration: 3000 });

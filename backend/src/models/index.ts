@@ -57,6 +57,7 @@ export { CartRule } from './cart-rule.model.js';
 
 // Carriers
 export { Carrier } from './carrier.model.js';
+export { CarrierLang } from './carrier-lang.model.js';
 export { CarrierZone } from './carrier-zone.model.js';
 export { CarrierRange } from './carrier-range.model.js';
 export { CarrierRangePrice } from './carrier-range-price.model.js';

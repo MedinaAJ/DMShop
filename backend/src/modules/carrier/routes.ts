@@ -34,3 +34,11 @@ carrierRouter.delete(
   authorize('admin'),
   asyncHandler(carrierController.remove),
 );
+
+// Translation management
+carrierRouter.put(
+  '/:id/translations/:idLang',
+  authenticate,
+  authorize('admin', 'employee'),
+  asyncHandler(carrierController.upsertTranslation),
+);

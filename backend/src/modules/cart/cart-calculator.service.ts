@@ -9,6 +9,7 @@ import { Tax } from '../../models/tax.model.js';
 import { Address } from '../../models/address.model.js';
 import { Country } from '../../models/country.model.js';
 import { Carrier } from '../../models/carrier.model.js';
+import { CarrierLang } from '../../models/carrier-lang.model.js';
 import { CarrierRange } from '../../models/carrier-range.model.js';
 import { CarrierRangePrice } from '../../models/carrier-range-price.model.js';
 import { CarrierZone } from '../../models/carrier-zone.model.js';
@@ -287,7 +288,7 @@ export const cartCalculator = {
     return { cost: round(shippingCost), costWithTax: round(shippingCostWithTax) };
   },
 
-  async getAvailableCarriers(idAddressDelivery: number, cartTotal?: number, cartWeight: number = 0) {
+  async getAvailableCarriers(idAddressDelivery: number, cartTotal?: number, cartWeight: number = 0, idLang: number = 1) {
     const address = await Address.findByPk(idAddressDelivery, {
       include: [{ model: Country, as: 'country' }],
     });
@@ -305,6 +306,7 @@ export const cartCalculator = {
     const { Op } = await import('sequelize');
     let carriers = await Carrier.findAll({
       where: { id: { [Op.in]: carrierIds }, active: true },
+      include: [{ model: CarrierLang, as: 'translations' }],
     });
 
     // Filter by max_weight: max_weight=0 means no limit
@@ -312,12 +314,25 @@ export const cartCalculator = {
       carriers = carriers.filter((c) => Number(c.max_weight) === 0 || Number(c.max_weight) >= cartWeight);
     }
 
+    // Resolve translated name/delay
+    const resolveTranslation = (carrier: Carrier) => {
+      const translations = (carrier as any).translations as CarrierLang[] | undefined;
+      const trans = translations?.find((t) => t.id_lang === idLang);
+      return {
+        name: trans?.name ?? carrier.name,
+        delayText: trans?.delay ?? null,
+      };
+    };
+
     // If cart totals are provided, enrich each carrier with estimated shipping cost
     if (cartTotal !== undefined) {
       const enriched = await Promise.all(
         carriers.map(async (carrier) => {
           const result = await this.getShippingCost(carrier.id, zoneId, cartTotal, cartWeight);
+          const { name, delayText } = resolveTranslation(carrier);
           return Object.assign({}, carrier.toJSON(), {
+            name,
+            delayText,
             estimatedCost: result.cost,
             estimatedCostWithTax: result.costWithTax,
             isFreeShipping: carrier.is_free || result.cost === 0,
@@ -327,7 +342,10 @@ export const cartCalculator = {
       return enriched;
     }
 
-    return carriers;
+    return carriers.map((carrier) => {
+      const { name, delayText } = resolveTranslation(carrier);
+      return Object.assign({}, carrier.toJSON(), { name, delayText });
+    });
   },
 };
 

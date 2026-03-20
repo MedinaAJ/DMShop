@@ -13,6 +13,7 @@ import {
 import { TaxRulesGroup } from './tax-rules-group.model.js';
 import { CarrierZone } from './carrier-zone.model.js';
 import { CarrierRange } from './carrier-range.model.js';
+import { CarrierLang } from './carrier-lang.model.js';
 import { Zone } from './zone.model.js';
 
 @Table({ tableName: 'carriers' })
@@ -70,6 +71,9 @@ export class Carrier extends Model {
 
   @HasMany(() => CarrierRange)
   declare ranges: CarrierRange[];
+
+  @HasMany(() => CarrierLang)
+  declare translations: CarrierLang[];
 
   @BelongsToMany(() => Zone, () => CarrierZone)
   declare zones: Zone[];

@@ -51,6 +51,7 @@ import {
   CartRule,
   // Carriers
   Carrier,
+  CarrierLang,
   CarrierZone,
   CarrierRange,
   CarrierRangePrice,
@@ -125,6 +126,7 @@ const models = [
   CartRule,
   // Carriers
   Carrier,
+  CarrierLang,
   CarrierZone,
   CarrierRange,
   CarrierRangePrice,
