@@ -1,14 +1,14 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeHtml, Title, Meta } from '@angular/platform-browser';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CmsService, CmsPageFull } from '../../core/services/cms.service';
 import { SeoService } from '../../core/seo.service';
 
 @Component({
   selector: 'app-cms-page',
   standalone: true,
-  imports: [MatProgressSpinnerModule],
+  imports: [MatProgressSpinner],
   template: `
     @if (loading()) {
       <div class="flex justify-center py-20">

@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { CartService } from '../../../core/services/cart.service';
@@ -17,7 +17,7 @@ import { environment } from '../../../../environments/environment';
     CurrencyPipe,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
+    MatProgressSpinner,
     MatSnackBarModule,
   ],
   template: `

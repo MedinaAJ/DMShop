@@ -2,7 +2,7 @@ import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,7 +23,7 @@ import { ProductCardComponent } from '../../shared/components/product-card/produ
     RouterLink,
     FormsModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule,
+    MatProgressSpinner,
     MatCheckboxModule,
     MatButtonModule,
     MatIconModule,

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
 
 @Component({
@@ -16,7 +16,7 @@ import { ApiService } from '../../../core/services/api.service';
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule,
+    MatProgressSpinner,
   ],
   template: `
     <div class="flex items-center gap-3 mb-6">

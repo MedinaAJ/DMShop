@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CurrencyPipe } from '@angular/common';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
@@ -26,7 +26,7 @@ import { environment } from '../../../environments/environment';
     MatIconModule,
     MatBadgeModule,
     MatMenuModule,
-    MatProgressSpinnerModule,
+    MatProgressSpinner,
     CurrencyPipe,
   ],
   template: `

@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
 
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -21,7 +21,7 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
   standalone: true,
   imports: [
     RouterLink, MatStepperModule, MatButtonModule, MatIconModule, MatRadioModule,
-    MatProgressSpinnerModule, MatCardModule,
+    MatProgressSpinner, MatCardModule,
     MatDividerModule, MatSnackBarModule, FormsModule, CurrencyPipe,
   ],
   template: `

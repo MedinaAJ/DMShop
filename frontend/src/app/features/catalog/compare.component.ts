@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -22,7 +22,7 @@ interface CompareItem {
 @Component({
   selector: 'app-compare',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, CurrencyPipe],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressSpinner, CurrencyPipe],
   template: `
     <div class="max-w-6xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-6">

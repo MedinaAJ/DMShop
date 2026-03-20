@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
 
 @Component({
@@ -16,7 +16,7 @@ import { ApiService } from '../../../core/services/api.service';
     MatIconModule,
     MatCardModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule,
+    MatProgressSpinner,
   ],
   template: `
     <div class="flex items-center justify-between mb-6">

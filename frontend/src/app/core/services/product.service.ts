@@ -81,8 +81,42 @@ export class ProductService {
 
   getById(id: number): Observable<ProductDetail> {
     return this.api
-      .get<SingleResponse<ProductDetail>>(`/products/${id}`)
-      .pipe(map((res) => res.data));
+      .get<SingleResponse<any>>(`/products/${id}`)
+      .pipe(map((res) => this.transformProduct(res.data)));
+  }
+
+  private transformProduct(p: any): ProductDetail {
+    const translations: Record<string, { name: string; description: string | null; descriptionShort: string | null; slug: string }> = {};
+    if (Array.isArray(p.translations)) {
+      const langMap: Record<number, string> = { 1: 'es', 2: 'en' };
+      for (const t of p.translations) {
+        const key = langMap[t.id_lang] || `lang_${t.id_lang}`;
+        translations[key] = {
+          name: t.name || '',
+          description: t.description || null,
+          descriptionShort: t.description_short || null,
+          slug: t.slug || '',
+        };
+      }
+    }
+    return {
+      id: p.id,
+      idCategoryDefault: p.id_category_default ?? p.idCategoryDefault,
+      idManufacturer: p.id_manufacturer ?? p.idManufacturer ?? null,
+      reference: p.reference || null,
+      ean13: p.ean13 || null,
+      price: Number(p.price),
+      weight: Number(p.weight || 0),
+      quantity: p.quantity,
+      active: p.active,
+      availableForOrder: p.available_for_order ?? p.availableForOrder ?? true,
+      showPrice: p.show_price ?? p.showPrice ?? true,
+      translations,
+      images: p.images || [],
+      categoryName: p.categoryName || null,
+      manufacturerName: p.manufacturer?.name ?? p.manufacturerName ?? null,
+      specificPrices: p.specificPrices || [],
+    } as any;
   }
 
   getByCategory(

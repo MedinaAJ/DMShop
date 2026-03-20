@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { CurrencyPipe } from '@angular/common';
 import { PaymentService } from '../../core/services/payment.service';
@@ -10,7 +10,7 @@ import { PaymentService } from '../../core/services/payment.service';
 @Component({
   selector: 'app-payment-confirmation',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule, CurrencyPipe],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressSpinner, MatCardModule, CurrencyPipe],
   template: `
     <div class="max-w-xl mx-auto px-4 py-12 text-center">
       @if (loading()) {

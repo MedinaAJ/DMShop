@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { OrderService, OrderListItem } from '../../../core/services/order.service';
@@ -10,7 +10,7 @@ import { OrderService, OrderListItem } from '../../../core/services/order.servic
 @Component({
   selector: 'app-order-list',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatPaginatorModule, CurrencyPipe, DatePipe],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressSpinner, MatPaginatorModule, CurrencyPipe, DatePipe],
   template: `
     <h2 class="text-xl font-semibold mb-4">Mis pedidos</h2>
 

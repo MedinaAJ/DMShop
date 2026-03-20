@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ProductService } from '../../core/services/product.service';
@@ -25,7 +25,7 @@ import { environment } from '../../../environments/environment';
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule,
+    MatProgressSpinner,
     MatTableModule,
     CurrencyPipe,
     DatePipe,
@@ -205,7 +205,7 @@ import { environment } from '../../../environments/environment';
               <div class="mt-3 flex items-center gap-4">
                 @if (selectedCombination.price_impact) {
                   <span class="text-lg font-semibold text-blue-600">
-                    {{ product.price + selectedCombination.price_impact | currency: 'EUR' }}
+                    {{ +product.price + +selectedCombination.price_impact | currency: 'EUR' }}
                   </span>
                 }
                 @if (selectedCombination.quantity > 5) {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
@@ -38,7 +38,7 @@ interface MeResponse {
 @Component({
   selector: 'app-account-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatIconModule, MatChipsModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatCardModule, MatIconModule, MatChipsModule, MatProgressSpinner],
   template: `
     <h2 class="text-xl font-semibold mb-4">Hola, {{ authService.user()?.firstName }}!</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
