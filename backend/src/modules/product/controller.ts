@@ -8,6 +8,18 @@ export const productController = {
     sendPaginated(res, data, meta);
   },
 
+  async compare(req: Request, res: Response) {
+    const idsParam = req.query.ids as string;
+    if (!idsParam) {
+      res.status(400).json({ success: false, message: 'ids parameter required' });
+      return;
+    }
+    const ids = idsParam.split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n) && n > 0);
+    const idLang = Number(req.query.idLang) || 1;
+    const result = await productService.compareProducts(ids, idLang);
+    sendSuccess(res, result);
+  },
+
   async getById(req: Request, res: Response) {
     const product = await productService.getById(Number(req.params.id), req.query.lang as string);
     sendSuccess(res, product);

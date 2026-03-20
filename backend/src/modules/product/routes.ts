@@ -87,6 +87,9 @@ productRouter.get(
   asyncHandler(productController.list),
 );
 
+// GET /products/compare?ids=1,2,3 — compare up to 5 products
+productRouter.get('/compare', asyncHandler(productController.compare));
+
 /**
  * @swagger
  * /products/{id}:

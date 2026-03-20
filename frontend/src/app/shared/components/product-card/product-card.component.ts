@@ -1,4 +1,4 @@
-import { Component, Input, inject, signal, OnInit } from '@angular/core';
+import { Component, Input, inject, signal, OnInit, computed } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { CurrencyPipe } from '@angular/common';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { CompareService } from '../../../core/services/compare.service';
 
 @Component({
   selector: 'app-product-card',
@@ -67,9 +68,20 @@ import { AuthService } from '../../../core/services/auth.service';
       </mat-card-content>
       <mat-card-actions class="flex items-center justify-between px-4 pb-4">
         <span class="text-lg font-bold text-blue-600">{{ product.price | currency: 'EUR' }}</span>
-        <a mat-mini-fab color="primary" [routerLink]="['/product', product.id]">
-          <mat-icon>visibility</mat-icon>
-        </a>
+        <div class="flex gap-1">
+          <button
+            mat-icon-button
+            [matTooltip]="compareService.isSelected(product.id) ? 'Quitar de comparativa' : (compareService.canAdd() ? 'Añadir a comparativa' : 'Máximo 3 productos')"
+            [color]="compareService.isSelected(product.id) ? 'accent' : ''"
+            [disabled]="!compareService.isSelected(product.id) && !compareService.canAdd()"
+            (click)="toggleCompare($event)"
+          >
+            <mat-icon>compare_arrows</mat-icon>
+          </button>
+          <a mat-mini-fab color="primary" [routerLink]="['/product', product.id]">
+            <mat-icon>visibility</mat-icon>
+          </a>
+        </div>
       </mat-card-actions>
     </mat-card>
   `,
@@ -88,6 +100,7 @@ export class ProductCardComponent implements OnInit {
   private readonly wishlistService = inject(WishlistService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  readonly compareService = inject(CompareService);
 
   readonly inWishlist = signal(false);
 
@@ -108,5 +121,16 @@ export class ProductCardComponent implements OnInit {
 
     await this.wishlistService.toggle(this.product.id);
     this.inWishlist.set(this.wishlistService.isInWishlist(this.product.id));
+  }
+
+  toggleCompare(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.compareService.toggle({
+      id: this.product.id,
+      name: this.product.name,
+      price: this.product.price,
+      coverImage: this.product.coverImage ?? undefined,
+    });
   }
 }

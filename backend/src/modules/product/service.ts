@@ -689,4 +689,68 @@ export const productService = {
     }
     return product;
   },
+
+  // =============== COMPARE ===============
+
+  /**
+   * Get full product data for comparison (attributes, features, images, price, stock).
+   * Accepts up to 5 product IDs.
+   */
+  async compareProducts(ids: number[], idLang = 1) {
+    if (ids.length === 0 || ids.length > 5) {
+      throw AppError.badRequest('Número de productos para comparar debe ser entre 1 y 5');
+    }
+
+    const products = await Product.findAll({
+      where: { id: ids } as any,
+      include: [
+        { model: ProductLang, as: 'translations' },
+        {
+          model: ProductImage,
+          as: 'images',
+          where: { cover: true },
+          required: false,
+          order: [['position', 'ASC']],
+        },
+      ],
+    });
+
+    const result = await Promise.all(
+      products.map(async (p) => {
+        const lang = (p.translations || []).find((t: any) => t.id_lang === idLang)
+          ?? p.translations?.[0];
+        const coverImage = p.images?.[0]?.image_url ?? null;
+
+        // Get features
+        const features = await ProductFeature.findAll({
+          where: { id_product: p.id },
+          include: [
+            { model: Feature, include: [{ model: FeatureLang, as: 'translations' }] },
+            { model: FeatureValue, include: [{ model: FeatureValueLang, as: 'translations' }] },
+          ],
+        });
+
+        return {
+          id: p.id,
+          reference: p.reference,
+          name: lang?.name ?? `Producto #${p.id}`,
+          description: lang?.description_short ?? '',
+          price: Number(p.price),
+          price_tax: Number(p.price),
+          quantity: p.quantity,
+          weight: Number(p.weight),
+          width: Number(p.width),
+          height: Number(p.height),
+          depth: Number(p.depth),
+          coverImage,
+          features: features.map((f: any) => ({
+            name: (f.feature?.translations?.find((t: any) => t.id_lang === idLang) ?? f.feature?.translations?.[0])?.name ?? `Feature #${f.id_feature}`,
+            value: (f.featureValue?.translations?.find((t: any) => t.id_lang === idLang) ?? f.featureValue?.translations?.[0])?.value ?? '',
+          })),
+        };
+      }),
+    );
+
+    return result;
+  },
 };

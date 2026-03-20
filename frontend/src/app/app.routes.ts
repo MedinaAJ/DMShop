@@ -122,6 +122,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'compare',
+        loadComponent: () =>
+          import('./features/catalog/compare.component').then((m) => m.CompareComponent),
+      },
+      {
         path: 'paginas/:slug',
         loadComponent: () =>
           import('./features/cms/cms-page.component').then((m) => m.CmsPageComponent),
