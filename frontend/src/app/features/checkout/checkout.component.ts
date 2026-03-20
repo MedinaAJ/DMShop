@@ -137,6 +137,12 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                       @if (summary.totalDiscountsTax > 0) {
                         <div class="flex justify-between text-green-600"><span>Descuentos</span><span>-{{ summary.totalDiscountsTax | currency:'EUR' }}</span></div>
                       }
+                      @if (summary.paymentSurcharge && summary.paymentSurcharge > 0) {
+                        <div class="flex justify-between text-orange-600">
+                          <span>Recargo ({{ paymentMethod }})</span>
+                          <span>+{{ summary.paymentSurcharge | currency:'EUR' }}</span>
+                        </div>
+                      }
                       <mat-divider />
                       <div class="flex justify-between text-lg font-bold pt-2"><span>Total</span><span>{{ summary.totalPaid | currency:'EUR' }}</span></div>
                     </div>
@@ -155,7 +161,7 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                           <div class="border rounded-lg p-4 cursor-pointer transition"
                                [class.border-blue-500]="paymentMethod === pm.name"
                                [class.bg-blue-50]="paymentMethod === pm.name"
-                               (click)="paymentMethod = pm.name">
+                               (click)="selectPaymentMethod(pm.name)">
                             <div class="flex items-center gap-3">
                               <mat-icon [class.text-blue-600]="paymentMethod === pm.name">
                                 {{ paymentMethod === pm.name ? 'radio_button_checked' : 'radio_button_unchecked' }}
@@ -274,10 +280,23 @@ export class CheckoutComponent implements OnInit {
 
     this.loadingSummary.set(true);
     try {
-      const res = await this.orderService.calculateSummary(this.selectedAddressId, id);
+      const res = await this.orderService.calculateSummary(this.selectedAddressId, id, this.paymentMethod);
       this.summary = res.data;
     } catch { /* empty */ }
     this.loadingSummary.set(false);
+  }
+
+  async selectPaymentMethod(name: string): Promise<void> {
+    this.paymentMethod = name;
+    // Recalculate summary to reflect surcharge change
+    if (this.selectedAddressId && this.selectedCarrierId) {
+      this.loadingSummary.set(true);
+      try {
+        const res = await this.orderService.calculateSummary(this.selectedAddressId, this.selectedCarrierId, name);
+        this.summary = res.data;
+      } catch { /* empty */ }
+      this.loadingSummary.set(false);
+    }
   }
 
   getCarrierPriceLabel(carrier: CarrierOption): string {

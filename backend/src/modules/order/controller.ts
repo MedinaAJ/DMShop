@@ -33,7 +33,7 @@ export const orderController = {
   // POST /orders/calculate — calculate cart summary for checkout preview
   async calculate(req: Request, res: Response) {
     const userId = req.user!.userId;
-    const { idAddressDelivery, idCarrier } = req.body;
+    const { idAddressDelivery, idCarrier, paymentMethod } = req.body;
 
     const cart = await Cart.findOne({
       where: { id_user: userId },
@@ -41,11 +41,11 @@ export const orderController = {
     });
 
     if (!cart) {
-      sendSuccess(res, { items: [], totalProducts: 0, totalProductsTax: 0, totalShipping: 0, totalShippingTax: 0, totalDiscounts: 0, totalDiscountsTax: 0, totalPaid: 0, itemCount: 0 });
+      sendSuccess(res, { items: [], totalProducts: 0, totalProductsTax: 0, totalShipping: 0, totalShippingTax: 0, totalDiscounts: 0, totalDiscountsTax: 0, paymentSurcharge: 0, totalPaid: 0, itemCount: 0 });
       return;
     }
 
-    const summary = await cartCalculator.calculate(cart.id, idAddressDelivery, idCarrier, userId);
+    const summary = await cartCalculator.calculate(cart.id, idAddressDelivery, idCarrier, userId, paymentMethod);
     sendSuccess(res, summary);
   },
 

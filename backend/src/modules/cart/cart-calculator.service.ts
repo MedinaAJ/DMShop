@@ -15,11 +15,13 @@ import { CarrierRangePrice } from '../../models/carrier-range-price.model.js';
 import { CarrierZone } from '../../models/carrier-zone.model.js';
 import { User } from '../../models/user.model.js';
 import { CustomerGroup } from '../../models/customer-group.model.js';
+import { Configuration } from '../../models/configuration.model.js';
 import type { CartSummary, CartItemDetailed } from '@dmshop/shared';
 import { discountService } from '../discount/service.js';
+import { paymentRegistry } from '../payment/payment-registry.js';
 
 export const cartCalculator = {
-  async calculate(cartId: number, idAddressDelivery?: number, idCarrier?: number, userId?: number | null): Promise<CartSummary> {
+  async calculate(cartId: number, idAddressDelivery?: number, idCarrier?: number, userId?: number | null, paymentMethodName?: string): Promise<CartSummary> {
     const cart = await Cart.findByPk(cartId, {
       include: [
         {
@@ -192,7 +194,29 @@ export const cartCalculator = {
       totalShippingTax = 0;
     }
 
-    const totalPaid = totalProductsTax + totalShippingTax - discountResult.totalDiscountsTax;
+    // Payment surcharge calculation
+    let paymentSurcharge = 0;
+    if (paymentMethodName) {
+      const paymentModule = paymentRegistry.get(paymentMethodName);
+      if (paymentModule) {
+        // Surcharge is applied on totalProductsTax + totalShippingTax - discounts
+        const subtotalBeforeSurcharge = totalProductsTax + totalShippingTax - discountResult.totalDiscountsTax;
+        if (paymentModule.surchargePercent && paymentModule.surchargePercent > 0) {
+          paymentSurcharge = round(subtotalBeforeSurcharge * paymentModule.surchargePercent / 100);
+        } else if (paymentModule.surchargeAmount && paymentModule.surchargeAmount > 0) {
+          paymentSurcharge = round(paymentModule.surchargeAmount);
+        } else {
+          // Load surcharge from DB configuration
+          const codSurchargeRow = await Configuration.findOne({ where: { key: `PAYMENT_${paymentMethodName.toUpperCase()}_SURCHARGE_AMOUNT` } });
+          if (codSurchargeRow?.value) {
+            const dbSurcharge = parseFloat(codSurchargeRow.value);
+            if (dbSurcharge > 0) paymentSurcharge = round(dbSurcharge);
+          }
+        }
+      }
+    }
+
+    const totalPaid = totalProductsTax + totalShippingTax - discountResult.totalDiscountsTax + paymentSurcharge;
 
     return {
       items,
@@ -203,10 +227,11 @@ export const cartCalculator = {
       totalDiscounts: round(discountResult.totalDiscounts),
       totalDiscountsTax: round(discountResult.totalDiscountsTax),
       groupDiscount: round(totalGroupDiscount),
+      paymentSurcharge: round(paymentSurcharge),
       totalPaid: round(Math.max(0, totalPaid)),
       itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
       appliedDiscounts: discountResult.discounts,
-    } as CartSummary & { appliedDiscounts: unknown[]; groupDiscount: number };
+    } as CartSummary & { appliedDiscounts: unknown[]; groupDiscount: number; paymentSurcharge: number };
   },
 
   async getTaxRate(taxRulesGroupId: number, countryId: number | null, stateId: number | null): Promise<number> {

@@ -81,7 +81,7 @@ export const orderService = {
     }
 
     // Calculate cart totals
-    const summary = await cartCalculator.calculate(cart.id, input.idAddressDelivery, input.idCarrier, userId);
+    const summary = await cartCalculator.calculate(cart.id, input.idAddressDelivery, input.idCarrier, userId, input.paymentMethod);
 
     if (summary.items.length === 0) {
       throw AppError.badRequest('El carrito está vacío', ErrorCode.CART_EMPTY);
@@ -135,6 +135,7 @@ export const orderService = {
           total_shipping_tax: summary.totalShippingTax,
           total_discounts: summary.totalDiscounts,
           total_discounts_tax: summary.totalDiscountsTax,
+          payment_surcharge: (summary as any).paymentSurcharge ?? 0,
           total_paid: summary.totalPaid,
           conversion_rate: 1,
           note: input.note ?? null,

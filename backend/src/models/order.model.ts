@@ -114,6 +114,9 @@ export class Order extends Model {
   @Column({ type: DataType.DECIMAL(20, 6), allowNull: false, defaultValue: 0, field: 'total_paid' })
   declare total_paid: number;
 
+  @Column({ type: DataType.DECIMAL(10, 6), allowNull: false, defaultValue: 0, field: 'payment_surcharge' })
+  declare payment_surcharge: number;
+
   @Column({
     type: DataType.DECIMAL(13, 6),
     allowNull: false,

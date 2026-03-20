@@ -38,6 +38,7 @@ export interface CartSummary {
   totalDiscounts: number;
   totalDiscountsTax: number;
   groupDiscount?: number;
+  paymentSurcharge?: number;
   totalPaid: number;
   itemCount: number;
   appliedDiscounts?: unknown[];

@@ -73,6 +73,7 @@ export interface CartSummaryResponse {
   totalShippingTax: number;
   totalDiscounts: number;
   totalDiscountsTax: number;
+  paymentSurcharge?: number;
   totalPaid: number;
   itemCount: number;
 }
@@ -116,9 +117,9 @@ export class OrderService {
     );
   }
 
-  async calculateSummary(idAddressDelivery: number, idCarrier: number) {
+  async calculateSummary(idAddressDelivery: number, idCarrier: number, paymentMethod?: string) {
     return firstValueFrom(
-      this.api.post<{ success: boolean; data: CartSummaryResponse }>('/orders/calculate', { idAddressDelivery, idCarrier }),
+      this.api.post<{ success: boolean; data: CartSummaryResponse }>('/orders/calculate', { idAddressDelivery, idCarrier, paymentMethod }),
     );
   }
 
