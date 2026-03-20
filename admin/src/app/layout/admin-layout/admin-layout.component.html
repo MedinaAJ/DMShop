@@ -1,0 +1,89 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav [mode]="'side'" [opened]="sidenavOpen()" class="sidebar">
+    <!-- Brand -->
+    <div class="sidebar-header">
+      <a routerLink="/dashboard" class="brand">
+        <mat-icon class="brand-icon">store</mat-icon>
+        <span class="brand-text">DMShop</span>
+        <span class="brand-badge">Admin</span>
+      </a>
+    </div>
+
+    <!-- Scrollable navigation -->
+    <nav class="sidebar-nav">
+      <!-- Top standalone items -->
+      @for (item of topItems; track item.route) {
+        <a class="nav-item" [routerLink]="item.route" routerLinkActive="active">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+
+      <div class="nav-divider"></div>
+
+      <!-- Grouped menus -->
+      @for (group of menuGroups; track group.key) {
+        <div class="nav-group" [class.expanded]="isGroupExpanded(group.key)">
+          <button class="nav-group-header" (click)="toggleGroup(group.key)" type="button">
+            <mat-icon class="group-icon">{{ group.icon }}</mat-icon>
+            <span class="group-label">{{ group.label }}</span>
+            <mat-icon
+              class="expand-arrow"
+              [@rotateIcon]="isGroupExpanded(group.key) ? 'expanded' : 'collapsed'"
+            >
+              expand_more
+            </mat-icon>
+          </button>
+          <div
+            class="nav-group-items"
+            [@expandCollapse]="isGroupExpanded(group.key) ? 'expanded' : 'collapsed'"
+          >
+            @for (item of group.items; track item.route) {
+              <a class="nav-item sub-item" [routerLink]="item.route" routerLinkActive="active">
+                <span class="sub-dot"></span>
+                <span>{{ item.label }}</span>
+              </a>
+            }
+          </div>
+        </div>
+      }
+    </nav>
+
+    <!-- Sidebar footer -->
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <mat-icon class="user-avatar">account_circle</mat-icon>
+        <div class="user-details">
+          <span class="user-name">{{ authService.user()?.firstName }} {{ authService.user()?.lastName }}</span>
+          <span class="user-role">{{ authService.user()?.role }}</span>
+        </div>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="main-content">
+    <mat-toolbar class="top-toolbar">
+      <button mat-icon-button (click)="sidenavOpen.set(!sidenavOpen())" class="menu-toggle">
+        <mat-icon>{{ sidenavOpen() ? 'menu_open' : 'menu' }}</mat-icon>
+      </button>
+      <span class="flex-1"></span>
+      <button mat-icon-button [matMenuTriggerFor]="profileMenu" class="profile-btn">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+      <mat-menu #profileMenu="matMenu">
+        <div class="profile-menu-header">
+          <strong>{{ authService.user()?.firstName }} {{ authService.user()?.lastName }}</strong>
+          <small>{{ authService.user()?.email }}</small>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="authService.logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Cerrar sesión</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+    <div class="page-content">
+      <router-outlet />
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
