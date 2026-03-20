@@ -9,6 +9,7 @@ import { OrderState } from '../../models/order-state.model.js';
 import { Cart } from '../../models/cart.model.js';
 import { CartItem } from '../../models/cart-item.model.js';
 import { Product } from '../../models/product.model.js';
+import { ProductLang } from '../../models/product-lang.model.js';
 import { ProductCombination } from '../../models/product-combination.model.js';
 import { User } from '../../models/user.model.js';
 import { Address } from '../../models/address.model.js';
@@ -16,7 +17,6 @@ import { Carrier } from '../../models/carrier.model.js';
 import { Currency } from '../../models/currency.model.js';
 import { Country } from '../../models/country.model.js';
 import { State } from '../../models/state.model.js';
-import { ProductLang } from '../../models/product-lang.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode, OrderStateId, HookName } from '@dmshop/shared';
 import type { CreateOrderInput, OrderListQuery, UpdateOrderStateInput, RegisterPaymentInput, UpdateTrackingInput } from '@dmshop/shared';
@@ -24,6 +24,7 @@ import { cartCalculator } from '../cart/cart-calculator.service.js';
 import { eventBus } from '../../hooks/event-bus.js';
 import { stockService } from '../stock/stock.service.js';
 import { mailService } from '../mail/mail.service.js';
+import { invoiceService } from '../invoice/invoice.service.js';
 import crypto from 'crypto';
 
 function generateReference(): string {
@@ -225,7 +226,7 @@ export const orderService = {
     if (query.state) where.id_order_state = query.state;
 
     if (query.dateFrom || query.dateTo) {
-      const dateFilter: any = {};
+      const dateFilter: Record<string | symbol, unknown> = {};
       if (query.dateFrom) dateFilter[Op.gte] = new Date(query.dateFrom);
       if (query.dateTo) dateFilter[Op.lte] = new Date(query.dateTo);
       where.created_at = dateFilter;
@@ -262,8 +263,9 @@ export const orderService = {
     if (query.state) where.id_order_state = query.state;
     if (query.userId) where.id_user = query.userId;
 
+
     if (query.dateFrom || query.dateTo) {
-      const dateFilter: any = {};
+      const dateFilter: Record<string | symbol, unknown> = {};
       if (query.dateFrom) dateFilter[Op.gte] = new Date(query.dateFrom);
       if (query.dateTo) dateFilter[Op.lte] = new Date(query.dateTo);
       where.created_at = dateFilter;
@@ -402,8 +404,42 @@ export const orderService = {
 
     // Send email if new state has send_email=true
     if (state.send_email) {
-      const trackingUrl = updatedOrder.carrier?.trackingUrl ?? undefined;
-      mailService.sendOrderStatusChange(updatedOrder, state, input.comment ?? undefined, trackingUrl).catch((err) =>
+      // Build tracking URL if state is "shipped" and there's a tracking number
+      let trackingUrl: string | undefined;
+      const orderCarrierForEmail = await OrderCarrier.findOne({
+        where: { id_order: orderId },
+        include: [{ model: Carrier, as: 'carrier' }],
+      });
+      const trackingNumber = orderCarrierForEmail?.tracking_number ?? undefined;
+      if (trackingNumber && (orderCarrierForEmail as any)?.carrier?.url) {
+        const carrierUrl = (orderCarrierForEmail as any).carrier.url as string;
+        if (carrierUrl.includes('@')) {
+          trackingUrl = carrierUrl.replace('@', encodeURIComponent(trackingNumber));
+        }
+      }
+
+      // Generate invoice PDF if state has invoice flag
+      let invoiceAttachment: { filename: string; content: Buffer; contentType: string } | undefined;
+      if (state.invoice) {
+        try {
+          const pdfBuffer = await invoiceService.generateInvoicePDF(orderId);
+          invoiceAttachment = {
+            filename: `factura-${updatedOrder.reference}.pdf`,
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+          };
+        } catch (err) {
+          console.warn('[OrderService] Could not generate invoice PDF for email attachment:', err);
+        }
+      }
+
+      mailService.sendOrderStatusChange(
+        updatedOrder,
+        state,
+        input.comment ?? undefined,
+        trackingUrl,
+        invoiceAttachment ? [invoiceAttachment] : undefined,
+      ).catch((err) =>
         console.error('[OrderService] Error sending order status email:', err),
       );
     }
@@ -453,17 +489,20 @@ export const orderService = {
       await orderCarrier.update({ tracking_number: input.trackingNumber });
     }
 
+    // Build tracking URL if carrier has a URL with @ placeholder
+    const carrier = order.carrier;
+    let trackingUrl: string | undefined;
+    if (carrier?.url && carrier.url.includes('@') && input.trackingNumber) {
+      trackingUrl = carrier.url.replace('@', encodeURIComponent(input.trackingNumber));
+    }
+
     const updatedOrder = await this.getById(orderId);
 
-    // Send tracking email if tracking number is set and carrier has a tracking URL template
+    // Send tracking email to customer (fire-and-forget)
     if (input.trackingNumber) {
-      const carrierUrl: string | null = (order as any).carrier?.url ?? null;
-      const trackingUrl = carrierUrl && carrierUrl.includes('@')
-        ? carrierUrl.replace('@', encodeURIComponent(input.trackingNumber))
-        : null;
-
-      mailService.sendTrackingUpdate(updatedOrder, input.trackingNumber, trackingUrl ?? undefined)
-        .catch((err) => console.error('[OrderService] Error sending tracking email:', err));
+      mailService.sendTrackingUpdate(updatedOrder, input.trackingNumber, trackingUrl).catch((err) =>
+        console.error('[OrderService] Error sending tracking email:', err),
+      );
     }
 
     return updatedOrder;
@@ -582,9 +621,6 @@ function mapOrderDetail(order: Order, orderCarrier: OrderCarrier | null) {
           carrierName: order.carrier?.name ?? '',
           carrierUrl: order.carrier?.url ?? null,
           trackingNumber: orderCarrier.tracking_number,
-          trackingUrl: (order.carrier?.url && orderCarrier.tracking_number)
-            ? order.carrier.url.replace('@', encodeURIComponent(orderCarrier.tracking_number))
-            : null,
           weight: Number(orderCarrier.weight),
           shippingCost: Number(orderCarrier.shipping_cost),
           shippingCostTax: Number(orderCarrier.shipping_cost_tax),

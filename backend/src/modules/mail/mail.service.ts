@@ -72,7 +72,12 @@ async function getShopUrl(): Promise<string> {
 }
 
 export const mailService = {
-  async send(to: string, subject: string, html: string): Promise<void> {
+  async send(
+    to: string,
+    subject: string,
+    html: string,
+    attachments?: Array<{ filename: string; content: Buffer | string; contentType?: string }>,
+  ): Promise<void> {
     const config = await getSmtpConfig();
 
     if (!config.host) {
@@ -83,7 +88,17 @@ export const mailService = {
     const transporter = createTransporter(config);
     const from = `"${config.fromName}" <${config.fromEmail}>`;
 
-    await transporter.sendMail({ from, to, subject, html });
+    await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      attachments: attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType ?? 'application/octet-stream',
+      })),
+    });
     console.log(`[MailService] Email sent to ${to}: ${subject}`);
   },
 
@@ -137,6 +152,7 @@ export const mailService = {
     state: Pick<OrderState, 'name' | 'color' | 'template'>,
     comment?: string,
     trackingUrl?: string,
+    attachments?: Array<{ filename: string; content: Buffer | string; contentType?: string }>,
   ): Promise<void> {
     const shopName = await getShopName();
     const shopUrl = await getShopUrl();
@@ -196,7 +212,7 @@ export const mailService = {
         break;
     }
 
-    await this.send(order.customerEmail, `Actualización de tu pedido #${order.reference}`, html);
+    await this.send(order.customerEmail, `Actualización de tu pedido #${order.reference}`, html, attachments);
   },
 
   /**
