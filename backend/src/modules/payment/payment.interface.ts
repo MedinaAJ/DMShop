@@ -36,6 +36,12 @@ export interface PaymentModule {
   allowedCountries?: string[];
 
   /**
+   * Customer group IDs that can use this payment method.
+   * Empty array or undefined means available to all groups.
+   */
+  allowedGroups?: number[];
+
+  /**
    * Surcharge applied as a percentage of the order total (e.g. 3 = 3%).
    * Only applied when > 0.
    */

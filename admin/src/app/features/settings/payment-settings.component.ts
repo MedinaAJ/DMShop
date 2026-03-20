@@ -21,15 +21,20 @@ interface PaymentConfig {
   // Cash on delivery extras
   codSurchargeAmount: string;
   codAllowedCountries: string;
+  codAllowedGroups: string;
   // Bank transfer extras
   bankTransferAllowedCountries: string;
+  bankTransferAllowedGroups: string;
   // Redsys
   redsysEnabled: boolean;
   redsysMerchantCode: string;
   redsysTerminal: string;
   redsysSecretKey: string;
+  redsysAllowedCountries: string;
+  redsysAllowedGroups: string;
   // Bizum (shares Redsys credentials)
   bizumEnabled: boolean;
+  bizumAllowedGroups: string;
 }
 
 @Component({
@@ -64,6 +69,11 @@ interface PaymentConfig {
                 <input matInput [(ngModel)]="config.bankTransferAllowedCountries" placeholder="ES, PT, FR" />
                 <mat-hint>Deja vacío para permitir en todos los países.</mat-hint>
               </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Grupos de clientes permitidos (IDs separados por coma)</mat-label>
+                <input matInput [(ngModel)]="config.bankTransferAllowedGroups" placeholder="1, 2, 3" />
+                <mat-hint>Deja vacío para permitir a todos los grupos.</mat-hint>
+              </mat-form-field>
             }
           </mat-card-content>
         </mat-card>
@@ -89,6 +99,11 @@ interface PaymentConfig {
                 <mat-label>Países permitidos (códigos ISO separados por coma)</mat-label>
                 <input matInput [(ngModel)]="config.codAllowedCountries" placeholder="ES, PT, FR" />
                 <mat-hint>Deja vacío para permitir en todos los países.</mat-hint>
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Grupos de clientes permitidos (IDs separados por coma)</mat-label>
+                <input matInput [(ngModel)]="config.codAllowedGroups" placeholder="1, 2, 3" />
+                <mat-hint>Deja vacío para permitir a todos los grupos. Útil para restringir contra reembolso a clientes verificados.</mat-hint>
               </mat-form-field>
             }
           </mat-card-content>
@@ -148,6 +163,16 @@ interface PaymentConfig {
                 <input matInput [(ngModel)]="config.redsysSecretKey" type="password" placeholder="sq7HjrUOBfKmC576..." />
                 <mat-hint>Clave de firma del panel de administración de Redsys.</mat-hint>
               </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Países permitidos (ISO separados por coma)</mat-label>
+                <input matInput [(ngModel)]="config.redsysAllowedCountries" placeholder="ES, PT" />
+                <mat-hint>Deja vacío para todos los países.</mat-hint>
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Grupos de clientes permitidos (IDs por coma)</mat-label>
+                <input matInput [(ngModel)]="config.redsysAllowedGroups" placeholder="1, 2" />
+                <mat-hint>Deja vacío para todos los grupos.</mat-hint>
+              </mat-form-field>
             }
           </mat-card-content>
         </mat-card>
@@ -171,6 +196,11 @@ interface PaymentConfig {
             <p class="text-sm text-gray-500">
               Bizum utiliza las mismas credenciales que Redsys (mismo comercio). Activa Redsys y configura las claves allí.
             </p>
+            <mat-form-field class="w-full">
+              <mat-label>Grupos de clientes permitidos para Bizum (IDs por coma)</mat-label>
+              <input matInput [(ngModel)]="config.bizumAllowedGroups" placeholder="1, 2, 3" />
+              <mat-hint>Deja vacío para todos los grupos.</mat-hint>
+            </mat-form-field>
           </mat-card-content>
         </mat-card>
 
@@ -200,12 +230,17 @@ export class PaymentSettingsComponent implements OnInit {
     stripeWebhookSecret: '',
     codSurchargeAmount: '0',
     codAllowedCountries: '',
+    codAllowedGroups: '',
     bankTransferAllowedCountries: '',
+    bankTransferAllowedGroups: '',
     redsysEnabled: false,
     redsysMerchantCode: '',
     redsysTerminal: '1',
     redsysSecretKey: '',
+    redsysAllowedCountries: '',
+    redsysAllowedGroups: '',
     bizumEnabled: false,
+    bizumAllowedGroups: '',
   };
 
   private readonly KEY_MAP: Record<keyof PaymentConfig, string> = {
@@ -217,12 +252,17 @@ export class PaymentSettingsComponent implements OnInit {
     stripeWebhookSecret: 'STRIPE_WEBHOOK_SECRET',
     codSurchargeAmount: 'PAYMENT_COD_SURCHARGE_AMOUNT',
     codAllowedCountries: 'PAYMENT_COD_ALLOWED_COUNTRIES',
+    codAllowedGroups: 'PAYMENT_COD_ALLOWED_GROUPS',
     bankTransferAllowedCountries: 'PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES',
+    bankTransferAllowedGroups: 'PAYMENT_BANK_TRANSFER_ALLOWED_GROUPS',
     redsysEnabled: 'PAYMENT_REDSYS_ENABLED',
     redsysMerchantCode: 'REDSYS_MERCHANT_CODE',
     redsysTerminal: 'REDSYS_TERMINAL',
     redsysSecretKey: 'REDSYS_SECRET_KEY',
+    redsysAllowedCountries: 'PAYMENT_REDSYS_ALLOWED_COUNTRIES',
+    redsysAllowedGroups: 'PAYMENT_REDSYS_ALLOWED_GROUPS',
     bizumEnabled: 'PAYMENT_BIZUM_ENABLED',
+    bizumAllowedGroups: 'PAYMENT_BIZUM_ALLOWED_GROUPS',
   };
 
   ngOnInit(): void {
@@ -238,12 +278,17 @@ export class PaymentSettingsComponent implements OnInit {
         this.config.stripeWebhookSecret = map.get('STRIPE_WEBHOOK_SECRET') ?? '';
         this.config.codSurchargeAmount = map.get('PAYMENT_COD_SURCHARGE_AMOUNT') ?? '0';
         this.config.codAllowedCountries = map.get('PAYMENT_COD_ALLOWED_COUNTRIES') ?? '';
+        this.config.codAllowedGroups = map.get('PAYMENT_COD_ALLOWED_GROUPS') ?? '';
         this.config.bankTransferAllowedCountries = map.get('PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES') ?? '';
+        this.config.bankTransferAllowedGroups = map.get('PAYMENT_BANK_TRANSFER_ALLOWED_GROUPS') ?? '';
         this.config.redsysEnabled = map.get('PAYMENT_REDSYS_ENABLED') === '1';
         this.config.redsysMerchantCode = map.get('REDSYS_MERCHANT_CODE') ?? '';
         this.config.redsysTerminal = map.get('REDSYS_TERMINAL') ?? '1';
         this.config.redsysSecretKey = map.get('REDSYS_SECRET_KEY') ?? '';
+        this.config.redsysAllowedCountries = map.get('PAYMENT_REDSYS_ALLOWED_COUNTRIES') ?? '';
+        this.config.redsysAllowedGroups = map.get('PAYMENT_REDSYS_ALLOWED_GROUPS') ?? '';
         this.config.bizumEnabled = map.get('PAYMENT_BIZUM_ENABLED') === '1';
+        this.config.bizumAllowedGroups = map.get('PAYMENT_BIZUM_ALLOWED_GROUPS') ?? '';
         this.loading = false;
       },
       error: () => { this.loading = false; },
@@ -261,12 +306,17 @@ export class PaymentSettingsComponent implements OnInit {
       { key: 'STRIPE_WEBHOOK_SECRET', value: this.config.stripeWebhookSecret },
       { key: 'PAYMENT_COD_SURCHARGE_AMOUNT', value: this.config.codSurchargeAmount },
       { key: 'PAYMENT_COD_ALLOWED_COUNTRIES', value: this.config.codAllowedCountries },
+      { key: 'PAYMENT_COD_ALLOWED_GROUPS', value: this.config.codAllowedGroups },
       { key: 'PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES', value: this.config.bankTransferAllowedCountries },
+      { key: 'PAYMENT_BANK_TRANSFER_ALLOWED_GROUPS', value: this.config.bankTransferAllowedGroups },
       { key: 'PAYMENT_REDSYS_ENABLED', value: this.config.redsysEnabled ? '1' : '0' },
       { key: 'REDSYS_MERCHANT_CODE', value: this.config.redsysMerchantCode },
       { key: 'REDSYS_TERMINAL', value: this.config.redsysTerminal },
       { key: 'REDSYS_SECRET_KEY', value: this.config.redsysSecretKey },
+      { key: 'PAYMENT_REDSYS_ALLOWED_COUNTRIES', value: this.config.redsysAllowedCountries },
+      { key: 'PAYMENT_REDSYS_ALLOWED_GROUPS', value: this.config.redsysAllowedGroups },
       { key: 'PAYMENT_BIZUM_ENABLED', value: this.config.bizumEnabled ? '1' : '0' },
+      { key: 'PAYMENT_BIZUM_ALLOWED_GROUPS', value: this.config.bizumAllowedGroups },
     ];
     this.api.put('/configurations', { configs }).subscribe({
       next: () => {
