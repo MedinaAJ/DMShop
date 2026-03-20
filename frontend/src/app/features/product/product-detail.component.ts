@@ -483,6 +483,27 @@ export class ProductDetailComponent implements OnInit {
             image: imageUrl,
             url: typeof window !== 'undefined' ? window.location.href : undefined,
           });
+
+          // Product JSON-LD
+          this.seoService.setProductJsonLd({
+            name: trans?.name ?? 'Producto',
+            description: trans?.descriptionShort ?? trans?.description ?? null,
+            image: imageUrl,
+            sku: product.reference ?? undefined,
+            price: Number(product.price),
+            availability: product.quantity > 0 ? 'InStock' : 'OutOfStock',
+            url: typeof window !== 'undefined' ? window.location.href : undefined,
+          });
+
+          // Breadcrumb JSON-LD
+          const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+          const categoryName = product.category?.name ?? product.translations?.[0]?.name ?? '';
+          this.seoService.setBreadcrumbJsonLd([
+            { name: 'Inicio', url: baseUrl + '/' },
+            { name: 'Catálogo', url: baseUrl + '/catalog' },
+            ...(categoryName ? [{ name: categoryName, url: baseUrl + '/catalog/' + (product.category?.id ?? '') }] : []),
+            { name: trans?.name ?? 'Producto', url: typeof window !== 'undefined' ? window.location.href : '' },
+          ]);
         },
         error: () => {
           this.product = null;

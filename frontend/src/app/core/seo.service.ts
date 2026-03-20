@@ -95,4 +95,70 @@ export class SeoService {
       this.setCanonicalUrl(opts.url);
     }
   }
+
+  /**
+   * Inject schema.org BreadcrumbList JSON-LD script tag.
+   * Safe to call multiple times (replaces existing script).
+   */
+  setBreadcrumbJsonLd(items: { name: string; url: string }[]): void {
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: items.map((item, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        name: item.name,
+        item: item.url,
+      })),
+    };
+    this.injectJsonLd('breadcrumb-ld', jsonLd);
+  }
+
+  /**
+   * Inject schema.org Product JSON-LD script tag.
+   */
+  setProductJsonLd(opts: {
+    name: string;
+    description?: string | null;
+    image?: string;
+    sku?: string;
+    price?: number;
+    currency?: string;
+    availability?: string;
+    url?: string;
+  }): void {
+    const jsonLd: Record<string, unknown> = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: opts.name,
+      description: opts.description ?? opts.name,
+    };
+    if (opts.image) jsonLd['image'] = opts.image;
+    if (opts.sku) jsonLd['sku'] = opts.sku;
+    if (opts.url) jsonLd['url'] = opts.url;
+    if (opts.price !== undefined) {
+      jsonLd['offers'] = {
+        '@type': 'Offer',
+        price: opts.price.toFixed(2),
+        priceCurrency: opts.currency ?? 'EUR',
+        availability: opts.availability === 'InStock'
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+        url: opts.url,
+      };
+    }
+    this.injectJsonLd('product-ld', jsonLd);
+  }
+
+  private injectJsonLd(id: string, data: Record<string, unknown>): void {
+    const scriptId = `ld-json-${id}`;
+    let script = this.document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (!script) {
+      script = this.document.createElement('script') as HTMLScriptElement;
+      script.id = scriptId;
+      script.type = 'application/ld+json';
+      this.document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(data);
+  }
 }

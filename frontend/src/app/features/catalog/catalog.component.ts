@@ -244,12 +244,22 @@ export class CatalogComponent implements OnInit, OnDestroy {
         this.categoryService.getById(this.categoryId).subscribe((cat) => {
           const lang = Object.keys(cat.translations || {})[0];
           this.categoryName = lang ? cat.translations[lang].name : '';
-          // SEO
+          const catUrl = typeof window !== 'undefined'
+            ? `${window.location.origin}/catalog/${cat.id}`
+            : '';
+          // SEO — canonical always points to page 1 (no ?page= in canonical)
           this.seoService.setCategoryMeta({
             name: this.categoryName,
             description: lang ? cat.translations[lang].description : undefined,
-            url: typeof window !== 'undefined' ? window.location.href : undefined,
+            url: catUrl || undefined,
           });
+          // Breadcrumb JSON-LD
+          const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+          this.seoService.setBreadcrumbJsonLd([
+            { name: 'Inicio', url: baseUrl + '/' },
+            { name: 'Catálogo', url: baseUrl + '/catalog' },
+            { name: this.categoryName, url: catUrl },
+          ]);
         });
       } else {
         this.categoryName = '';
