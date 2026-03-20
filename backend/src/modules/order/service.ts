@@ -24,6 +24,7 @@ import type { CreateOrderInput, OrderListQuery, UpdateOrderStateInput, RegisterP
 import { cartCalculator } from '../cart/cart-calculator.service.js';
 import { eventBus } from '../../hooks/event-bus.js';
 import { stockService } from '../stock/stock.service.js';
+import { loyaltyService } from '../loyalty/service.js';
 import { mailService } from '../mail/mail.service.js';
 import { invoiceService } from '../invoice/invoice.service.js';
 import crypto from 'crypto';
@@ -383,6 +384,7 @@ export const orderService = {
 
     // If transitioning to "Cancelled" state (id 6), restore stock
     const CANCELLED_STATE_ID = 6;
+    const DELIVERED_STATE_ID = OrderStateId.DELIVERED ?? 5; // Typically id 5 = delivered
     if (input.idOrderState === CANCELLED_STATE_ID && previousStateId !== CANCELLED_STATE_ID) {
       const items = await OrderItem.findAll({ where: { id_order: orderId } });
       for (const item of items) {
@@ -396,10 +398,23 @@ export const orderService = {
             reason: `Pedido #${order.reference} cancelado`,
           });
         } catch (err) {
-          // Log but don't fail the state update if stock restoration fails
           console.warn(`Could not restore stock for order item ${item.id}:`, err);
         }
       }
+      // Reverse loyalty points if order was rewarded
+      loyaltyService.reverseForOrder(order.id_user, orderId).catch((e) =>
+        console.warn('[Loyalty] reverseForOrder error:', e),
+      );
+    }
+
+    // If transitioning to "Delivered", award loyalty points
+    if (
+      (input.idOrderState === DELIVERED_STATE_ID || input.idOrderState === OrderStateId.DELIVERED) &&
+      previousStateId !== input.idOrderState
+    ) {
+      loyaltyService.awardForOrder(order.id_user, orderId, Number(order.total_paid)).catch((e) =>
+        console.warn('[Loyalty] awardForOrder error:', e),
+      );
     }
 
     const updatedOrder = await this.getById(orderId);

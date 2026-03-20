@@ -106,6 +106,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'loyalty',
+            loadComponent: () =>
+              import('./features/account/loyalty/loyalty.component').then(
+                (m) => m.LoyaltyComponent,
+              ),
+          },
+          {
             path: 'wishlist',
             loadComponent: () =>
               import('./features/account/wishlist/wishlist.component').then(

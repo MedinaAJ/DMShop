@@ -26,6 +26,7 @@ import { cmsRouter } from '../modules/cms/routes.js';
 import { returnRouter } from '../modules/return/routes.js';
 import { customerGroupRouter } from '../modules/customer-group/routes.js';
 import { langRouter } from '../modules/lang/routes.js';
+import { loyaltyRouter } from '../modules/loyalty/routes.js';
 import { invoiceController } from '../modules/invoice/invoice.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { asyncHandler } from '../middleware/async-handler.js';
@@ -59,6 +60,7 @@ apiRouter.use('/cms', cmsRouter);
 apiRouter.use('/returns', returnRouter);
 apiRouter.use('/customer-groups', customerGroupRouter);
 apiRouter.use('/langs', langRouter);
+apiRouter.use('/', loyaltyRouter); // Loyalty mounts /account/loyalty, /cart/apply-loyalty, /admin/...
 
 // Invoice download: GET /api/v1/orders/:id/invoice
 apiRouter.get('/orders/:id/invoice', authenticate, asyncHandler(invoiceController.downloadInvoice));
