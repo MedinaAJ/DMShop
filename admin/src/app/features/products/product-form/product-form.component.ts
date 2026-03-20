@@ -578,6 +578,60 @@ interface ProductData {
               </div>
             </div>
           </mat-tab>
+
+          <!-- TAB: Historial de precios -->
+          @if (!isNew) {
+            <mat-tab label="Historial de precios">
+              <div class="pt-4">
+                @if (priceHistory.length === 0) {
+                  <p class="text-gray-500 text-sm">No hay cambios de precio registrados para este producto.</p>
+                } @else {
+                  <table class="w-full text-sm border-collapse">
+                    <thead>
+                      <tr class="bg-gray-50 text-left">
+                        <th class="px-3 py-2 border border-gray-200">Fecha</th>
+                        <th class="px-3 py-2 border border-gray-200">Acción</th>
+                        <th class="px-3 py-2 border border-gray-200">Precio anterior</th>
+                        <th class="px-3 py-2 border border-gray-200">Precio nuevo</th>
+                        <th class="px-3 py-2 border border-gray-200">Reducción anterior</th>
+                        <th class="px-3 py-2 border border-gray-200">Reducción nueva</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (h of priceHistory; track h.id) {
+                        <tr class="hover:bg-gray-50">
+                          <td class="px-3 py-2 border border-gray-200 text-xs text-gray-500">
+                            {{ h.changedAt | date:'dd/MM/yyyy HH:mm' }}
+                          </td>
+                          <td class="px-3 py-2 border border-gray-200">
+                            <span [class]="h.action === 'created' ? 'text-green-600' : h.action === 'deleted' ? 'text-red-600' : 'text-blue-600'">
+                              {{ h.action === 'created' ? 'Creado' : h.action === 'deleted' ? 'Eliminado' : 'Modificado' }}
+                            </span>
+                          </td>
+                          <td class="px-3 py-2 border border-gray-200">
+                            {{ h.oldPrice != null ? (h.oldPrice | currency:'EUR') : '—' }}
+                          </td>
+                          <td class="px-3 py-2 border border-gray-200">
+                            {{ h.newPrice != null ? (h.newPrice | currency:'EUR') : '—' }}
+                          </td>
+                          <td class="px-3 py-2 border border-gray-200">
+                            @if (h.oldReduction > 0) {
+                              {{ h.oldReduction }}{{ h.reductionType === 'percentage' ? '%' : '€' }}
+                            } @else { — }
+                          </td>
+                          <td class="px-3 py-2 border border-gray-200">
+                            @if (h.newReduction > 0) {
+                              {{ h.newReduction }}{{ h.reductionType === 'percentage' ? '%' : '€' }}
+                            } @else { — }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+              </div>
+            </mat-tab>
+          }
         }
       </mat-tab-group>
     }
@@ -609,6 +663,7 @@ export class ProductFormComponent implements OnInit {
   newFeatureValueId: number | null = null;
   allCategories: Array<{ id: number; name: string; prefix: string }> = [];
   selectedCategories = new Set<number>();
+  priceHistory: any[] = [];
 
   // Stock & Combinations
   stockMovements: StockMovement[] = [];
@@ -697,6 +752,7 @@ export class ProductFormComponent implements OnInit {
     this.loadCategories();
     this.loadStockData();
     this.loadAllAttributes();
+    this.loadPriceHistory();
   }
 
   private loadProductFeatures(): void {
@@ -722,6 +778,15 @@ export class ProductFormComponent implements OnInit {
     if (this.product.idCategoryDefault) {
       this.selectedCategories.add(this.product.idCategoryDefault);
     }
+  }
+
+  private loadPriceHistory(): void {
+    if (!this.productId) return;
+    this.api.get<any>(`/discounts/specific-prices/history/${this.productId}`)
+      .subscribe({
+        next: (res) => { this.priceHistory = res.data || []; },
+        error: () => { this.priceHistory = []; },
+      });
   }
 
   private flattenTree(nodes: any[], prefix: string): void {

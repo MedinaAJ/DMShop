@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { CartRule } from '../../models/cart-rule.model.js';
 import { SpecificPrice } from '../../models/specific-price.model.js';
+import { ProductPriceHistory } from '../../models/product-price-history.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode } from '@dmshop/shared';
 import { sendSuccess, sendCreated, sendPaginated, sendNoContent } from '../../utils/response.js';
@@ -99,14 +100,82 @@ export const discountController = {
       date_from: req.body.dateFrom ?? null,
       date_to: req.body.dateTo ?? null,
     });
+
+    // Record in price history
+    try {
+      await ProductPriceHistory.create({
+        id_product: sp.id_product,
+        old_price: null,
+        new_price: Number(sp.price) >= 0 ? Number(sp.price) : null,
+        old_reduction: 0,
+        new_reduction: Number(sp.reduction),
+        reduction_type: sp.reduction_type,
+        changed_by: (req as any).user?.userId ?? null,
+        action: 'created',
+        changed_at: new Date(),
+      });
+    } catch (err) {
+      console.warn('[DiscountController] Could not record price history:', err);
+    }
+
     sendCreated(res, mapSpecificPrice(sp));
   },
 
   async deleteSpecificPrice(req: Request, res: Response) {
     const sp = await SpecificPrice.findByPk(Number(req.params.id));
     if (!sp) throw AppError.notFound('Precio específico no encontrado');
+
+    // Record deletion in history before destroying
+    try {
+      await ProductPriceHistory.create({
+        id_product: sp.id_product,
+        old_price: Number(sp.price) >= 0 ? Number(sp.price) : null,
+        new_price: null,
+        old_reduction: Number(sp.reduction),
+        new_reduction: 0,
+        reduction_type: sp.reduction_type,
+        changed_by: (req as any).user?.userId ?? null,
+        action: 'deleted',
+        changed_at: new Date(),
+      });
+    } catch (err) {
+      console.warn('[DiscountController] Could not record price history:', err);
+    }
+
     await sp.destroy();
     sendNoContent(res);
+  },
+
+  /** GET /discounts/specific-prices/history/:productId — price change history for a product */
+  async listPriceHistory(req: Request, res: Response) {
+    const productId = Number(req.params.productId);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 50;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await ProductPriceHistory.findAndCountAll({
+      where: { id_product: productId },
+      order: [['changed_at', 'DESC']],
+      limit,
+      offset,
+    });
+
+    sendPaginated(
+      res,
+      rows.map((h) => ({
+        id: h.id,
+        productId: h.id_product,
+        oldPrice: h.old_price,
+        newPrice: h.new_price,
+        oldReduction: Number(h.old_reduction),
+        newReduction: Number(h.new_reduction),
+        reductionType: h.reduction_type,
+        changedBy: h.changed_by,
+        action: h.action,
+        changedAt: h.changed_at,
+      })),
+      { page, perPage: limit, total: count, totalPages: Math.ceil(count / limit) },
+    );
   },
 };
 

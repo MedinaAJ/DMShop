@@ -138,7 +138,9 @@ export class WishlistComponent implements OnInit {
     this.addingToCart.set(productId);
     try {
       await this.cartService.addItem(productId, 1);
-      this.snackBar.open('Producto añadido al carrito', 'OK', { duration: 2000 });
+      // Auto-remove from wishlist after adding to cart (PrestaShop behaviour)
+      await this.wishlistService.removeItem(productId);
+      this.snackBar.open('Añadido al carrito y eliminado de tu lista de deseos', 'OK', { duration: 2500 });
     } catch {
       this.snackBar.open('Error al añadir al carrito', 'OK', { duration: 3000 });
     } finally {

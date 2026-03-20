@@ -73,6 +73,7 @@ import { CmsCategory } from '../models/cms-category.model.js';
 import { CmsCategoryLang } from '../models/cms-category-lang.model.js';
 import { CmsPage } from '../models/cms-page.model.js';
 import { CmsPageLang } from '../models/cms-page-lang.model.js';
+import { ProductPriceHistory } from '../models/product-price-history.model.js';
 
 const models = [
   // Core
@@ -136,6 +137,7 @@ const models = [
   OrderCarrier,
   // Pricing
   SpecificPrice,
+  ProductPriceHistory,
   // Stock
   StockMovement,
   // Wishlist

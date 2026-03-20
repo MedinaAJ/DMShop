@@ -58,3 +58,11 @@ discountRouter.delete(
   authenticate, authorize('admin'),
   asyncHandler(discountController.deleteSpecificPrice),
 );
+
+// --- Price History (admin) ---
+// Note: this route must come BEFORE /specific-prices/:id routes (it uses a different path segment)
+discountRouter.get(
+  '/specific-prices/history/:productId',
+  authenticate, authorize('admin'),
+  asyncHandler(discountController.listPriceHistory),
+);
