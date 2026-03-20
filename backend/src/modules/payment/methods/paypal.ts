@@ -1,81 +1,78 @@
 /**
- * PayPal payment module for DMShop.
+ * PayPal payment module — OAuth2 + Orders API v2
  *
- * Uses the PayPal Orders API v2 (REST) with OAuth2 client-credentials flow.
- * Works in both sandbox and live mode via PAYPAL_MODE env var.
+ * Configuration (DB table `configurations` takes precedence over env vars):
+ *   - PAYPAL_CLIENT_ID
+ *   - PAYPAL_CLIENT_SECRET
+ *   - PAYPAL_MODE  (sandbox | live)
+ *   - PAYMENT_PAYPAL_ENABLED  (1 to enable)
  *
- * Environment variables required:
- *   PAYPAL_CLIENT_ID     — PayPal app client id
- *   PAYPAL_CLIENT_SECRET — PayPal app client secret
- *   PAYPAL_MODE          — 'sandbox' | 'live' (default: sandbox)
+ * Flow:
+ *  1. POST /payment/process { orderId, paymentMethod: 'paypal' }
+ *     → calls paypalModule.process() → creates PayPal order → returns redirectUrl
+ *  2. User approves on PayPal, returns to GET /payment/paypal/success?token=XXX&orderId=YYY
+ *     → controller verifies token→orderId mapping
+ *     → calls paypalModule.handleWebhook({ type:'capture', token, orderId })
+ *     → captures payment, stores transaction, updates order state
  */
 
-import axios from 'axios';
 import { Configuration } from '../../../models/configuration.model.js';
-import { env } from '../../../config/env.js';
 import type { PaymentModule, PaymentResult } from '../payment.interface.js';
 import type { Order } from '../../../models/order.model.js';
+import { env } from '../../../config/env.js';
 
-// ─── PayPal API base URLs ────────────────────────────────────────────────────
-
-function getBaseUrl(mode: string): string {
-  return mode === 'live'
-    ? 'https://api-m.paypal.com'
-    : 'https://api-m.sandbox.paypal.com';
-}
-
-// ─── Configuration helpers ──────────────────────────────────────────────────
+// --------------------------------------------------------------------------
+// Config helpers
+// --------------------------------------------------------------------------
 
 interface PayPalConfig {
   clientId: string;
   clientSecret: string;
-  mode: string;
+  mode: 'sandbox' | 'live';
+  baseUrl: string;
 }
 
 async function getPayPalConfig(): Promise<PayPalConfig | null> {
-  // Prefer DB config, fall back to env vars
-  try {
-    const rows = await Configuration.findAll({
-      where: { key: ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_MODE'] },
-    });
-    const map = new Map(rows.map((r) => [r.key, r.value]));
+  const keys = ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_MODE'];
+  const configs = await Configuration.findAll({ where: { key: keys } });
+  const map = new Map<string, string>(configs.map((c) => [c.key, c.value]));
 
-    const clientId = map.get('PAYPAL_CLIENT_ID') || (env as any).PAYPAL_CLIENT_ID || '';
-    const clientSecret = map.get('PAYPAL_CLIENT_SECRET') || (env as any).PAYPAL_CLIENT_SECRET || '';
-    const mode = map.get('PAYPAL_MODE') || (env as any).PAYPAL_MODE || 'sandbox';
+  const clientId = map.get('PAYPAL_CLIENT_ID') || process.env['PAYPAL_CLIENT_ID'] || '';
+  const clientSecret = map.get('PAYPAL_CLIENT_SECRET') || process.env['PAYPAL_CLIENT_SECRET'] || '';
+  const mode = (map.get('PAYPAL_MODE') || process.env['PAYPAL_MODE'] || 'sandbox') as 'sandbox' | 'live';
 
-    if (!clientId || !clientSecret) return null;
-    return { clientId, clientSecret, mode };
-  } catch {
-    const clientId = (env as any).PAYPAL_CLIENT_ID || '';
-    const clientSecret = (env as any).PAYPAL_CLIENT_SECRET || '';
-    const mode = (env as any).PAYPAL_MODE || 'sandbox';
-    if (!clientId || !clientSecret) return null;
-    return { clientId, clientSecret, mode };
-  }
+  if (!clientId || !clientSecret) return null;
+
+  const baseUrl = mode === 'live'
+    ? 'https://api-m.paypal.com'
+    : 'https://api-m.sandbox.paypal.com';
+
+  return { clientId, clientSecret, mode, baseUrl };
 }
 
-// ─── OAuth2 Access Token ─────────────────────────────────────────────────────
+// --------------------------------------------------------------------------
+// PayPal REST API helpers
+// --------------------------------------------------------------------------
 
 async function getAccessToken(config: PayPalConfig): Promise<string> {
-  const base = getBaseUrl(config.mode);
   const credentials = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
-
-  const { data } = await axios.post<{ access_token: string }>(
-    `${base}/v1/oauth2/token`,
-    'grant_type=client_credentials',
-    {
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+  const response = await fetch(`${config.baseUrl}/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${credentials}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
-  );
+    body: 'grant_type=client_credentials',
+  });
 
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`PayPal auth failed: ${error}`);
+  }
+
+  const data = await response.json() as { access_token: string };
   return data.access_token;
 }
-
-// ─── PayPal Orders API helpers ───────────────────────────────────────────────
 
 async function createPayPalOrder(
   config: PayPalConfig,
@@ -83,152 +80,197 @@ async function createPayPalOrder(
   order: Order,
   returnUrl: string,
   cancelUrl: string,
-): Promise<{ id: string; approvalUrl: string }> {
-  const base = getBaseUrl(config.mode);
-  const amount = Number(order.total_paid).toFixed(2);
-
-  const { data } = await axios.post(
-    `${base}/v2/checkout/orders`,
-    {
-      intent: 'CAPTURE',
-      purchase_units: [
-        {
-          reference_id: String(order.id),
-          description: `Pedido #${order.reference}`,
-          amount: {
-            currency_code: 'EUR',
-            value: amount,
-          },
+): Promise<{ id: string; approveUrl: string }> {
+  const body = {
+    intent: 'CAPTURE',
+    purchase_units: [
+      {
+        reference_id: String(order.id),
+        description: `Pedido #${order.reference}`,
+        amount: {
+          currency_code: 'EUR',
+          value: Number(order.total_paid).toFixed(2),
         },
-      ],
-      payment_source: {
-        paypal: {
-          experience_context: {
-            payment_method_preference: 'IMMEDIATE_PAYMENT_REQUIRED',
-            brand_name: 'DMShop',
-            locale: 'es-ES',
-            landing_page: 'LOGIN',
-            shipping_preference: 'NO_SHIPPING',
-            user_action: 'PAY_NOW',
-            return_url: returnUrl,
-            cancel_url: cancelUrl,
-          },
+      },
+    ],
+    payment_source: {
+      paypal: {
+        experience_context: {
+          payment_method_preference: 'IMMEDIATE_PAYMENT_REQUIRED',
+          landing_page: 'LOGIN',
+          shipping_preference: 'NO_SHIPPING',
+          user_action: 'PAY_NOW',
+          return_url: returnUrl,
+          cancel_url: cancelUrl,
         },
       },
     },
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'PayPal-Request-Id': `dmshop-${order.id}-${Date.now()}`,
-      },
+  };
+
+  const response = await fetch(`${config.baseUrl}/v2/checkout/orders`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'PayPal-Request-Id': `dmshop-${order.id}-${Date.now()}`,
     },
-  );
+    body: JSON.stringify(body),
+  });
 
-  const approvalLink = (data.links as Array<{ rel: string; href: string }>).find(
-    (l) => l.rel === 'payer-action',
-  );
-
-  if (!approvalLink) {
-    throw new Error('PayPal did not return an approval URL');
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`PayPal createOrder failed: ${error}`);
   }
 
-  return { id: data.id, approvalUrl: approvalLink.href };
+  const data = await response.json() as {
+    id: string;
+    links: Array<{ rel: string; href: string }>;
+  };
+
+  const approveLink = data.links.find((l) => l.rel === 'payer-action' || l.rel === 'approve');
+  if (!approveLink) throw new Error('PayPal: no approval URL in response');
+
+  return { id: data.id, approveUrl: approveLink.href };
 }
 
 async function capturePayPalOrder(
   config: PayPalConfig,
   accessToken: string,
   paypalOrderId: string,
-): Promise<{ status: string; captureId: string; amount: number }> {
-  const base = getBaseUrl(config.mode);
-
-  const { data } = await axios.post(
-    `${base}/v2/checkout/orders/${paypalOrderId}/capture`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+): Promise<{
+  id: string;
+  status: string;
+  purchaseUnits: Array<{
+    referenceId: string;
+    payments: { captures: Array<{ id: string; amount: { value: string }; status: string }> };
+  }>;
+}> {
+  const response = await fetch(`${config.baseUrl}/v2/checkout/orders/${paypalOrderId}/capture`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
     },
-  );
+    body: '{}',
+  });
 
-  const capture = data.purchase_units?.[0]?.payments?.captures?.[0];
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`PayPal captureOrder failed: ${error}`);
+  }
+
+  const data = await response.json() as {
+    id: string;
+    status: string;
+    purchase_units: Array<{
+      reference_id: string;
+      payments: { captures: Array<{ id: string; amount: { value: string }; status: string }> };
+    }>;
+  };
 
   return {
+    id: data.id,
     status: data.status,
-    captureId: capture?.id ?? '',
-    amount: parseFloat(capture?.amount?.value ?? '0'),
+    purchaseUnits: data.purchase_units.map((pu) => ({
+      referenceId: pu.reference_id,
+      payments: pu.payments,
+    })),
   };
 }
 
-// ─── Payment Module ──────────────────────────────────────────────────────────
+// --------------------------------------------------------------------------
+// Payment module
+// --------------------------------------------------------------------------
 
 export const paypalModule: PaymentModule = {
   name: 'paypal',
   displayName: 'PayPal',
   description: 'Paga de forma segura con tu cuenta PayPal o tarjeta.',
-  icon: 'account_balance_wallet',
+  icon: 'payment',
   requiresConfig: true,
 
   async isAvailable(): Promise<boolean> {
     const enabled = await Configuration.findOne({ where: { key: 'PAYMENT_PAYPAL_ENABLED' } });
-    if (enabled && enabled.value !== '1') return false;
+    if (enabled?.value !== '1') return false;
     const config = await getPayPalConfig();
     return config !== null;
   },
 
   async process(order: Order): Promise<PaymentResult> {
     const config = await getPayPalConfig();
-    if (!config) throw new Error('PayPal is not configured');
+    if (!config) throw new Error('PayPal no está configurado');
 
     const frontendUrl = env.FRONTEND_URL || 'http://localhost:4200';
-    const backendUrl = env.APP_URL || 'http://localhost:3000';
+    const backendUrl = process.env['BACKEND_URL'] || process.env['API_URL'] || 'http://localhost:3000';
 
-    const returnUrl = `${backendUrl}/payment/paypal/success?orderId=${order.id}`;
-    const cancelUrl = `${frontendUrl}/checkout?payment=cancelled`;
+    const returnUrl = `${backendUrl}/api/v1/payment/paypal/success?orderId=${order.id}`;
+    const cancelUrl = `${backendUrl}/api/v1/payment/paypal/cancel?orderId=${order.id}`;
 
     const accessToken = await getAccessToken(config);
-    const { id: paypalOrderId, approvalUrl } = await createPayPalOrder(
-      config,
-      accessToken,
-      order,
-      returnUrl,
-      cancelUrl,
+    const { id: paypalOrderId, approveUrl } = await createPayPalOrder(
+      config, accessToken, order, returnUrl, cancelUrl,
     );
+
+    // Extract token from the approveUrl (PayPal appends ?token=XXXXX)
+    try {
+      const url = new URL(approveUrl);
+      const token = url.searchParams.get('token');
+      if (token) {
+        // Store the token → orderId mapping for security verification in the success handler
+        await Configuration.upsert({
+          key: `PAYPAL_TOKEN_${token}`,
+          value: String(order.id),
+        });
+      }
+    } catch {
+      // If we can't parse the URL, store by paypalOrderId as fallback
+      await Configuration.upsert({
+        key: `PAYPAL_TOKEN_${paypalOrderId}`,
+        value: String(order.id),
+      });
+    }
 
     return {
       status: 'redirect',
-      redirectUrl: approvalUrl,
+      redirectUrl: approveUrl,
       transactionId: paypalOrderId,
       metadata: { paypalOrderId },
     };
   },
 
-  /**
-   * Handle PayPal webhook events (IPN/Webhooks API).
-   * For simplicity, we only handle PAYMENT.CAPTURE.COMPLETED.
-   */
   async handleWebhook(
     payload: unknown,
     _headers: Record<string, string>,
   ): Promise<{ orderId: number; transactionId: string; amount: number; success: boolean }> {
-    const event = payload as any;
+    const body = payload as { type?: string; token?: string; orderId?: number; paypalOrderId?: string };
 
-    if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
-      const capture = event.resource;
-      const orderId = Number(capture?.custom_id || capture?.invoice_id || 0);
-      const captureId: string = capture?.id ?? '';
-      const amount = parseFloat(capture?.amount?.value ?? '0');
+    if (body.type === 'capture') {
+      // Called from the success redirect handler in the controller
+      const config = await getPayPalConfig();
+      if (!config) throw new Error('PayPal no está configurado');
 
-      return { orderId, transactionId: captureId, amount, success: true };
+      const paypalOrderId = body.token ?? body.paypalOrderId ?? '';
+      if (!paypalOrderId) throw new Error('PayPal: missing token/order ID');
+
+      const accessToken = await getAccessToken(config);
+      const captured = await capturePayPalOrder(config, accessToken, paypalOrderId);
+
+      const capture = captured.purchaseUnits[0]?.payments?.captures?.[0];
+      if (!capture) throw new Error('PayPal: no capture in response');
+
+      const orderId = body.orderId ?? Number(captured.purchaseUnits[0]?.referenceId ?? 0);
+      const amount = parseFloat(capture.amount?.value ?? '0');
+      const success = capture.status === 'COMPLETED' || captured.status === 'COMPLETED';
+
+      return {
+        orderId,
+        transactionId: capture.id,
+        amount,
+        success,
+      };
     }
 
-    throw new Error(`Unhandled PayPal event type: ${event.event_type}`);
+    // IPN / Webhook notification (not commonly used with Orders API v2)
+    throw new Error('PayPal webhook: unhandled payload type');
   },
 };
-
-// ─── Exported helpers for controller ────────────────────────────────────────
-
-export { getPayPalConfig, getAccessToken, capturePayPalOrder };

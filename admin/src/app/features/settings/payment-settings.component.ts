@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSelectModule } from '@angular/material/select';
 import { ApiService } from '../../core/services/api.service';
 
 interface PaymentConfig {
@@ -23,6 +24,18 @@ interface PaymentConfig {
   codAllowedCountries: string;
   // Bank transfer extras
   bankTransferAllowedCountries: string;
+  // PayPal
+  paypalEnabled: boolean;
+  paypalClientId: string;
+  paypalClientSecret: string;
+  paypalMode: string;
+  // Redsys
+  redsysEnabled: boolean;
+  redsysMerchantCode: string;
+  redsysSecretKey: string;
+  redsysTerminal: string;
+  redsysEnvironment: string;
+  redsysMerchantUrl: string;
 }
 
 @Component({
@@ -31,7 +44,7 @@ interface PaymentConfig {
   imports: [
     FormsModule, MatCardModule, MatSlideToggleModule, MatFormFieldModule,
     MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
-    MatSnackBarModule, MatDividerModule,
+    MatSnackBarModule, MatDividerModule, MatSelectModule,
   ],
   template: `
     <div class="max-w-3xl">
@@ -116,6 +129,79 @@ interface PaymentConfig {
           </mat-card-content>
         </mat-card>
 
+        <!-- PayPal -->
+        <mat-card class="mb-4">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="!text-3xl text-blue-500 mt-1">payment</mat-icon>
+            <mat-card-title>PayPal</mat-card-title>
+            <mat-card-subtitle>Pagos con cuenta PayPal o tarjeta vía PayPal Checkout.</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="pt-4 space-y-4">
+            <mat-slide-toggle [(ngModel)]="config.paypalEnabled">
+              Habilitado
+            </mat-slide-toggle>
+
+            @if (config.paypalEnabled) {
+              <mat-form-field class="w-full">
+                <mat-label>Modo</mat-label>
+                <mat-select [(ngModel)]="config.paypalMode">
+                  <mat-option value="sandbox">Sandbox (pruebas)</mat-option>
+                  <mat-option value="live">Live (producción)</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Client ID</mat-label>
+                <input matInput [(ngModel)]="config.paypalClientId" placeholder="AYS..." />
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Client Secret</mat-label>
+                <input matInput type="password" [(ngModel)]="config.paypalClientSecret" placeholder="EG..." />
+              </mat-form-field>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Redsys -->
+        <mat-card class="mb-4">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="!text-3xl text-green-600 mt-1">account_balance</mat-icon>
+            <mat-card-title>Redsys (TPV Virtual bancario)</mat-card-title>
+            <mat-card-subtitle>Pasarela de pago con tarjeta para bancos españoles (BBVA, CaixaBank, Sabadell…)</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="pt-4 space-y-4">
+            <mat-slide-toggle [(ngModel)]="config.redsysEnabled">
+              Habilitado
+            </mat-slide-toggle>
+
+            @if (config.redsysEnabled) {
+              <mat-form-field class="w-full">
+                <mat-label>Entorno</mat-label>
+                <mat-select [(ngModel)]="config.redsysEnvironment">
+                  <mat-option value="test">Test (sis-t.redsys.es)</mat-option>
+                  <mat-option value="prod">Producción (sis.redsys.es)</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Código de comercio (Ds_MerchantCode)</mat-label>
+                <input matInput [(ngModel)]="config.redsysMerchantCode" placeholder="999008881" />
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Terminal</mat-label>
+                <input matInput [(ngModel)]="config.redsysTerminal" placeholder="001" />
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>Clave secreta SHA256 (base64)</mat-label>
+                <input matInput type="password" [(ngModel)]="config.redsysSecretKey" placeholder="sq7H..." />
+              </mat-form-field>
+              <mat-form-field class="w-full">
+                <mat-label>URL de notificación (Webhook) — Ds_MerchantURL</mat-label>
+                <input matInput [(ngModel)]="config.redsysMerchantUrl" placeholder="https://tutienda.com/api/v1/payment/webhook/redsys" />
+                <mat-hint>URL del servidor backend que recibirá la notificación POST de Redsys.</mat-hint>
+              </mat-form-field>
+            }
+          </mat-card-content>
+        </mat-card>
+
         <div class="flex justify-end mt-4">
           <button mat-flat-button color="primary" (click)="save()" [disabled]="saving">
             @if (saving) { <mat-spinner diameter="20" class="inline-block mr-2" /> }
@@ -143,22 +229,20 @@ export class PaymentSettingsComponent implements OnInit {
     codSurchargeAmount: '0',
     codAllowedCountries: '',
     bankTransferAllowedCountries: '',
-  };
-
-  private readonly KEY_MAP: Record<keyof PaymentConfig, string> = {
-    bankTransferEnabled: 'PAYMENT_BANK_TRANSFER_ENABLED',
-    cashOnDeliveryEnabled: 'PAYMENT_CASH_ON_DELIVERY_ENABLED',
-    stripeEnabled: 'PAYMENT_STRIPE_ENABLED',
-    stripePublicKey: 'STRIPE_PUBLIC_KEY',
-    stripeSecretKey: 'STRIPE_SECRET_KEY',
-    stripeWebhookSecret: 'STRIPE_WEBHOOK_SECRET',
-    codSurchargeAmount: 'PAYMENT_COD_SURCHARGE_AMOUNT',
-    codAllowedCountries: 'PAYMENT_COD_ALLOWED_COUNTRIES',
-    bankTransferAllowedCountries: 'PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES',
+    paypalEnabled: false,
+    paypalClientId: '',
+    paypalClientSecret: '',
+    paypalMode: 'sandbox',
+    redsysEnabled: false,
+    redsysMerchantCode: '',
+    redsysSecretKey: '',
+    redsysTerminal: '001',
+    redsysEnvironment: 'test',
+    redsysMerchantUrl: '',
   };
 
   ngOnInit(): void {
-    this.api.get<any>('/configurations', { prefix: 'PAYMENT_,STRIPE_' }).subscribe({
+    this.api.get<any>('/configurations', { prefix: 'PAYMENT_,STRIPE_,PAYPAL_,REDSYS_' }).subscribe({
       next: (res) => {
         const map = new Map<string, string>();
         for (const c of res.data) map.set(c.key, c.value);
@@ -171,6 +255,18 @@ export class PaymentSettingsComponent implements OnInit {
         this.config.codSurchargeAmount = map.get('PAYMENT_COD_SURCHARGE_AMOUNT') ?? '0';
         this.config.codAllowedCountries = map.get('PAYMENT_COD_ALLOWED_COUNTRIES') ?? '';
         this.config.bankTransferAllowedCountries = map.get('PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES') ?? '';
+        // PayPal
+        this.config.paypalEnabled = map.get('PAYMENT_PAYPAL_ENABLED') === '1';
+        this.config.paypalClientId = map.get('PAYPAL_CLIENT_ID') ?? '';
+        this.config.paypalClientSecret = map.get('PAYPAL_CLIENT_SECRET') ?? '';
+        this.config.paypalMode = map.get('PAYPAL_MODE') ?? 'sandbox';
+        // Redsys
+        this.config.redsysEnabled = map.get('PAYMENT_REDSYS_ENABLED') === '1';
+        this.config.redsysMerchantCode = map.get('REDSYS_MERCHANT_CODE') ?? '';
+        this.config.redsysSecretKey = map.get('REDSYS_SECRET_KEY') ?? '';
+        this.config.redsysTerminal = map.get('REDSYS_TERMINAL') ?? '001';
+        this.config.redsysEnvironment = map.get('REDSYS_ENVIRONMENT') ?? 'test';
+        this.config.redsysMerchantUrl = map.get('REDSYS_MERCHANT_URL') ?? '';
         this.loading = false;
       },
       error: () => { this.loading = false; },
@@ -189,6 +285,18 @@ export class PaymentSettingsComponent implements OnInit {
       { key: 'PAYMENT_COD_SURCHARGE_AMOUNT', value: this.config.codSurchargeAmount },
       { key: 'PAYMENT_COD_ALLOWED_COUNTRIES', value: this.config.codAllowedCountries },
       { key: 'PAYMENT_BANK_TRANSFER_ALLOWED_COUNTRIES', value: this.config.bankTransferAllowedCountries },
+      // PayPal
+      { key: 'PAYMENT_PAYPAL_ENABLED', value: this.config.paypalEnabled ? '1' : '0' },
+      { key: 'PAYPAL_CLIENT_ID', value: this.config.paypalClientId },
+      { key: 'PAYPAL_CLIENT_SECRET', value: this.config.paypalClientSecret },
+      { key: 'PAYPAL_MODE', value: this.config.paypalMode },
+      // Redsys
+      { key: 'PAYMENT_REDSYS_ENABLED', value: this.config.redsysEnabled ? '1' : '0' },
+      { key: 'REDSYS_MERCHANT_CODE', value: this.config.redsysMerchantCode },
+      { key: 'REDSYS_SECRET_KEY', value: this.config.redsysSecretKey },
+      { key: 'REDSYS_TERMINAL', value: this.config.redsysTerminal },
+      { key: 'REDSYS_ENVIRONMENT', value: this.config.redsysEnvironment },
+      { key: 'REDSYS_MERCHANT_URL', value: this.config.redsysMerchantUrl },
     ];
     this.api.put('/configurations', { configs }).subscribe({
       next: () => {
