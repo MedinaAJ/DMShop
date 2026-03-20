@@ -19,7 +19,7 @@ function buildMerchantParameters(params: Record<string, string>): string {
 
 /** HMAC3DES (Triple-DES ECB) key derivation from base64 secret + order number */
 async function deriveOrderKey(secretKeyBase64: string, order: string): Promise<Buffer> {
-  const { createDecipheriv, createCipheriv } = await import('crypto');
+  const { createCipheriv } = await import('crypto');
   const secretKey = Buffer.from(secretKeyBase64, 'base64');
   // DES3 ECB encrypt order (padded to 8 bytes multiples)
   const orderBuf = Buffer.alloc(8, 0);

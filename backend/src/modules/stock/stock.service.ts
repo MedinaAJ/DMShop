@@ -1,4 +1,4 @@
-import { Transaction, Op } from 'sequelize';
+import { Transaction } from 'sequelize';
 import { sequelize } from '../../config/database.js';
 import { StockMovement, StockMovementType } from '../../models/stock-movement.model.js';
 import { Product } from '../../models/product.model.js';
@@ -322,23 +322,23 @@ export const stockService = {
     const productLang = await ProductLang.findOne({ where: { id_product: idProduct, id_lang: 1 } });
     const productName = productLang?.name ?? `Producto #${idProduct}`;
 
-    // Dynamically import mailer to avoid circular deps
-    const { mailer } = await import('../mail/mailer.js');
+    // Dynamically import mail service to avoid circular deps
+    const { mailService } = await import('../mail/mail.service.js');
     const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:4200';
 
     await Promise.all(
       alerts.map(async (alert) => {
         try {
-          await mailer.sendMail({
-            to: alert.email,
-            subject: `¡${productName} ya está disponible!`,
-            html: `
+          await mailService.send(
+            alert.email,
+            `¡${productName} ya está disponible!`,
+            `
               <h2>¡Tenemos buenas noticias!</h2>
               <p>El producto <strong>${productName}</strong> que tenías en tu lista de espera está de nuevo en stock.</p>
               <p><a href="${frontendUrl}/products/${idProduct}" style="background:#1976d2;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block">Ver producto</a></p>
               <p style="color:#666;font-size:12px">Recibes este email porque te suscribiste a las alertas de disponibilidad en nuestra tienda.</p>
             `,
-          });
+          );
           await alert.update({ sent_at: new Date() });
         } catch (err) {
           console.error(`[StockAlert] Error sending to ${alert.email}:`, err);

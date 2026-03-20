@@ -37,12 +37,14 @@ paypalRouter.get(
       const accessToken = await getAccessToken(config);
       const capture = await capturePayPalOrder(config, accessToken, paypalOrderId);
 
-      if (capture.status === 'COMPLETED') {
+      const captureData = capture.purchaseUnits?.[0]?.payments?.captures?.[0];
+
+      if (capture.status === 'COMPLETED' && captureData) {
         // Register the payment in the order
         await orderService.registerPayment(ourOrderId, {
           paymentMethod: 'paypal',
-          transactionId: capture.captureId,
-          amount: capture.amount,
+          transactionId: captureData.id,
+          amount: parseFloat(captureData.amount.value),
           idCurrency: 1,
         });
 

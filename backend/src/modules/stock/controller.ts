@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { stockService } from './stock.service.js';
-import { sendSuccess, sendCreated } from '../../utils/response.js';
+import { sendSuccess, sendCreated, sendPaginated } from '../../utils/response.js';
 
 export const stockController = {
   // GET /stock/movements?id_product=&page=&limit=
@@ -49,7 +49,7 @@ export const stockController = {
     const page = Number(req.query.page) || 1;
     const perPage = Number(req.query.perPage) || 20;
     const result = await stockService.getPendingStockAlerts(page, perPage);
-    sendSuccess(res, result.data, 200, result.meta);
+    sendPaginated(res, result.data, result.meta);
   },
 
   // POST /products/:id/stock-alert — subscribe to back-in-stock alert (public)

@@ -96,7 +96,7 @@ interface LoyaltyTransaction {
                   </mat-icon>
                   <div>
                     <p class="font-medium text-sm">
-                      {{ sourceLabels[tx.source] ?? tx.source }}
+                      {{ sourceLabels[tx.source] || tx.source }}
                     </p>
                     <p class="text-xs text-gray-400">{{ tx.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
                   </div>

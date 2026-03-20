@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { loyaltyService } from './service.js';
-import { sendSuccess } from '../../utils/response.js';
+import { sendSuccess, sendPaginated } from '../../utils/response.js';
 
 export const loyaltyController = {
   // GET /account/loyalty — user's loyalty balance + history
@@ -9,7 +9,7 @@ export const loyaltyController = {
     const page = Number(req.query.page) || 1;
     const perPage = Number(req.query.perPage) || 20;
     const result = await loyaltyService.getHistory(userId, page, perPage);
-    sendSuccess(res, { balance: result.balance, history: result.data }, 200, result.meta);
+    sendPaginated(res, [{ balance: result.balance, history: result.data }], result.meta);
   },
 
   // POST /cart/apply-loyalty — redeem points for discount

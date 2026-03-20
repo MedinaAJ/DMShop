@@ -8,8 +8,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -35,9 +34,7 @@ import {
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     CurrencyPipe,
-    DatePipe,
     DecimalPipe,
     MatCardModule,
     MatIconModule,

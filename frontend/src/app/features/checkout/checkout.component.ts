@@ -63,7 +63,7 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                     <div>
                       <p class="font-semibold">{{ addr.alias }} — {{ addr.firstName }} {{ addr.lastName }}</p>
                       <p class="text-sm text-gray-600">{{ addr.address1 }}, {{ addr.postcode }} {{ addr.city }}</p>
-                      <p class="text-sm text-gray-400">{{ addr.country?.name }}</p>
+                      <p class="text-sm text-gray-400">{{ addr.country.name }}</p>
                     </div>
                   </div>
                 </div>
@@ -202,11 +202,11 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                     <mat-spinner diameter="20" class="inline-block mr-2" />
                   }
                   @if (paymentMethod === 'paypal') {
-                    <mat-icon>account_balance_wallet</mat-icon> Pagar con PayPal
+                    <ng-container><mat-icon>account_balance_wallet</mat-icon> Pagar con PayPal</ng-container>
                   } @else if (paymentMethod === 'bizum') {
                     📱 Pagar con Bizum
                   } @else if (paymentMethod === 'redsys') {
-                    <mat-icon>credit_card</mat-icon> Pagar con tarjeta (TPV)
+                    <ng-container><mat-icon>credit_card</mat-icon> Pagar con tarjeta (TPV)</ng-container>
                   } @else {
                     Confirmar pedido
                   }

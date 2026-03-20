@@ -19,7 +19,6 @@
 import { Configuration } from '../../../models/configuration.model.js';
 import type { PaymentModule, PaymentResult } from '../payment.interface.js';
 import type { Order } from '../../../models/order.model.js';
-import { env } from '../../../config/env.js';
 
 // --------------------------------------------------------------------------
 // Config helpers
@@ -32,7 +31,7 @@ interface PayPalConfig {
   baseUrl: string;
 }
 
-async function getPayPalConfig(): Promise<PayPalConfig | null> {
+export async function getPayPalConfig(): Promise<PayPalConfig | null> {
   const keys = ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_MODE'];
   const configs = await Configuration.findAll({ where: { key: keys } });
   const map = new Map<string, string>(configs.map((c) => [c.key, c.value]));
@@ -54,7 +53,7 @@ async function getPayPalConfig(): Promise<PayPalConfig | null> {
 // PayPal REST API helpers
 // --------------------------------------------------------------------------
 
-async function getAccessToken(config: PayPalConfig): Promise<string> {
+export async function getAccessToken(config: PayPalConfig): Promise<string> {
   const credentials = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
   const response = await fetch(`${config.baseUrl}/v1/oauth2/token`, {
     method: 'POST',
@@ -133,7 +132,7 @@ async function createPayPalOrder(
   return { id: data.id, approveUrl: approveLink.href };
 }
 
-async function capturePayPalOrder(
+export async function capturePayPalOrder(
   config: PayPalConfig,
   accessToken: string,
   paypalOrderId: string,
@@ -200,7 +199,6 @@ export const paypalModule: PaymentModule = {
     const config = await getPayPalConfig();
     if (!config) throw new Error('PayPal no está configurado');
 
-    const frontendUrl = env.FRONTEND_URL || 'http://localhost:4200';
     const backendUrl = process.env['BACKEND_URL'] || process.env['API_URL'] || 'http://localhost:3000';
 
     const returnUrl = `${backendUrl}/api/v1/payment/paypal/success?orderId=${order.id}`;

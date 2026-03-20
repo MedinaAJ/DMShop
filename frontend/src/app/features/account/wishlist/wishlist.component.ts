@@ -98,8 +98,7 @@ import { environment } from '../../../../environments/environment';
                     @if (addingToCart() === item.id_product) {
                       <mat-spinner diameter="16" class="inline-block" />
                     } @else {
-                      <mat-icon class="text-sm mr-1">shopping_cart</mat-icon>
-                      Añadir
+                      <ng-container><mat-icon class="text-sm mr-1">shopping_cart</mat-icon> Añadir</ng-container>
                     }
                   </button>
                   <button

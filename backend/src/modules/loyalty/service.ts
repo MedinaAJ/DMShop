@@ -1,7 +1,5 @@
 import { LoyaltyPoint } from '../../models/loyalty-point.model.js';
 import { Configuration } from '../../models/configuration.model.js';
-import { sequelize } from '../../config/database.js';
-import { Op } from 'sequelize';
 
 /** Get loyalty config from database */
 async function getLoyaltyConfig(): Promise<{ pointsPerEuro: number; euroPerPoint: number }> {
@@ -100,7 +98,7 @@ export const loyaltyService = {
     };
   },
 
-  async adminAdjustPoints(idUser: number, points: number, reason?: string) {
+  async adminAdjustPoints(idUser: number, points: number, _reason?: string) {
     return LoyaltyPoint.create({
       id_user: idUser,
       points,

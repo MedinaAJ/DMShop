@@ -1,6 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -52,7 +51,6 @@ const STATE_COLORS: Record<ReturnState, string> = {
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,

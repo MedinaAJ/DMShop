@@ -719,7 +719,7 @@ export const productService = {
       products.map(async (p) => {
         const lang = (p.translations || []).find((t: any) => t.id_lang === idLang)
           ?? p.translations?.[0];
-        const coverImage = p.images?.[0]?.image_url ?? null;
+        const coverImage = p.images?.[0]?.path ?? null;
 
         // Get features
         const features = await ProductFeature.findAll({
@@ -739,9 +739,6 @@ export const productService = {
           price_tax: Number(p.price),
           quantity: p.quantity,
           weight: Number(p.weight),
-          width: Number(p.width),
-          height: Number(p.height),
-          depth: Number(p.depth),
           coverImage,
           features: features.map((f: any) => ({
             name: (f.feature?.translations?.find((t: any) => t.id_lang === idLang) ?? f.feature?.translations?.[0])?.name ?? `Feature #${f.id_feature}`,

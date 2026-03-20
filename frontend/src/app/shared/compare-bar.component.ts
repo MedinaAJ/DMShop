@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
+import { SlicePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { CompareService } from '../../core/services/compare.service';
+import { CompareService } from '../core/services/compare.service';
 
 @Component({
   selector: 'app-compare-bar',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, SlicePipe],
   template: `
     @if (compareService.count() > 0) {
       <div class="fixed bottom-0 left-0 right-0 bg-gray-900 text-white shadow-2xl z-50 py-3 px-6 flex items-center justify-between">

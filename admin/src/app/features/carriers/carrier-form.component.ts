@@ -11,7 +11,6 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTabsModule } from '@angular/material/tabs';
-import { CurrencyPipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
 
 interface RangePrice {
@@ -48,7 +47,6 @@ interface LangTranslation {
     MatProgressSpinnerModule,
     MatCheckboxModule,
     MatTabsModule,
-    CurrencyPipe,
   ],
   template: `
     <div class="flex items-center gap-4 mb-6">

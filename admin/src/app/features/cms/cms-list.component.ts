@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { DatePipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
 import { firstValueFrom } from 'rxjs';
 
@@ -29,7 +28,6 @@ interface CmsPageAdmin {
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatPaginatorModule,
-    DatePipe,
   ],
   template: `
     <div class="flex justify-between items-center mb-6">

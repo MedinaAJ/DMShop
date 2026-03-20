@@ -10,12 +10,7 @@ paymentRouter.get('/methods', authenticate, asyncHandler(paymentController.listM
 paymentRouter.post('/process', authenticate, asyncHandler(paymentController.process));
 paymentRouter.get('/confirmation/:orderId', authenticate, asyncHandler(paymentController.confirmation));
 
-// Redsys: get signed form fields to redirect to TPV
-paymentRouter.post('/redsys/form', authenticate, asyncHandler(paymentController.redsysForm));
 
-// PayPal: OAuth2 callback routes (no auth middleware — user comes back from PayPal)
-paymentRouter.get('/paypal/success', asyncHandler(paymentController.paypalSuccess));
-paymentRouter.get('/paypal/cancel', asyncHandler(paymentController.paypalCancel));
 
 // Webhooks from payment providers (raw body for signature verification)
 // Redsys sends URL-encoded POST, so accept both JSON and form-encoded

@@ -290,7 +290,7 @@ import { environment } from '../../../environments/environment';
                         [style.width.%]="reviewStats()!.totalReviews > 0 ? (reviewStats()!.distribution[star] / reviewStats()!.totalReviews * 100) : 0"
                       ></div>
                     </div>
-                    <span class="w-6 text-gray-500">{{ reviewStats()!.distribution[star] ?? 0 }}</span>
+                    <span class="w-6 text-gray-500">{{ reviewStats()!.distribution[star] }}</span>
                   </div>
                 }
               </div>
@@ -497,11 +497,11 @@ export class ProductDetailComponent implements OnInit {
 
           // Breadcrumb JSON-LD
           const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-          const categoryName = product.category?.name ?? product.translations?.[0]?.name ?? '';
+          const categoryName = product.categoryName ?? product.translations?.[0]?.name ?? '';
           this.seoService.setBreadcrumbJsonLd([
             { name: 'Inicio', url: baseUrl + '/' },
             { name: 'Catálogo', url: baseUrl + '/catalog' },
-            ...(categoryName ? [{ name: categoryName, url: baseUrl + '/catalog/' + (product.category?.id ?? '') }] : []),
+            ...(categoryName ? [{ name: categoryName, url: baseUrl + '/catalog/' + (product.idCategoryDefault ?? '') }] : []),
             { name: trans?.name ?? 'Producto', url: typeof window !== 'undefined' ? window.location.href : '' },
           ]);
         },

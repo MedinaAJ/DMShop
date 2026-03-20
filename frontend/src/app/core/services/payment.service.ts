@@ -7,6 +7,8 @@ export interface PaymentMethodOption {
   displayName: string;
   description: string;
   icon: string;
+  surchargePercent?: number;
+  surchargeAmount?: number;
 }
 
 export interface PaymentProcessResult {
