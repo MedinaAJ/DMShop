@@ -2,6 +2,9 @@ import { ProductReview } from '../../models/product-review.model.js';
 import { User } from '../../models/user.model.js';
 import { Product } from '../../models/product.model.js';
 import { ProductLang } from '../../models/product-lang.model.js';
+import { Order } from '../../models/order.model.js';
+import { OrderItem } from '../../models/order-item.model.js';
+import { Configuration } from '../../models/configuration.model.js';
 import { AppError } from '../../utils/app-error.js';
 
 import type { PaginationMeta } from '@dmshop/shared';
@@ -62,6 +65,24 @@ export const reviewService = {
     userId: number,
     data: { rating: number; title: string; content: string },
   ) {
+    // Check if "only buyers can review" setting is active
+    const requirePurchaseRow = await Configuration.findOne({ where: { key: 'REVIEW_REQUIRE_PURCHASE' } });
+    if (requirePurchaseRow?.value === '1') {
+      // Verify user has purchased this product (delivered order containing it)
+      const hasPurchased = await OrderItem.findOne({
+        where: { id_product: productId },
+        include: [{
+          model: Order,
+          as: 'order',
+          where: { id_user: userId },
+          required: true,
+        }],
+      });
+      if (!hasPurchased) {
+        throw AppError.forbidden('Solo los compradores pueden dejar una reseña de este producto');
+      }
+    }
+
     const existing = await ProductReview.findOne({
       where: { id_product: productId, id_user: userId },
     });
