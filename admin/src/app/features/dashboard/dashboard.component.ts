@@ -193,7 +193,8 @@ declare const Chart: any;
                     <div class="flex items-center gap-2">
                       @if (product.cover_image) {
                         <img [src]="getImageUrl(product.cover_image)" [alt]="product.name"
-                          class="w-8 h-8 rounded object-cover shrink-0" />
+                          class="w-8 h-8 rounded object-cover shrink-0"
+                          (error)="$any($event.target).style.display='none'" />
                       } @else {
                         <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center shrink-0">
                           <mat-icon class="!text-sm text-gray-400">image</mat-icon>
@@ -316,6 +317,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       const ChartClass = chartModule.Chart;
       if (ChartClass) {
         ChartClass.register(
+          chartModule.LineController,
           chartModule.CategoryScale,
           chartModule.LinearScale,
           chartModule.PointElement,

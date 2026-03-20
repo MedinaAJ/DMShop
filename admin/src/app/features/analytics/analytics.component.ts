@@ -295,6 +295,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       const ChartClass = chartModule.Chart;
       if (ChartClass) {
         ChartClass.register(
+          chartModule.LineController,
+          chartModule.BarController,
           chartModule.CategoryScale,
           chartModule.LinearScale,
           chartModule.BarElement,

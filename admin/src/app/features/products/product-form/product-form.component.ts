@@ -228,7 +228,7 @@ interface ProductData {
                     [class.border-blue-500]="img.cover"
                     [class.border-gray-200]="!img.cover"
                   >
-                    <img [src]="getImageUrl(img.path)" class="w-full h-32 object-cover" />
+                    <img [src]="getImageUrl(img.path)" class="w-full h-32 object-cover" (error)="onImageError($event)" />
                     @if (img.cover) {
                       <span
                         class="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1"
@@ -711,16 +711,15 @@ export class ProductFormComponent implements OnInit {
         next: (res) => {
           const p = res.data;
           this.product = {
-            price: p.price,
+            price: Number(p.price),
             quantity: p.quantity,
             reference: p.reference || '',
             ean13: p.ean13 || '',
             active: p.active,
-            idCategoryDefault: p.idCategoryDefault,
-            idManufacturer: p.idManufacturer || null,
-            idSupplier: p.idSupplier || null,
-            translations: (p.translations ||
-              this.product.translations) as ProductData['translations'],
+            idCategoryDefault: p.id_category_default ?? p.idCategoryDefault,
+            idManufacturer: p.id_manufacturer ?? p.idManufacturer ?? null,
+            idSupplier: p.id_supplier ?? p.idSupplier ?? null,
+            translations: this.mapTranslations(p.translations),
           };
           this.stockEditValue = p.quantity;
           this.lowStockAlertValue = p.lowStockAlert ?? 5;
@@ -799,9 +798,34 @@ export class ProductFormComponent implements OnInit {
     }
   }
 
+  private mapTranslations(raw: any): ProductData['translations'] {
+    const empty: TranslationData = { name: '', slug: '', description: '', descriptionShort: '' };
+    if (!raw || !Array.isArray(raw)) {
+      return { es: { ...empty }, en: { ...empty } };
+    }
+    const langMap: Record<number, string> = { 1: 'es', 2: 'en' };
+    const result: Record<string, TranslationData> = { es: { ...empty }, en: { ...empty } };
+    for (const t of raw) {
+      const key = langMap[t.id_lang] || `lang_${t.id_lang}`;
+      result[key] = {
+        name: t.name || '',
+        slug: t.slug || '',
+        description: t.description || '',
+        descriptionShort: t.description_short || '',
+      };
+    }
+    return result as ProductData['translations'];
+  }
+
   getImageUrl(path: string): string {
     if (path.startsWith('http')) return path;
     return environment.apiUrl.replace('/api/v1', '') + '/' + path.replace(/^\//, '');
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    img.parentElement?.classList.add('bg-gray-100');
   }
 
   onSubmit(): void {
