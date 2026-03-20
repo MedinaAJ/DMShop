@@ -8,6 +8,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
+import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../core/services/api.service';
 
 interface OrderState {
@@ -20,6 +21,12 @@ interface OrderState {
   invoice: boolean;
   icon: string | null;
   deleted: boolean;
+  translations?: { id_lang: number; name: string }[];
+}
+
+interface StateLangTranslation {
+  idLang: number;
+  name: string;
 }
 
 @Component({
@@ -35,6 +42,7 @@ interface OrderState {
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatCardModule,
+    MatTabsModule,
   ],
   template: `
     <div class="mb-6">
@@ -105,9 +113,31 @@ interface OrderState {
             </mat-card-header>
             <mat-card-content class="space-y-4 pt-4">
               <mat-form-field appearance="outline" class="w-full">
-                <mat-label>Nombre</mat-label>
+                <mat-label>Nombre (por defecto)</mat-label>
                 <input matInput [(ngModel)]="formData.name" name="stateName" required />
+                <mat-hint>Nombre de reserva si no hay traducción disponible.</mat-hint>
               </mat-form-field>
+
+              <!-- Translations by language -->
+              @if (availableLangs.length > 0) {
+                <div class="border rounded-lg p-3 bg-blue-50">
+                  <p class="text-xs font-semibold text-blue-800 mb-2">🌍 Traducciones</p>
+                  <mat-tab-group>
+                    @for (lang of availableLangs; track lang.id) {
+                      <mat-tab [label]="lang.name">
+                        <div class="pt-3">
+                          <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Nombre en {{ lang.name }}</mat-label>
+                            <input matInput
+                                   [(ngModel)]="getTranslation(lang.id).name"
+                                   [name]="'strans_' + lang.id" />
+                          </mat-form-field>
+                        </div>
+                      </mat-tab>
+                    }
+                  </mat-tab-group>
+                </div>
+              }
 
               <div class="flex items-center gap-4">
                 <mat-form-field appearance="outline" class="w-40">
@@ -167,11 +197,25 @@ export class OrderStatesComponent implements OnInit {
   saving = false;
   editingState: OrderState | null = null;
   creatingNew = false;
+  availableLangs: { id: number; name: string }[] = [];
+  translations: Map<number, StateLangTranslation> = new Map();
 
   formData = this.emptyForm();
 
+  getTranslation(idLang: number): StateLangTranslation {
+    if (!this.translations.has(idLang)) {
+      this.translations.set(idLang, { idLang, name: '' });
+    }
+    return this.translations.get(idLang)!;
+  }
+
   ngOnInit(): void {
     this.loadStates();
+    this.api.get<any>('/langs').subscribe({
+      next: (res) => {
+        this.availableLangs = (res.data || []).map((l: any) => ({ id: l.id, name: l.name }));
+      },
+    });
   }
 
   loadStates(): void {
@@ -188,6 +232,11 @@ export class OrderStatesComponent implements OnInit {
   startEdit(state: OrderState): void {
     this.editingState = state;
     this.creatingNew = false;
+    this.translations = new Map();
+    // Load existing translations
+    (state.translations || []).forEach((t) => {
+      this.translations.set(t.id_lang, { idLang: t.id_lang, name: t.name });
+    });
     this.formData = {
       name: state.name,
       color: state.color,
@@ -202,6 +251,7 @@ export class OrderStatesComponent implements OnInit {
   startCreate(): void {
     this.creatingNew = true;
     this.editingState = null;
+    this.translations = new Map();
     this.formData = this.emptyForm();
   }
 
@@ -223,11 +273,21 @@ export class OrderStatesComponent implements OnInit {
       : this.api.put(`/orders/admin/states/${this.editingState!.id}`, payload);
 
     obs.subscribe({
-      next: () => {
-        this.snack.open(this.creatingNew ? 'Estado creado' : 'Estado actualizado', 'OK', { duration: 2000 });
-        this.cancelEdit();
-        this.loadStates();
-        this.saving = false;
+      next: (res: any) => {
+        const savedId = res?.data?.id ?? this.editingState?.id;
+        // Save translations
+        const transPromises = Array.from(this.translations.values())
+          .filter((t) => t.name.trim())
+          .map((t) =>
+            this.api.put(`/orders/admin/states/${savedId}/translations/${t.idLang}`, { name: t.name })
+              .toPromise().catch(() => null),
+          );
+        Promise.all(transPromises).then(() => {
+          this.snack.open(this.creatingNew ? 'Estado creado' : 'Estado actualizado', 'OK', { duration: 2000 });
+          this.cancelEdit();
+          this.loadStates();
+          this.saving = false;
+        });
       },
       error: () => {
         this.snack.open('Error al guardar', 'Cerrar', { duration: 3000 });

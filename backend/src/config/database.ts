@@ -57,6 +57,7 @@ import {
   CarrierRangePrice,
   // Orders
   OrderState,
+  OrderStateLang,
   Order,
   OrderItem,
   OrderHistory,
@@ -132,6 +133,7 @@ const models = [
   CarrierRangePrice,
   // Orders
   OrderState,
+  OrderStateLang,
   Order,
   OrderItem,
   OrderHistory,

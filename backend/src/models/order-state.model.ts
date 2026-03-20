@@ -1,4 +1,5 @@
-import { Table, Column, Model, DataType } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript';
+import { OrderStateLang } from './order-state-lang.model.js';
 
 @Table({ tableName: 'order_states', timestamps: false })
 export class OrderState extends Model {
@@ -36,4 +37,7 @@ export class OrderState extends Model {
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false })
   declare deleted: boolean;
+
+  @HasMany(() => OrderStateLang)
+  declare translations: OrderStateLang[];
 }

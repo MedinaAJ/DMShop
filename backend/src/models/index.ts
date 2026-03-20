@@ -64,6 +64,7 @@ export { CarrierRangePrice } from './carrier-range-price.model.js';
 
 // Orders
 export { OrderState } from './order-state.model.js';
+export { OrderStateLang } from './order-state-lang.model.js';
 export { Order } from './order.model.js';
 export { OrderItem } from './order-item.model.js';
 export { OrderHistory } from './order-history.model.js';

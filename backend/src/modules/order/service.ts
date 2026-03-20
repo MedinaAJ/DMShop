@@ -6,6 +6,7 @@ import { OrderHistory } from '../../models/order-history.model.js';
 import { OrderPayment } from '../../models/order-payment.model.js';
 import { OrderCarrier } from '../../models/order-carrier.model.js';
 import { OrderState } from '../../models/order-state.model.js';
+import { OrderStateLang } from '../../models/order-state-lang.model.js';
 import { Cart } from '../../models/cart.model.js';
 import { CartItem } from '../../models/cart-item.model.js';
 import { Product } from '../../models/product.model.js';
@@ -508,8 +509,23 @@ export const orderService = {
     return updatedOrder;
   },
 
-  async getStates() {
-    return OrderState.findAll({ order: [['id', 'ASC']] });
+  async getStates(idLang?: number) {
+    const states = await OrderState.findAll({
+      where: { deleted: false },
+      include: [{ model: OrderStateLang, as: 'translations' }],
+      order: [['id', 'ASC']],
+    });
+
+    if (!idLang) return states;
+
+    // Resolve translated name for each state
+    return states.map((s: any) => {
+      const trans = (s.translations || []).find((t: any) => t.id_lang === idLang);
+      return {
+        ...s.toJSON(),
+        displayName: trans?.name ?? s.name,
+      };
+    });
   },
 
   async createState(input: {
@@ -561,6 +577,18 @@ export const orderService = {
     if (!state) throw AppError.notFound('Estado no encontrado', ErrorCode.NOT_FOUND);
     // Soft delete
     await state.update({ deleted: true });
+  },
+
+  /** Upsert translation for an order state */
+  async upsertStateTranslation(idOrderState: number, idLang: number, name: string) {
+    const [record] = await OrderStateLang.findOrCreate({
+      where: { id_order_state: idOrderState, id_lang: idLang },
+      defaults: { id_order_state: idOrderState, id_lang: idLang, name },
+    });
+    if (record.name !== name) {
+      await record.update({ name });
+    }
+    return record;
   },
 
   async bulkUpdateState(orderIds: number[], stateId: number, adminUserId: number): Promise<void> {

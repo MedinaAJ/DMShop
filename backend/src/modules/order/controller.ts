@@ -24,8 +24,9 @@ export const orderController = {
   },
 
   // GET /orders/states — list all order states
-  async getStates(_req: Request, res: Response) {
-    const states = await orderService.getStates();
+  async getStates(req: Request, res: Response) {
+    const idLang = Number(req.query.idLang) || undefined;
+    const states = await orderService.getStates(idLang);
     sendSuccess(res, states);
   },
 
@@ -139,5 +140,14 @@ export const orderController = {
   async adminDeleteState(req: Request, res: Response) {
     await orderService.deleteState(Number(req.params.id));
     sendSuccess(res, { deleted: true });
+  },
+
+  // PUT /orders/admin/states/:id/translations/:idLang
+  async adminUpsertStateTranslation(req: Request, res: Response) {
+    const idOrderState = Number(req.params.id);
+    const idLang = Number(req.params.idLang);
+    const { name } = req.body;
+    const record = await orderService.upsertStateTranslation(idOrderState, idLang, name);
+    sendSuccess(res, record);
   },
 };

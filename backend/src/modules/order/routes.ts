@@ -25,6 +25,7 @@ orderRouter.get('/', authenticate, validate(orderListQuerySchema, 'query'), asyn
 // --- Admin: Order State CRUD (must be before /admin/:id) ---
 orderRouter.post('/admin/states', authenticate, authorize('admin'), asyncHandler(orderController.adminCreateState));
 orderRouter.put('/admin/states/:id', authenticate, authorize('admin'), asyncHandler(orderController.adminUpdateState2));
+orderRouter.put('/admin/states/:id/translations/:idLang', authenticate, authorize('admin'), asyncHandler(orderController.adminUpsertStateTranslation));
 orderRouter.delete('/admin/states/:id', authenticate, authorize('admin'), asyncHandler(orderController.adminDeleteState));
 
 // --- Admin: Order management (must be before /:id) ---
