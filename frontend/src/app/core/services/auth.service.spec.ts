@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { ApiService } from './api.service';
 import { StorageService } from './storage.service';
 import { Router } from '@angular/router';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 
 const BASE = environment.apiUrl;
 

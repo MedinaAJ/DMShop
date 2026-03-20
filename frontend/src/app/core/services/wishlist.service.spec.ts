@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { WishlistService } from './wishlist.service';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 
 const BASE = environment.apiUrl;
 
