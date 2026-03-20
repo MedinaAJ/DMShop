@@ -5,10 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTableModule } from '@angular/material/table';
-import { MatInputModule } from '@angular/material/input';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
@@ -29,10 +26,7 @@ import { environment } from '../../../environments/environment';
     MatIconModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
-    MatSelectModule,
-    MatFormFieldModule,
     MatTableModule,
-    MatInputModule,
     CurrencyPipe,
     DatePipe,
   ],
@@ -192,18 +186,19 @@ import { environment } from '../../../environments/environment';
             <h3 class="text-lg font-semibold mb-4">Opciones disponibles</h3>
             <div class="flex flex-wrap gap-4">
               @for (group of attributeGroups; track group.name) {
-                <mat-form-field appearance="outline" class="min-w-[180px]">
-                  <mat-label>{{ group.name }}</mat-label>
-                  <mat-select
+                <div class="min-w-[180px]">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ group.name }}</label>
+                  <select
                     [(ngModel)]="group.selectedValueId"
-                    name="attr_{{ group.name }}"
-                    (selectionChange)="onCombinationSelect()"
+                    [name]="'attr_' + group.name"
+                    (ngModelChange)="onCombinationSelect()"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                   >
                     @for (val of group.values; track val.id) {
-                      <mat-option [value]="val.id">{{ val.name }}</mat-option>
+                      <option [ngValue]="val.id">{{ val.name }}</option>
                     }
-                  </mat-select>
-                </mat-form-field>
+                  </select>
+                </div>
               }
             </div>
             @if (selectedCombination) {
@@ -335,14 +330,24 @@ import { environment } from '../../../environments/environment';
                     </button>
                   }
                 </div>
-                <mat-form-field appearance="outline" class="w-full mb-3">
-                  <mat-label>Título</mat-label>
-                  <input matInput [(ngModel)]="reviewTitle" maxlength="128" placeholder="Resume tu experiencia" />
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="w-full mb-4">
-                  <mat-label>Comentario</mat-label>
-                  <textarea matInput [(ngModel)]="reviewContent" rows="4" placeholder="Comparte tu experiencia con el producto..."></textarea>
-                </mat-form-field>
+                <div class="w-full mb-3">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                  <input
+                    [(ngModel)]="reviewTitle"
+                    maxlength="128"
+                    placeholder="Resume tu experiencia"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  />
+                </div>
+                <div class="w-full mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Comentario</label>
+                  <textarea
+                    [(ngModel)]="reviewContent"
+                    rows="4"
+                    placeholder="Comparte tu experiencia con el producto..."
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-y"
+                  ></textarea>
+                </div>
                 <button
                   mat-flat-button
                   color="primary"

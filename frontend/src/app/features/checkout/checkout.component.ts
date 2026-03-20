@@ -4,8 +4,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -22,7 +21,7 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
   standalone: true,
   imports: [
     RouterLink, MatStepperModule, MatButtonModule, MatIconModule, MatRadioModule,
-    MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatCardModule,
+    MatProgressSpinnerModule, MatCardModule,
     MatDividerModule, MatSnackBarModule, FormsModule, CurrencyPipe,
   ],
   template: `
@@ -187,10 +186,15 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                       </div>
                     }
 
-                    <mat-form-field class="w-full mt-4">
-                      <mat-label>Nota (opcional)</mat-label>
-                      <textarea matInput [(ngModel)]="orderNote" rows="2"></textarea>
-                    </mat-form-field>
+                    <div class="w-full mt-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Nota (opcional)</label>
+                      <textarea
+                        [(ngModel)]="orderNote"
+                        rows="2"
+                        placeholder="Nota (opcional)"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-y"
+                      ></textarea>
+                    </div>
                   </div>
                 </div>
               }

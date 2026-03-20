@@ -5,8 +5,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ApiService } from '../../../core/services/api.service';
 import { firstValueFrom } from 'rxjs';
@@ -28,8 +26,6 @@ interface LoyaltyTransaction {
     MatProgressSpinnerModule,
     MatCardModule,
     MatSnackBarModule,
-    MatInputModule,
-    MatFormFieldModule,
     CurrencyPipe,
     DatePipe,
   ],
@@ -68,12 +64,19 @@ interface LoyaltyTransaction {
               <mat-card-title>Canjear puntos</mat-card-title>
             </mat-card-header>
             <mat-card-content class="pt-4">
-              <div class="flex gap-3">
-                <mat-form-field class="flex-1">
-                  <mat-label>Puntos a canjear</mat-label>
-                  <input matInput type="number" [(ngModel)]="pointsToRedeem" min="1" [max]="balance()" />
-                  <mat-hint>Máximo {{ balance() }} puntos = {{ balance() * (euroPerPoint() ?? 0.01) | currency:'EUR' }}</mat-hint>
-                </mat-form-field>
+              <div class="flex gap-3 items-end">
+                <div class="flex-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Puntos a canjear</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="pointsToRedeem"
+                    min="1"
+                    [max]="balance()"
+                    placeholder="Puntos a canjear"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">Máximo {{ balance() }} puntos = {{ balance() * (euroPerPoint() ?? 0.01) | currency:'EUR' }}</p>
+                </div>
                 <button mat-flat-button color="primary" (click)="redeem()" [disabled]="redeeming() || !pointsToRedeem || pointsToRedeem > balance()">
                   {{ redeeming() ? '...' : 'Canjear' }}
                 </button>

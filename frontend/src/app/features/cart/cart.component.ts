@@ -3,8 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
@@ -13,7 +12,7 @@ import { CartService } from '../../core/services/cart.service';
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [RouterLink, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatFormFieldModule, MatInputModule, MatSnackBarModule, CurrencyPipe],
+  imports: [RouterLink, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule, CurrencyPipe],
   template: `
     <div class="max-w-4xl mx-auto px-4 py-8">
       <h1 class="text-2xl font-bold mb-6">Carrito de compra</h1>
@@ -120,10 +119,13 @@ import { CartService } from '../../core/services/cart.service';
 
           <!-- Coupon input -->
           <div class="flex items-center gap-2 mb-3">
-            <mat-form-field appearance="outline" class="flex-1 !mb-0" subscriptSizing="dynamic">
-              <mat-label>Código de cupón</mat-label>
-              <input matInput [(ngModel)]="couponCode" name="coupon" (keyup.enter)="applyCoupon()" />
-            </mat-form-field>
+            <input
+              [(ngModel)]="couponCode"
+              name="coupon"
+              (keyup.enter)="applyCoupon()"
+              placeholder="Código de cupón"
+              class="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
             <button mat-stroked-button (click)="applyCoupon()" [disabled]="!couponCode()">
               Aplicar
             </button>

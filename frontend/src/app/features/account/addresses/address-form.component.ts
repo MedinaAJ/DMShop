@@ -1,11 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
@@ -16,11 +13,8 @@ import { ApiService } from '../../../core/services/api.service';
   imports: [
     RouterLink,
     FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatSelectModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
   ],
@@ -34,89 +28,157 @@ import { ApiService } from '../../../core/services/api.service';
       <div class="flex justify-center py-12"><mat-spinner diameter="40" /></div>
     } @else {
       <form (ngSubmit)="onSubmit()" class="max-w-lg space-y-4">
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Alias (ej. Casa, Trabajo)</mat-label>
-          <input matInput [(ngModel)]="address.alias" name="alias" required maxlength="32" />
-        </mat-form-field>
-
-        <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Nombre</mat-label>
-            <input matInput [(ngModel)]="address.firstName" name="firstName" required />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Apellidos</mat-label>
-            <input matInput [(ngModel)]="address.lastName" name="lastName" required />
-          </mat-form-field>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Alias (ej. Casa, Trabajo)</label>
+          <input
+            [(ngModel)]="address.alias"
+            name="alias"
+            required
+            maxlength="32"
+            placeholder="Alias (ej. Casa, Trabajo)"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
         </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Empresa (opcional)</mat-label>
-          <input matInput [(ngModel)]="address.company" name="company" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Dirección</mat-label>
-          <input matInput [(ngModel)]="address.address1" name="address1" required />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Dirección línea 2 (opcional)</mat-label>
-          <input matInput [(ngModel)]="address.address2" name="address2" />
-        </mat-form-field>
-
         <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Código postal</mat-label>
-            <input matInput [(ngModel)]="address.postcode" name="postcode" required />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Ciudad</mat-label>
-            <input matInput [(ngModel)]="address.city" name="city" required />
-          </mat-form-field>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <input
+              [(ngModel)]="address.firstName"
+              name="firstName"
+              required
+              placeholder="Nombre"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+            <input
+              [(ngModel)]="address.lastName"
+              name="lastName"
+              required
+              placeholder="Apellidos"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
         </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>País</mat-label>
-          <mat-select
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Empresa (opcional)</label>
+          <input
+            [(ngModel)]="address.company"
+            name="company"
+            placeholder="Empresa (opcional)"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+          <input
+            [(ngModel)]="address.address1"
+            name="address1"
+            required
+            placeholder="Dirección"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Dirección línea 2 (opcional)</label>
+          <input
+            [(ngModel)]="address.address2"
+            name="address2"
+            placeholder="Dirección línea 2 (opcional)"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Código postal</label>
+            <input
+              [(ngModel)]="address.postcode"
+              name="postcode"
+              required
+              placeholder="Código postal"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+            <input
+              [(ngModel)]="address.city"
+              name="city"
+              required
+              placeholder="Ciudad"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">País</label>
+          <select
             [(ngModel)]="address.idCountry"
             name="idCountry"
             required
-            (selectionChange)="onCountryChange()"
+            (ngModelChange)="onCountryChange()"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
           >
+            <option [ngValue]="null" disabled>— Seleccionar país —</option>
             @for (c of countries; track c.id) {
-              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+              <option [ngValue]="c.id">{{ c.name }}</option>
             }
-          </mat-select>
-        </mat-form-field>
+          </select>
+        </div>
 
         @if (states.length) {
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Provincia / Estado</mat-label>
-            <mat-select [(ngModel)]="address.idState" name="idState">
-              <mat-option [value]="null">— Seleccionar —</mat-option>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Provincia / Estado</label>
+            <select
+              [(ngModel)]="address.idState"
+              name="idState"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
+            >
+              <option [ngValue]="null">— Seleccionar —</option>
               @for (s of states; track s.id) {
-                <mat-option [value]="s.id">{{ s.name }}</mat-option>
+                <option [ngValue]="s.id">{{ s.name }}</option>
               }
-            </mat-select>
-          </mat-form-field>
+            </select>
+          </div>
         }
 
         <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Teléfono fijo</mat-label>
-            <input matInput [(ngModel)]="address.phone" name="phone" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Teléfono móvil</mat-label>
-            <input matInput [(ngModel)]="address.phoneMobile" name="phoneMobile" />
-          </mat-form-field>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono fijo</label>
+            <input
+              [(ngModel)]="address.phone"
+              name="phone"
+              placeholder="Teléfono fijo"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono móvil</label>
+            <input
+              [(ngModel)]="address.phoneMobile"
+              name="phoneMobile"
+              placeholder="Teléfono móvil"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
         </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>NIF / CIF</mat-label>
-          <input matInput [(ngModel)]="address.vatNumber" name="vatNumber" />
-        </mat-form-field>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">NIF / CIF</label>
+          <input
+            [(ngModel)]="address.vatNumber"
+            name="vatNumber"
+            placeholder="NIF / CIF"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </div>
 
         <div class="flex gap-3 pt-2">
           <button mat-flat-button color="primary" type="submit" [disabled]="saving">

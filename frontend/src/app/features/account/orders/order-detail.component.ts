@@ -4,8 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CurrencyPipe, DatePipe } from '@angular/common';
@@ -21,8 +19,6 @@ import { ApiService } from '../../../core/services/api.service';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatCheckboxModule,
     MatSnackBarModule,
     CurrencyPipe,
@@ -107,14 +103,26 @@ import { ApiService } from '../../../core/services/api.service';
             <mat-icon class="align-middle mr-2 text-orange-600">assignment_return</mat-icon>
             Solicitud de devolución
           </h3>
-          <mat-form-field appearance="outline" class="w-full mb-3">
-            <mat-label>Motivo general de la devolución</mat-label>
-            <input matInput [(ngModel)]="returnReason" name="returnReason" required />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="w-full mb-4">
-            <mat-label>Nota adicional (opcional)</mat-label>
-            <textarea matInput [(ngModel)]="returnNote" rows="2" name="returnNote"></textarea>
-          </mat-form-field>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Motivo general de la devolución</label>
+            <input
+              [(ngModel)]="returnReason"
+              name="returnReason"
+              required
+              placeholder="Motivo general de la devolución"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nota adicional (opcional)</label>
+            <textarea
+              [(ngModel)]="returnNote"
+              rows="2"
+              name="returnNote"
+              placeholder="Nota adicional (opcional)"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-y"
+            ></textarea>
+          </div>
 
           <h4 class="font-semibold mb-2 text-sm text-gray-700">Selecciona los artículos a devolver:</h4>
           @for (item of order.items; track item.id) {

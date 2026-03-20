@@ -1,8 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -15,8 +13,6 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [
     RouterLink,
     FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatIconModule,
     MatCheckboxModule,
@@ -32,37 +28,61 @@ import { AuthService } from '../../../core/services/auth.service';
 
       <form (ngSubmit)="onSubmit()" class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Nombre</mat-label>
-            <input matInput [(ngModel)]="firstName" name="firstName" required />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Apellidos</mat-label>
-            <input matInput [(ngModel)]="lastName" name="lastName" required />
-          </mat-form-field>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <input
+              [(ngModel)]="firstName"
+              name="firstName"
+              required
+              placeholder="Nombre"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+            <input
+              [(ngModel)]="lastName"
+              name="lastName"
+              required
+              placeholder="Apellidos"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
         </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" [(ngModel)]="email" name="email" required />
-          <mat-icon matPrefix>email</mat-icon>
-        </mat-form-field>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <div class="relative">
+            <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[20px]">email</mat-icon>
+            <input
+              type="email"
+              [(ngModel)]="email"
+              name="email"
+              required
+              placeholder="Email"
+              class="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
+        </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Contraseña</mat-label>
-          <input
-            matInput
-            [type]="hidePassword ? 'password' : 'text'"
-            [(ngModel)]="password"
-            name="password"
-            required
-            minlength="8"
-          />
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
-            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-          <mat-hint>Mínimo 8 caracteres</mat-hint>
-        </mat-form-field>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+          <div class="relative">
+            <input
+              [type]="hidePassword ? 'password' : 'text'"
+              [(ngModel)]="password"
+              name="password"
+              required
+              minlength="8"
+              placeholder="Contraseña"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+            <button type="button" (click)="hidePassword = !hidePassword" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <mat-icon class="!text-[20px]">{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Mínimo 8 caracteres</p>
+        </div>
 
         <mat-checkbox [(ngModel)]="newsletter" name="newsletter" color="primary">
           Suscribirme al boletín

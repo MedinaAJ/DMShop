@@ -4,8 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -27,8 +25,6 @@ import { ProductCardComponent } from '../../shared/components/product-card/produ
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatCheckboxModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatIconModule,
     MatExpansionModule,
@@ -76,28 +72,28 @@ import { ProductCardComponent } from '../../shared/components/product-card/produ
               <mat-panel-title class="font-semibold">Precio</mat-panel-title>
             </mat-expansion-panel-header>
             <div class="flex gap-2 pt-2">
-              <mat-form-field appearance="outline" class="flex-1">
-                <mat-label>Mín</mat-label>
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Mín</label>
                 <input
-                  matInput
                   type="number"
                   [(ngModel)]="minPrice"
                   (ngModelChange)="onFilterChange()"
                   min="0"
                   placeholder="0"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="flex-1">
-                <mat-label>Máx</mat-label>
+              </div>
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Máx</label>
                 <input
-                  matInput
                   type="number"
                   [(ngModel)]="maxPrice"
                   (ngModelChange)="onFilterChange()"
                   min="0"
                   placeholder="∞"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 />
-              </mat-form-field>
+              </div>
             </div>
           </mat-expansion-panel>
 
