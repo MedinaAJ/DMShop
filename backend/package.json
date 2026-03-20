@@ -8,6 +8,7 @@
     "start": "node dist/app.js",
     "db:migrate": "tsx src/cli/migrate.ts",
     "db:seed": "tsx src/cli/seed.ts",
+    "db:seed-dummy": "tsx src/cli/seed-dummy.ts",
     "db:reset": "tsx src/cli/reset.ts",
     "test": "vitest run",
     "test:watch": "vitest",
