@@ -160,11 +160,21 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                               <mat-icon [class.text-blue-600]="paymentMethod === pm.name">
                                 {{ paymentMethod === pm.name ? 'radio_button_checked' : 'radio_button_unchecked' }}
                               </mat-icon>
-                              <mat-icon class="text-gray-500">{{ pm.icon }}</mat-icon>
-                              <div>
+                              @if (pm.name === 'bizum') {
+                                <span class="text-xl">📱</span>
+                              } @else {
+                                <mat-icon class="text-gray-500">{{ pm.icon }}</mat-icon>
+                              }
+                              <div class="flex-1">
                                 <p class="font-semibold">{{ pm.displayName }}</p>
                                 <p class="text-sm text-gray-500">{{ pm.description }}</p>
                               </div>
+                              @if (pm.surchargeAmount && pm.surchargeAmount > 0) {
+                                <span class="text-sm text-orange-600 font-medium">+{{ pm.surchargeAmount | currency:'EUR' }}</span>
+                              }
+                              @if (pm.surchargePercent && pm.surchargePercent > 0) {
+                                <span class="text-sm text-orange-600 font-medium">+{{ pm.surchargePercent }}%</span>
+                              }
                             </div>
                           </div>
                         }
@@ -187,6 +197,10 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
                   }
                   @if (paymentMethod === 'paypal') {
                     <mat-icon>account_balance_wallet</mat-icon> Pagar con PayPal
+                  } @else if (paymentMethod === 'bizum') {
+                    📱 Pagar con Bizum
+                  } @else if (paymentMethod === 'redsys') {
+                    <mat-icon>credit_card</mat-icon> Pagar con tarjeta (TPV)
                   } @else {
                     Confirmar pedido
                   }

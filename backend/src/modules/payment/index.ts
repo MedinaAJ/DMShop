@@ -4,6 +4,7 @@ import { cashOnDeliveryModule } from './methods/cash-on-delivery.js';
 import { stripeModule } from './methods/stripe.js';
 import { redsysModule } from './methods/redsys.js';
 import { paypalModule } from './methods/paypal.js';
+import { bizumModule } from './methods/bizum.js';
 
 export function registerPaymentModules(): void {
   paymentRegistry.register(bankTransferModule);
@@ -11,4 +12,5 @@ export function registerPaymentModules(): void {
   paymentRegistry.register(stripeModule);
   paymentRegistry.register(redsysModule);
   paymentRegistry.register(paypalModule);
+  paymentRegistry.register(bizumModule);
 }
