@@ -224,3 +224,6 @@ productRouter.put(
 // Reviews
 productRouter.get('/:id/reviews', asyncHandler(reviewController.listForProduct));
 productRouter.post('/:id/reviews', authenticate, asyncHandler(reviewController.createReview));
+
+// Back-in-stock alert subscription (public — no auth required, accepts any email)
+productRouter.post('/:id/stock-alert', asyncHandler(stockController.subscribeStockAlert));

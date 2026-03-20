@@ -11,7 +11,6 @@ export const stockController = {
     const limit = req.query.limit ? Number(req.query.limit) : 20;
 
     const result = await stockService.getMovements(id_product, { id_combination, page, limit });
-    // Build paginated response manually to match perPage field
     res.status(200).json({
       success: true,
       data: result.data,
@@ -43,6 +42,31 @@ export const stockController = {
   async getAlerts(_req: Request, res: Response) {
     const alerts = await stockService.getStockAlerts();
     sendSuccess(res, alerts);
+  },
+
+  // GET /stock/back-in-stock — pending back-in-stock email subscriptions (admin)
+  async getBackInStockAlerts(req: Request, res: Response) {
+    const page = Number(req.query.page) || 1;
+    const perPage = Number(req.query.perPage) || 20;
+    const result = await stockService.getPendingStockAlerts(page, perPage);
+    sendSuccess(res, result.data, 200, result.meta);
+  },
+
+  // POST /products/:id/stock-alert — subscribe to back-in-stock alert (public)
+  async subscribeStockAlert(req: Request, res: Response) {
+    const idProduct = Number(req.params.id);
+    const { email, idCombination, idLang } = req.body;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      res.status(400).json({ success: false, message: 'Email inválido' });
+      return;
+    }
+    const alert = await stockService.subscribeStockAlert(
+      idProduct,
+      email,
+      idCombination ?? null,
+      idLang ?? 1,
+    );
+    sendSuccess(res, { id: alert.id, email: alert.email });
   },
 
   // PUT /products/:id/stock — quick stock adjustment

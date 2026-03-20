@@ -29,3 +29,11 @@ stockRouter.get(
   authorize('admin'),
   asyncHandler(stockController.getAlerts),
 );
+
+// GET /stock/back-in-stock — pending subscriptions (admin)
+stockRouter.get(
+  '/back-in-stock',
+  authenticate,
+  authorize('admin'),
+  asyncHandler(stockController.getBackInStockAlerts),
+);

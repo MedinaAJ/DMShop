@@ -82,6 +82,7 @@ export { Wishlist } from './wishlist.model.js';
 export { WishlistItem } from './wishlist-item.model.js';
 
 // Reviews
+export { StockAlert } from './stock-alert.model.js';
 export { ProductReview } from './product-review.model.js';
 
 // Returns / RMA

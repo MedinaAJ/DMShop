@@ -71,6 +71,7 @@ import {
 import { Wishlist } from '../models/wishlist.model.js';
 import { WishlistItem } from '../models/wishlist-item.model.js';
 import { ProductReview } from '../models/product-review.model.js';
+import { StockAlert } from '../models/stock-alert.model.js';
 import { CmsCategory } from '../models/cms-category.model.js';
 import { CmsCategoryLang } from '../models/cms-category-lang.model.js';
 import { CmsPage } from '../models/cms-page.model.js';
@@ -149,6 +150,8 @@ const models = [
   WishlistItem,
   // Reviews
   ProductReview,
+  // Stock Alerts
+  StockAlert,
   // CMS
   CmsCategory,
   CmsCategoryLang,

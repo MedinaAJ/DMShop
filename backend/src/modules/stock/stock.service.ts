@@ -1,9 +1,10 @@
-import { Transaction } from 'sequelize';
+import { Transaction, Op } from 'sequelize';
 import { sequelize } from '../../config/database.js';
 import { StockMovement, StockMovementType } from '../../models/stock-movement.model.js';
 import { Product } from '../../models/product.model.js';
-import { ProductCombination } from '../../models/product-combination.model.js';
 import { ProductLang } from '../../models/product-lang.model.js';
+import { ProductCombination } from '../../models/product-combination.model.js';
+import { StockAlert } from '../../models/stock-alert.model.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode } from '@dmshop/shared';
 
@@ -58,7 +59,7 @@ export const stockService = {
 
         await combination.update({ quantity: stockAfter }, { transaction: t });
 
-        return StockMovement.create(
+        const movement = await StockMovement.create(
           {
             id_product: params.id_product,
             id_combination: params.id_combination,
@@ -71,6 +72,17 @@ export const stockService = {
           },
           { transaction: t },
         );
+
+        // Fire back-in-stock alerts if stock rose from 0
+        if (stockBefore <= 0 && stockAfter > 0) {
+          setImmediate(() =>
+            this.fireStockAlerts(params.id_product, params.id_combination).catch((e) =>
+              console.error('[StockAlert] fire error:', e),
+            ),
+          );
+        }
+
+        return movement;
       } else {
         const product = await Product.findByPk(params.id_product, {
           transaction: t,
@@ -93,7 +105,7 @@ export const stockService = {
 
         await product.update({ quantity: stockAfter }, { transaction: t });
 
-        return StockMovement.create(
+        const movement = await StockMovement.create(
           {
             id_product: params.id_product,
             id_combination: null,
@@ -106,6 +118,17 @@ export const stockService = {
           },
           { transaction: t },
         );
+
+        // Fire back-in-stock alerts if stock rose from 0
+        if (stockBefore <= 0 && stockAfter > 0) {
+          setImmediate(() =>
+            this.fireStockAlerts(params.id_product, null).catch((e) =>
+              console.error('[StockAlert] fire error:', e),
+            ),
+          );
+        }
+
+        return movement;
       }
     };
 
@@ -239,5 +262,88 @@ export const stockService = {
       quantity: p.quantity,
       lowStockAlert: p.low_stock_alert,
     }));
+  },
+
+  /** Subscribe email to back-in-stock alert for a product/combination */
+  async subscribeStockAlert(
+    idProduct: number,
+    email: string,
+    idCombination?: number | null,
+    idLang: number = 1,
+  ): Promise<StockAlert> {
+    // Upsert: if already subscribed and not yet sent, return existing
+    const existing = await StockAlert.findOne({
+      where: {
+        id_product: idProduct,
+        id_combination: idCombination ?? null,
+        email: email.toLowerCase().trim(),
+        sent_at: null,
+      },
+    });
+    if (existing) return existing;
+
+    return StockAlert.create({
+      id_product: idProduct,
+      id_combination: idCombination ?? null,
+      email: email.toLowerCase().trim(),
+      id_lang: idLang,
+      sent_at: null,
+    });
+  },
+
+  /** Get pending stock alerts for admin list */
+  async getPendingStockAlerts(page = 1, perPage = 20) {
+    const offset = (page - 1) * perPage;
+    const { count, rows } = await StockAlert.findAndCountAll({
+      where: { sent_at: null },
+      order: [['created_at', 'DESC']],
+      limit: perPage,
+      offset,
+    });
+    return { data: rows, meta: { page, perPage, total: count, totalPages: Math.ceil(count / perPage) } };
+  },
+
+  /**
+   * Fire stock alerts for a product (or combination) that just came back in stock.
+   * Called internally after move() increases stock from 0.
+   */
+  async fireStockAlerts(idProduct: number, idCombination?: number | null): Promise<void> {
+    const alerts = await StockAlert.findAll({
+      where: {
+        id_product: idProduct,
+        id_combination: idCombination ?? null,
+        sent_at: null,
+      },
+    });
+
+    if (alerts.length === 0) return;
+
+    // Get product name for email
+    const productLang = await ProductLang.findOne({ where: { id_product: idProduct, id_lang: 1 } });
+    const productName = productLang?.name ?? `Producto #${idProduct}`;
+
+    // Dynamically import mailer to avoid circular deps
+    const { mailer } = await import('../mail/mailer.js');
+    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:4200';
+
+    await Promise.all(
+      alerts.map(async (alert) => {
+        try {
+          await mailer.sendMail({
+            to: alert.email,
+            subject: `¡${productName} ya está disponible!`,
+            html: `
+              <h2>¡Tenemos buenas noticias!</h2>
+              <p>El producto <strong>${productName}</strong> que tenías en tu lista de espera está de nuevo en stock.</p>
+              <p><a href="${frontendUrl}/products/${idProduct}" style="background:#1976d2;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block">Ver producto</a></p>
+              <p style="color:#666;font-size:12px">Recibes este email porque te suscribiste a las alertas de disponibilidad en nuestra tienda.</p>
+            `,
+          });
+          await alert.update({ sent_at: new Date() });
+        } catch (err) {
+          console.error(`[StockAlert] Error sending to ${alert.email}:`, err);
+        }
+      }),
+    );
   },
 };

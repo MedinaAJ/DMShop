@@ -124,6 +124,28 @@ import { environment } from '../../../environments/environment';
               </p>
             }
 
+            @if (effectiveStock <= 0 && product.availableForOrder !== false) {
+              <!-- Back-in-stock notification -->
+              @if (!stockAlertSent) {
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+                  <p class="text-sm text-orange-800 font-medium mb-2">🔔 Notificarme cuando esté disponible</p>
+                  <div class="flex gap-2">
+                    <input
+                      type="email"
+                      class="flex-1 border rounded px-3 py-1.5 text-sm"
+                      placeholder="tu@email.com"
+                      [(ngModel)]="stockAlertEmail"
+                    />
+                    <button mat-stroked-button color="accent" (click)="subscribeStockAlert()" [disabled]="stockAlertLoading">
+                      {{ stockAlertLoading ? '...' : 'Avisar' }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <p class="text-green-600 text-sm mb-4">✅ Te avisaremos cuando el producto esté disponible.</p>
+              }
+            }
+
             @if (product.reference) {
               <p class="text-sm text-gray-400 mb-4">Ref: {{ product.reference }}</p>
             }
@@ -366,6 +388,9 @@ export class ProductDetailComponent implements OnInit {
   qty = 1;
   selectedImage: string | null = null;
   addingToCart = false;
+  stockAlertEmail = '';
+  stockAlertLoading = false;
+  stockAlertSent = false;
 
   combinations: any[] = [];
   attributeGroups: Array<{
@@ -563,6 +588,24 @@ export class ProductDetailComponent implements OnInit {
 
   decreaseQty(): void {
     if (this.qty > 1) this.qty--;
+  }
+
+  async subscribeStockAlert(): Promise<void> {
+    if (!this.stockAlertEmail) return;
+    this.stockAlertLoading = true;
+    try {
+      await fetch(`/api/products/${this.product.id}/stock-alert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: this.stockAlertEmail }),
+      });
+      this.stockAlertSent = true;
+      this.snackBar.open('¡Te avisaremos cuando el producto esté disponible!', 'OK', { duration: 3000 });
+    } catch {
+      this.snackBar.open('Error al suscribirse. Inténtalo de nuevo.', 'Cerrar', { duration: 3000 });
+    } finally {
+      this.stockAlertLoading = false;
+    }
   }
 
   async addToCart(): Promise<void> {
