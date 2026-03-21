@@ -207,6 +207,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'languages',
+        loadComponent: () =>
+          import('./features/languages/languages.component').then(
+            (m) => m.LanguagesComponent,
+          ),
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',

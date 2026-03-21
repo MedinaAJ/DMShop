@@ -106,6 +106,7 @@ export class AdminLayoutComponent implements OnInit {
       items: [
         { label: 'Impuestos', icon: 'account_balance', route: '/taxes' },
         { label: 'Geográfico', icon: 'public', route: '/geo' },
+        { label: 'Idiomas', icon: 'translate', route: '/languages' },
         { label: 'Pagos', icon: 'payment', route: '/payment-settings' },
         { label: 'Email (SMTP)', icon: 'email', route: '/email-settings' },
       ],

@@ -143,7 +143,7 @@ async function seedDummy() {
 
   // --- Currencies ---
   console.log('💱 Seeding currencies...');
-  const [currEur, currUsd] = await Currency.bulkCreate([
+  const [currEur, _currUsd] = await Currency.bulkCreate([
     { name: 'Euro', iso_code: 'EUR', symbol: '€', conversion_rate: 1.0, decimals: 2, active: true, is_default: true },
     { name: 'US Dollar', iso_code: 'USD', symbol: '$', conversion_rate: 1.08, decimals: 2, active: true, is_default: false },
   ]);
@@ -238,10 +238,10 @@ async function seedDummy() {
     statesData.map((s) => ({ id_country: spain.id, iso_code: s.iso, name: s.name, active: true })),
   );
   // Madrid index = 30 (0-based)
-  const madridState = spanishStates[30];
-  const barcelonaState = spanishStates[8];
-  const valenciaState = spanishStates[47];
-  const sevillaState = spanishStates[42];
+  const _madridState = spanishStates[30];
+  const _barcelonaState = spanishStates[8];
+  const _valenciaState = spanishStates[47];
+  const _sevillaState = spanishStates[42];
 
   // --- Taxes ---
   console.log('💰 Seeding taxes...');
