@@ -59,6 +59,7 @@ export interface ProductFilters {
   max_price?: number;
   in_stock?: boolean;
   attributes?: string;
+  sort?: 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'bestseller' | 'name_asc';
 }
 
 @Injectable({ providedIn: 'root' })

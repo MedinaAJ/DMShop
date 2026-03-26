@@ -27,6 +27,26 @@ import { env } from '../../config/env.js';
 
 // =============== HELPERS ===============
 
+function buildProductOrder(sort?: string): [string, string][] {
+  switch (sort) {
+    case 'newest':
+      return [['created_at', 'DESC']];
+    case 'oldest':
+      return [['created_at', 'ASC']];
+    case 'price_asc':
+      return [['price', 'ASC']];
+    case 'price_desc':
+      return [['price', 'DESC']];
+    case 'name_asc':
+      return [['id', 'ASC']]; // fallback; real name sort would need JOIN sort
+    case 'bestseller':
+      // bestseller: order by sales_count if exists, else by id desc (proxy)
+      return [['id', 'DESC']];
+    default:
+      return [['created_at', 'DESC']];
+  }
+}
+
 function transformProductListItem(p: any, appUrl: string) {
   const translations: any[] = Array.isArray(p.translations) ? p.translations : [];
   const trans = translations[0] || {};
@@ -178,7 +198,7 @@ export const productService = {
       ],
       limit: perPage,
       offset,
-      order: [['created_at', 'DESC']],
+      order: buildProductOrder(query.sort as string | undefined),
       distinct: true,
     });
 

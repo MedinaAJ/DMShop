@@ -10,7 +10,7 @@ import {
   effect,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CurrencyPipe, DecimalPipe, PercentPipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe, PercentPipe, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -19,7 +19,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { FormsModule } from '@angular/forms';
 import { ProductStockService, StockAlert } from '../products/product-stock.service';
-import { AnalyticsService, AnalyticsSummary, RevenuePoint, TopProduct, TopCategory, Period } from '../analytics/analytics.service';
+import { AnalyticsService, AnalyticsSummary, RevenuePoint, TopProduct, TopCategory, Period, DashboardStats } from '../analytics/analytics.service';
 
 // Chart.js (vanilla API to avoid type issues)
 declare const Chart: any;
@@ -31,6 +31,7 @@ declare const Chart: any;
     RouterLink,
     CurrencyPipe,
     DecimalPipe,
+    DatePipe,
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -53,6 +54,119 @@ declare const Chart: any;
         }
       </div>
     </div>
+
+    <!-- Quick KPI Cards from consolidated stats -->
+    @if (!loadingStats() && dashboardStats()) {
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <mat-card class="!bg-green-50 border-l-4 border-green-500">
+          <mat-card-content class="!pt-4 !pb-3">
+            <div class="flex items-center gap-2 mb-1">
+              <mat-icon class="text-green-600">today</mat-icon>
+              <span class="text-xs text-gray-500">Ventas hoy</span>
+            </div>
+            <p class="text-xl font-bold text-green-700">{{ dashboardStats()!.kpis.salesToday | currency:'EUR':'symbol':'1.2-2' }}</p>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="!bg-blue-50 border-l-4 border-blue-500">
+          <mat-card-content class="!pt-4 !pb-3">
+            <div class="flex items-center gap-2 mb-1">
+              <mat-icon class="text-blue-600">date_range</mat-icon>
+              <span class="text-xs text-gray-500">Ventas este mes</span>
+            </div>
+            <p class="text-xl font-bold text-blue-700">{{ dashboardStats()!.kpis.salesMonth | currency:'EUR':'symbol':'1.2-2' }}</p>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="!bg-orange-50 border-l-4 border-orange-500">
+          <mat-card-content class="!pt-4 !pb-3">
+            <div class="flex items-center gap-2 mb-1">
+              <mat-icon class="text-orange-600">pending_actions</mat-icon>
+              <span class="text-xs text-gray-500">Pedidos pendientes</span>
+            </div>
+            <p class="text-xl font-bold text-orange-700">{{ dashboardStats()!.kpis.pendingOrders }}</p>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="!bg-purple-50 border-l-4 border-purple-500">
+          <mat-card-content class="!pt-4 !pb-3">
+            <div class="flex items-center gap-2 mb-1">
+              <mat-icon class="text-purple-600">person_add</mat-icon>
+              <span class="text-xs text-gray-500">Nuevos clientes (mes)</span>
+            </div>
+            <p class="text-xl font-bold text-purple-700">{{ dashboardStats()!.kpis.newCustomersMonth }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Recent orders + low stock side by side -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Recent orders -->
+        <mat-card>
+          <mat-card-content>
+            <div class="flex items-center justify-between mb-3 pt-2">
+              <h2 class="font-semibold">Últimos pedidos</h2>
+              <a mat-button routerLink="/orders" color="primary">Ver todos</a>
+            </div>
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b">
+                  <th class="text-left pb-2 font-medium text-gray-500">Ref</th>
+                  <th class="text-left pb-2 font-medium text-gray-500">Cliente</th>
+                  <th class="text-right pb-2 font-medium text-gray-500">Total</th>
+                  <th class="text-right pb-2 font-medium text-gray-500">Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of dashboardStats()!.recentOrders; track order.id) {
+                  <tr class="border-b hover:bg-gray-50 cursor-pointer" [routerLink]="['/orders', order.id]">
+                    <td class="py-2 font-mono text-xs">{{ order.reference }}</td>
+                    <td class="py-2 max-w-[120px] truncate">{{ order.customer }}</td>
+                    <td class="py-2 text-right">{{ order.total | currency:'EUR':'symbol':'1.2-2' }}</td>
+                    <td class="py-2 text-right text-gray-400">{{ order.date | date:'dd/MM' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Low stock products -->
+        <mat-card>
+          <mat-card-content>
+            <div class="flex items-center justify-between mb-3 pt-2">
+              <h2 class="font-semibold text-red-600">
+                <mat-icon class="!text-base align-middle mr-1">warning</mat-icon>
+                Poco stock
+              </h2>
+              <a mat-button routerLink="/products" color="warn">Ver productos</a>
+            </div>
+            @if (dashboardStats()!.lowStockProducts.length === 0) {
+              <p class="text-gray-500 text-sm py-4 text-center">No hay productos con poco stock.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (p of dashboardStats()!.lowStockProducts; track p.id) {
+                  <div class="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <span class="font-medium text-sm">{{ p.name }}</span>
+                      @if (p.reference) {
+                        <span class="text-xs text-gray-400 ml-2">({{ p.reference }})</span>
+                      }
+                    </div>
+                    <span
+                      class="font-bold text-sm px-2 py-0.5 rounded"
+                      [class.text-red-700]="p.quantity === 0"
+                      [class.bg-red-100]="p.quantity === 0"
+                      [class.text-orange-700]="p.quantity > 0"
+                      [class.bg-orange-100]="p.quantity > 0"
+                    >
+                      {{ p.quantity === 0 ? 'Sin stock' : p.quantity + ' uds' }}
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
 
     <!-- KPI Cards -->
     @if (loadingSummary()) {
@@ -294,6 +408,10 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
 
   selectedPeriod = signal<Period>('month');
 
+  // Dashboard stats (consolidated KPIs)
+  loadingStats = signal(true);
+  dashboardStats = signal<DashboardStats | null>(null);
+
   private chartInstance: any = null;
 
   periods = [
@@ -341,6 +459,16 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       error: () => {
         this.loadingAlerts.set(false);
       },
+    });
+
+    // Load consolidated dashboard stats
+    this.loadingStats.set(true);
+    this.analyticsService.getDashboardStats().subscribe({
+      next: (stats) => {
+        this.dashboardStats.set(stats);
+        this.loadingStats.set(false);
+      },
+      error: () => this.loadingStats.set(false),
     });
 
     this.loadAnalytics();

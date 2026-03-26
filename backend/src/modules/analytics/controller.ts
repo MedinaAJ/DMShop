@@ -41,4 +41,10 @@ export const analyticsController = {
     const data = await analyticsService.getCustomersChart({ period: period as any, startDate, endDate });
     res.json({ success: true, data });
   },
+
+  async getDashboardStats(_req: Request, res: Response) {
+    const data = await analyticsService.getDashboardStats();
+    res.json({ success: true, data });
+  },
 };
+

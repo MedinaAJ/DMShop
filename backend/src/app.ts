@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import { createServer } from 'http';
 
 import { env } from './config/env.js';
 import { sequelize, initDatabase } from './config/database.js';
@@ -15,6 +16,8 @@ import { seoRouter } from './modules/seo/seo.routes.js';
 import { registerPaymentModules } from './modules/payment/index.js';
 import { cmsService } from './modules/cms/service.js';
 import { OrderState } from './models/order-state.model.js';
+import { translationService } from './modules/translation/service.js';
+import { initWebSocket } from './websocket/notifications.js';
 
 const app = express();
 
@@ -118,9 +121,18 @@ async function bootstrap() {
     await seedPaymentOrderStates();
     logger.info('Payment order states ensured');
 
-    app.listen(env.PORT, () => {
+    // Seed translations if empty
+    await translationService.seedDefaults();
+    logger.info('Translations seeded');
+
+    // Create HTTP server and attach WebSocket
+    const httpServer = createServer(app);
+    initWebSocket(httpServer);
+
+    httpServer.listen(env.PORT, () => {
       logger.info(`DMShop API running on http://localhost:${env.PORT}`);
       logger.info(`Swagger docs at http://localhost:${env.PORT}/api-docs`);
+      logger.info(`WebSocket server at ws://localhost:${env.PORT}/ws`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

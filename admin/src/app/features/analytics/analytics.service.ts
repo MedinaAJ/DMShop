@@ -72,4 +72,36 @@ export class AnalyticsService {
       .get<{ success: boolean; data: CustomerPoint[] }>('/analytics/customers-chart', params as any)
       .pipe(map((r) => r.data));
   }
+
+  getDashboardStats(): Observable<DashboardStats> {
+    return this.api
+      .get<{ success: boolean; data: DashboardStats }>('/analytics/dashboard/stats')
+      .pipe(map((r) => r.data));
+  }
+}
+
+export interface DashboardKPIs {
+  salesToday: number;
+  salesMonth: number;
+  pendingOrders: number;
+  newCustomersMonth: number;
+}
+
+export interface DashboardStats {
+  kpis: DashboardKPIs;
+  revenueChart: { date: string; revenue: number }[];
+  recentOrders: {
+    id: number;
+    reference: string;
+    customer: string;
+    total: number;
+    status: number;
+    date: string;
+  }[];
+  lowStockProducts: {
+    id: number;
+    name: string;
+    quantity: number;
+    reference: string | null;
+  }[];
 }

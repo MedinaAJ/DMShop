@@ -14,3 +14,5 @@ analyticsRouter.get('/revenue-chart', asyncHandler(analyticsController.getRevenu
 analyticsRouter.get('/top-products', asyncHandler(analyticsController.getTopProducts));
 analyticsRouter.get('/top-categories', asyncHandler(analyticsController.getTopCategories));
 analyticsRouter.get('/customers-chart', asyncHandler(analyticsController.getCustomersChart));
+analyticsRouter.get('/dashboard/stats', asyncHandler(analyticsController.getDashboardStats));
+

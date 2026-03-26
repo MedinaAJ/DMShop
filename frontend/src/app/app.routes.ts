@@ -119,6 +119,13 @@ export const routes: Routes = [
                 (m) => m.WishlistComponent,
               ),
           },
+          {
+            path: 'affiliate',
+            loadComponent: () =>
+              import('./features/account/affiliate/affiliate-page.component').then(
+                (m) => m.AffiliatePageComponent,
+              ),
+          },
         ],
       },
       {

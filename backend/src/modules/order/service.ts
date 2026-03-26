@@ -27,6 +27,7 @@ import { stockService } from '../stock/stock.service.js';
 import { loyaltyService } from '../loyalty/service.js';
 import { mailService } from '../mail/mail.service.js';
 import { invoiceService } from '../invoice/invoice.service.js';
+import { emitNewOrder, emitOrderStatusChanged } from '../../websocket/notifications.js';
 import crypto from 'crypto';
 
 function generateReference(): string {
@@ -216,6 +217,12 @@ export const orderService = {
 
     const orderDetail = await this.getById(order.id, userId);
 
+    // Emit WebSocket notification to admin
+    try {
+      const user = await User.findByPk(userId, { attributes: ['email'] });
+      emitNewOrder(order.id, order.reference, Number(order.total_paid ?? 0), user?.email ?? '');
+    } catch { /* non-critical */ }
+
     // Fire-and-forget: send confirmation email (don't block if email fails)
     mailService.sendOrderConfirmation(orderDetail).catch((err) =>
       console.error('[OrderService] Error sending order confirmation email:', err),
@@ -381,6 +388,11 @@ export const orderService = {
       id_user: adminUserId,
       comment: input.comment ?? null,
     });
+
+    // Emit WebSocket notification to admin
+    try {
+      emitOrderStatusChanged(orderId, order.reference, input.idOrderState, state.name ?? '');
+    } catch { /* non-critical */ }
 
     // If transitioning to "Cancelled" state (id 6), restore stock
     const CANCELLED_STATE_ID = 6;

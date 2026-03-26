@@ -78,6 +78,10 @@ import { CmsCategoryLang } from '../models/cms-category-lang.model.js';
 import { CmsPage } from '../models/cms-page.model.js';
 import { CmsPageLang } from '../models/cms-page-lang.model.js';
 import { ProductPriceHistory } from '../models/product-price-history.model.js';
+import { Translation } from '../models/translation.model.js';
+import { Affiliate } from '../models/affiliate.model.js';
+import { AffiliateReferral } from '../models/affiliate-referral.model.js';
+import { NewsletterSubscriber } from '../models/newsletter-subscriber.model.js';
 
 const models = [
   // Core
@@ -160,6 +164,13 @@ const models = [
   CmsCategoryLang,
   CmsPage,
   CmsPageLang,
+  // Translations
+  Translation,
+  // Affiliates
+  Affiliate,
+  AffiliateReferral,
+  // Newsletter
+  NewsletterSubscriber,
 ];
 
 export const sequelize = new Sequelize({

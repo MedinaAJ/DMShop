@@ -392,4 +392,114 @@ export const analyticsService = {
 
     return result;
   },
+
+  async getDashboardStats() {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Import Product model inline to avoid circular deps
+    const { Product } = await import('../../models/product.model.js');
+    const { User } = await import('../../models/user.model.js');
+    const { Order } = await import('../../models/order.model.js');
+    const { ProductLang } = await import('../../models/product-lang.model.js');
+
+    // Sales today
+    const salesTodayResult = await sequelize.query<{ total: string }>(
+      `SELECT COALESCE(SUM(total_paid), 0) AS total FROM orders
+       WHERE created_at >= :start AND paid = 1`,
+      { replacements: { start: todayStart }, type: (await import('sequelize')).QueryTypes.SELECT },
+    );
+    const salesToday = Number(salesTodayResult[0]?.total ?? 0);
+
+    // Sales this month
+    const salesMonthResult = await sequelize.query<{ total: string }>(
+      `SELECT COALESCE(SUM(total_paid), 0) AS total FROM orders
+       WHERE created_at >= :start AND paid = 1`,
+      { replacements: { start: monthStart }, type: (await import('sequelize')).QueryTypes.SELECT },
+    );
+    const salesMonth = Number(salesMonthResult[0]?.total ?? 0);
+
+    // Pending orders (state id 1 = Awaiting payment or similar)
+    const pendingOrders = await Order.count({
+      where: {
+        id_order_state: { [Op.in]: [1, 2, 10] }, // pending/awaiting states
+      },
+    });
+
+    // New customers this month
+    const newCustomersMonth = await User.count({
+      where: {
+        created_at: { [Op.gte]: monthStart },
+        role: 'customer',
+      },
+    });
+
+    // Revenue last 30 days (chart)
+    const revenueChart = await sequelize.query<{ date: string; revenue: string }>(
+      `SELECT DATE(created_at) AS date, COALESCE(SUM(total_paid), 0) AS revenue
+       FROM orders
+       WHERE created_at >= :start AND paid = 1
+       GROUP BY DATE(created_at)
+       ORDER BY date ASC`,
+      {
+        replacements: { start: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) },
+        type: (await import('sequelize')).QueryTypes.SELECT,
+      },
+    );
+
+    // Recent orders (last 10)
+    const recentOrders = await Order.findAll({
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'email', 'first_name', 'last_name'] },
+      ],
+      order: [['created_at', 'DESC']],
+      limit: 10,
+    });
+
+    // Low stock products (quantity < 5)
+    const lowStockProducts = await Product.findAll({
+      where: { quantity: { [Op.lt]: 5 }, active: true },
+      include: [
+        {
+          model: ProductLang,
+          as: 'translations',
+          where: { id_lang: 1 },
+          required: false,
+          limit: 1,
+        },
+      ],
+      order: [['quantity', 'ASC']],
+      limit: 20,
+    });
+
+    return {
+      kpis: {
+        salesToday,
+        salesMonth,
+        pendingOrders,
+        newCustomersMonth,
+      },
+      revenueChart: revenueChart.map((r) => ({
+        date: r.date,
+        revenue: Number(r.revenue),
+      })),
+      recentOrders: recentOrders.map((o: any) => ({
+        id: o.id,
+        reference: o.reference,
+        customer: o.user
+          ? `${o.user.first_name ?? ''} ${o.user.last_name ?? ''}`.trim() || o.user.email
+          : 'Invitado',
+        total: Number(o.total_paid),
+        status: o.id_order_state,
+        date: o.created_at,
+      })),
+      lowStockProducts: lowStockProducts.map((p: any) => ({
+        id: p.id,
+        name: p.translations?.[0]?.name ?? `Producto #${p.id}`,
+        quantity: p.quantity,
+        reference: p.reference,
+      })),
+    };
+  },
 };

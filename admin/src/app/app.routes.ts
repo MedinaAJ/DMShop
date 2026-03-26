@@ -226,6 +226,27 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'translations',
+        loadComponent: () =>
+          import('./features/translations/translations.component').then(
+            (m) => m.TranslationsComponent,
+          ),
+      },
+      {
+        path: 'newsletter',
+        loadComponent: () =>
+          import('./features/newsletter/newsletter.component').then(
+            (m) => m.NewsletterComponent,
+          ),
+      },
+      {
+        path: 'affiliates',
+        loadComponent: () =>
+          import('./features/affiliates/affiliates.component').then(
+            (m) => m.AffiliatesComponent,
+          ),
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',

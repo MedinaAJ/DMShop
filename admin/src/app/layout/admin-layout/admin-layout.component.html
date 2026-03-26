@@ -67,6 +67,50 @@
         <mat-icon>{{ sidenavOpen() ? 'menu_open' : 'menu' }}</mat-icon>
       </button>
       <span class="flex-1"></span>
+      <!-- Notifications bell -->
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="notificationsMenu"
+        [matBadge]="notificationsService.unreadCount() > 0 ? notificationsService.unreadCount().toString() : null"
+        matBadgeColor="warn"
+        matBadgeSize="small"
+        class="notification-btn"
+        title="Notificaciones"
+      >
+        <mat-icon>{{ notificationsService.connected() ? 'notifications' : 'notifications_off' }}</mat-icon>
+      </button>
+      <mat-menu #notificationsMenu="matMenu" class="notifications-menu">
+        <div class="px-4 py-2 flex items-center justify-between border-b" (click)="$event.stopPropagation()">
+          <strong>Notificaciones</strong>
+          @if (notificationsService.unreadCount() > 0) {
+            <button mat-button color="primary" (click)="notificationsService.markAllRead()">
+              Marcar todas leídas
+            </button>
+          }
+        </div>
+        @if (notificationsService.notifications().length === 0) {
+          <div class="px-4 py-8 text-center text-gray-400 text-sm">Sin notificaciones</div>
+        } @else {
+          @for (n of notificationsService.notifications().slice(0, 10); track n.id) {
+            <div
+              class="px-4 py-3 border-b cursor-pointer hover:bg-gray-50"
+              [class.bg-blue-50]="!n.read"
+              (click)="notificationsService.markRead(n.id)"
+            >
+              <div class="flex items-start gap-2">
+                <mat-icon class="!text-xl shrink-0 mt-0.5" [class]="getNotifIcon(n.type).color">
+                  {{ getNotifIcon(n.type).icon }}
+                </mat-icon>
+                <div>
+                  <div class="font-medium text-sm">{{ n.title }}</div>
+                  <div class="text-xs text-gray-500">{{ n.message }}</div>
+                  <div class="text-xs text-gray-400 mt-0.5">{{ n.timestamp | date:'HH:mm dd/MM' }}</div>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </mat-menu>
       <button mat-icon-button [matMenuTriggerFor]="profileMenu" class="profile-btn">
         <mat-icon>account_circle</mat-icon>
       </button>

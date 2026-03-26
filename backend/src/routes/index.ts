@@ -27,6 +27,9 @@ import { returnRouter } from '../modules/return/routes.js';
 import { customerGroupRouter } from '../modules/customer-group/routes.js';
 import { langRouter } from '../modules/lang/routes.js';
 import { loyaltyRouter } from '../modules/loyalty/routes.js';
+import { translationRouter } from '../modules/translation/routes.js';
+import { affiliateRouter } from '../modules/affiliate/routes.js';
+import { newsletterRouter } from '../modules/newsletter/routes.js';
 import { invoiceController } from '../modules/invoice/invoice.controller.js';
 import { themeRouter } from '../modules/theme/theme.routes.js';
 import { emailTemplatesRouter } from '../modules/mail/email-templates.routes.js';
@@ -65,6 +68,10 @@ apiRouter.use('/langs', langRouter);
 apiRouter.use('/', loyaltyRouter); // Loyalty mounts /account/loyalty, /cart/apply-loyalty, /admin/...
 apiRouter.use('/theme', themeRouter);
 apiRouter.use('/admin/email-templates', emailTemplatesRouter);
+apiRouter.use('/translations', translationRouter);
+apiRouter.use('/', affiliateRouter);
+apiRouter.use('/', newsletterRouter);
 
 // Invoice download: GET /api/v1/orders/:id/invoice
 apiRouter.get('/orders/:id/invoice', authenticate, asyncHandler(invoiceController.downloadInvoice));
+

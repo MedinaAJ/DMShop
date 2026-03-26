@@ -6,9 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDivider } from '@angular/material/divider';
+import { MatBadgeModule } from '@angular/material/badge';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationsService } from '../../core/services/notifications.service';
+import { CommonModule } from '@angular/common';
 
 interface MenuItem {
   label: string;
@@ -36,6 +39,8 @@ interface MenuGroup {
     MatButtonModule,
     MatMenuModule,
     MatDivider,
+    MatBadgeModule,
+    CommonModule,
   ],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss',
@@ -54,6 +59,7 @@ interface MenuGroup {
 })
 export class AdminLayoutComponent implements OnInit {
   readonly authService = inject(AuthService);
+  readonly notificationsService = inject(NotificationsService);
   private readonly router = inject(Router);
   readonly sidenavOpen = signal(true);
   readonly expandedGroups = signal<Record<string, boolean>>({});
@@ -107,6 +113,7 @@ export class AdminLayoutComponent implements OnInit {
         { label: 'Impuestos', icon: 'account_balance', route: '/taxes' },
         { label: 'Geográfico', icon: 'public', route: '/geo' },
         { label: 'Idiomas', icon: 'translate', route: '/languages' },
+        { label: 'Traducciones', icon: 'language', route: '/translations' },
         { label: 'Pagos', icon: 'payment', route: '/payment-settings' },
         { label: 'Email (SMTP)', icon: 'email', route: '/email-settings' },
         { label: 'Apariencia', icon: 'palette', route: '/theme-config' },
@@ -119,6 +126,8 @@ export class AdminLayoutComponent implements OnInit {
       icon: 'article',
       items: [
         { label: 'Páginas CMS', icon: 'description', route: '/cms' },
+        { label: 'Newsletter', icon: 'email', route: '/newsletter' },
+        { label: 'Afiliados', icon: 'share', route: '/affiliates' },
       ],
     },
   ];
@@ -128,6 +137,9 @@ export class AdminLayoutComponent implements OnInit {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => this.expandGroupForCurrentRoute(e.urlAfterRedirects));
+
+    // Connect to WebSocket for real-time notifications
+    this.notificationsService.connect();
   }
 
   toggleGroup(key: string): void {
@@ -144,6 +156,15 @@ export class AdminLayoutComponent implements OnInit {
         this.expandedGroups.update((groups) => ({ ...groups, [group.key]: true }));
         break;
       }
+    }
+  }
+
+  getNotifIcon(type: string): { icon: string; color: string } {
+    switch (type) {
+      case 'new_order': return { icon: 'shopping_cart', color: 'text-green-600' };
+      case 'order_status_changed': return { icon: 'swap_horiz', color: 'text-blue-600' };
+      case 'out_of_stock': return { icon: 'warning', color: 'text-red-600' };
+      default: return { icon: 'info', color: 'text-gray-500' };
     }
   }
 }
