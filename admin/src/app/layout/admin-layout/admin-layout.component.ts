@@ -109,6 +109,8 @@ export class AdminLayoutComponent implements OnInit {
         { label: 'Idiomas', icon: 'translate', route: '/languages' },
         { label: 'Pagos', icon: 'payment', route: '/payment-settings' },
         { label: 'Email (SMTP)', icon: 'email', route: '/email-settings' },
+        { label: 'Apariencia', icon: 'palette', route: '/theme-config' },
+        { label: 'Plantillas de email', icon: 'mark_email_unread', route: '/email-templates' },
       ],
     },
     {

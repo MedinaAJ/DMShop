@@ -214,6 +214,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'theme-config',
+        loadComponent: () =>
+          import('./features/theme/theme-config.component').then((m) => m.ThemeConfigComponent),
+      },
+      {
+        path: 'email-templates',
+        loadComponent: () =>
+          import('./features/email-templates/email-templates.component').then(
+            (m) => m.EmailTemplatesComponent,
+          ),
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',
