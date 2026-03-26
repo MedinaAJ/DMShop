@@ -1,6 +1,45 @@
 # DMShop vs PrestaShop — Gap Analysis
 
-## Fecha: 2026-03-26 (actualizado en sprint 5)
+## Fecha: 2026-03-26 (actualizado en sprint 6)
+
+---
+
+## SPRINT 6 — 2026-03-26 (Lex, subagent)
+
+### ✅ Tareas completadas en este sprint
+
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| T1 | Checkout — confirmación de pedido y error de pago | ✅ |
+| T2 | Multi-moneda — CurrencyService + selector header + backend CRUD | ✅ |
+| T3 | SEO avanzado — og:price:amount, og:price:currency, twitter:card | ✅ |
+| T4 | Import/Export CSV de productos (backend + admin UI) | ✅ |
+| T5 | Gestión imágenes mejorada | ✅ (ya estaba completo en sprint anterior) |
+| T6 | CMS Editor WYSIWYG con toolbar + preview en tiempo real | ✅ |
+| T7 | Tickets soporte — modelos, backend, frontend cliente + admin | ✅ |
+| T8 | Módulo presupuestos (Quotes) — modelos, backend, frontend cliente + admin | ✅ |
+| T9 | PWA: manifest.webmanifest + Service Worker + meta tags | ✅ |
+| T10 | Tests: 194/194 passing, GAP actualizado | ✅ |
+
+### Tests: 194/194 passing ✅
+
+### Archivos nuevos en sprint 6
+- `backend/src/models/support-ticket.model.ts`
+- `backend/src/models/support-message.model.ts`
+- `backend/src/models/quote.model.ts`
+- `backend/src/models/quote-item.model.ts`
+- `backend/src/modules/currency/routes.ts`
+- `backend/src/modules/support/routes.ts`
+- `backend/src/modules/quotes/routes.ts`
+- `frontend/src/app/core/services/currency.service.ts`
+- `frontend/src/app/features/checkout/order-confirmation.component.ts`
+- `frontend/src/app/features/checkout/payment-error.component.ts`
+- `frontend/src/app/features/account/support/support.component.ts`
+- `frontend/src/app/features/account/quotes/quotes.component.ts`
+- `frontend/public/manifest.webmanifest`
+- `frontend/public/sw.js`
+- `admin/src/app/features/support/admin-support.component.ts`
+- `admin/src/app/features/quotes/admin-quotes.component.ts`
 
 ---
 
