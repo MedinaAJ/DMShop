@@ -80,6 +80,8 @@ export const productRouter = Router();
  *     responses:
  *       200: { description: Lista de productos }
  */
+const csvUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: (_req, file, cb) => { cb(null, file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')); } });
+
 productRouter.get(
   '/',
   optionalAuth,
@@ -89,6 +91,10 @@ productRouter.get(
 
 // GET /products/compare?ids=1,2,3 — compare up to 5 products
 productRouter.get('/compare', asyncHandler(productController.compare));
+
+// Export/Import CSV (admin)
+productRouter.get('/export', authenticate, authorize('admin', 'employee'), asyncHandler(productController.exportCsv));
+productRouter.post('/import', authenticate, authorize('admin', 'employee'), csvUpload.single('file'), asyncHandler(productController.importCsv));
 
 /**
  * @swagger

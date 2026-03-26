@@ -95,3 +95,7 @@ export { CmsCategory } from './cms-category.model.js';
 export { CmsCategoryLang } from './cms-category-lang.model.js';
 export { CmsPage } from './cms-page.model.js';
 export { CmsPageLang } from './cms-page-lang.model.js';
+
+// Support
+export { SupportTicket } from './support-ticket.model.js';
+export { SupportMessage } from './support-message.model.js';

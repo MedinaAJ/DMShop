@@ -58,11 +58,22 @@ export class SeoService {
     description: string | null;
     image?: string;
     url?: string;
+    price?: number;
+    currency?: string;
   }): void {
     this.updateTitle(opts.name);
     this.updateMeta(opts.description ?? opts.name);
     this.metaService.updateTag({ property: 'og:type', content: 'product' });
     this.updateOgTags(opts.name, opts.description ?? opts.name, opts.image, opts.url);
+    // Twitter card type
+    this.metaService.updateTag({ name: 'twitter:card', content: opts.image ? 'summary_large_image' : 'summary' });
+    // Price meta tags
+    if (opts.price !== undefined) {
+      this.metaService.updateTag({ property: 'og:price:amount', content: opts.price.toFixed(2) });
+      this.metaService.updateTag({ property: 'og:price:currency', content: opts.currency ?? 'EUR' });
+      this.metaService.updateTag({ name: 'twitter:data1', content: `${opts.price.toFixed(2)} ${opts.currency ?? '€'}` });
+      this.metaService.updateTag({ name: 'twitter:label1', content: 'Precio' });
+    }
     if (opts.url) {
       this.setCanonicalUrl(opts.url);
     }

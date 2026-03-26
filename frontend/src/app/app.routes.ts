@@ -40,6 +40,28 @@ export const routes: Routes = [
           import('./features/checkout/checkout.component').then((m) => m.CheckoutComponent),
       },
       {
+        path: 'checkout/success',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/checkout/order-confirmation.component').then((m) => m.OrderConfirmationComponent),
+      },
+      {
+        path: 'checkout/success/:orderId',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/checkout/order-confirmation.component').then((m) => m.OrderConfirmationComponent),
+      },
+      {
+        path: 'checkout/error',
+        loadComponent: () =>
+          import('./features/checkout/payment-error.component').then((m) => m.PaymentErrorComponent),
+      },
+      {
+        path: 'checkout/error/:orderId',
+        loadComponent: () =>
+          import('./features/checkout/payment-error.component').then((m) => m.PaymentErrorComponent),
+      },
+      {
         path: 'payment/confirmation/:orderId',
         canActivate: [authGuard],
         loadComponent: () =>
@@ -131,6 +153,13 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/account/profile/profile.component').then(
                 (m) => m.ProfileComponent,
+              ),
+          },
+          {
+            path: 'support',
+            loadComponent: () =>
+              import('./features/account/support/support.component').then(
+                (m) => m.SupportComponent,
               ),
           },
         ],

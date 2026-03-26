@@ -15,6 +15,7 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { I18nService } from './core/services/i18n.service';
 import { ThemeService } from './core/services/theme.service';
+import { CurrencyService } from './core/services/currency.service';
 
 function initializeAuth(): () => Promise<void> {
   const authService = inject(AuthService);
@@ -29,6 +30,11 @@ function initializeI18n(): () => Promise<void> {
 function initializeTheme(): () => Promise<void> {
   const themeService = inject(ThemeService);
   return () => themeService.init();
+}
+
+function initializeCurrencies(): () => Promise<void> {
+  const currencyService = inject(CurrencyService);
+  return () => currencyService.loadCurrencies();
 }
 
 export const appConfig: ApplicationConfig = {
@@ -51,6 +57,11 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: initializeTheme,
+      multi: true,
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeCurrencies,
       multi: true,
     },
   ],

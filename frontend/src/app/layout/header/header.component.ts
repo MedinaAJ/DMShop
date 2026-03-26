@@ -15,6 +15,7 @@ import { CartService } from '../../core/services/cart.service';
 import { WishlistService } from '../../core/services/wishlist.service';
 import { ApiService } from '../../core/services/api.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { CurrencyService } from '../../core/services/currency.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { environment } from '../../../environments/environment';
 
@@ -150,6 +151,21 @@ import { environment } from '../../../environments/environment';
             }
           </mat-menu>
 
+          <!-- Currency selector -->
+          @if (currencyService.availableCurrencies().length > 1) {
+            <button mat-icon-button [matMenuTriggerFor]="currencyMenu" class="text-gray-600" [title]="'Divisa'">
+              <span class="text-xs font-bold">{{ currencyService.currentCurrency()?.iso_code ?? 'EUR' }}</span>
+            </button>
+            <mat-menu #currencyMenu="matMenu">
+              @for (currency of currencyService.availableCurrencies(); track currency.id) {
+                <button mat-menu-item (click)="currencyService.setCurrency(currency)">
+                  <span class="mr-2">{{ currency.symbol }}</span>
+                  <span>{{ currency.name }} ({{ currency.iso_code }})</span>
+                </button>
+              }
+            </mat-menu>
+          }
+
           <a routerLink="/cart" class="relative p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-gray-100">
             <mat-icon
               [matBadge]="cartService.itemCount() || null"
@@ -236,6 +252,7 @@ export class HeaderComponent {
   readonly cartService = inject(CartService);
   readonly wishlistService = inject(WishlistService);
   readonly i18nService = inject(I18nService);
+  readonly currencyService = inject(CurrencyService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);

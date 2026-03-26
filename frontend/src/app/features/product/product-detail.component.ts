@@ -491,6 +491,8 @@ export class ProductDetailComponent implements OnInit {
             description: trans?.descriptionShort ?? trans?.description ?? null,
             image: imageUrl,
             url: typeof window !== 'undefined' ? window.location.href : undefined,
+            price: Number(product.price),
+            currency: 'EUR',
           });
 
           // Product JSON-LD

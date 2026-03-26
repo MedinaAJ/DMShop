@@ -76,6 +76,10 @@ interface LoyaltyBalance {
           }
         </p>
       </a>
+      <a routerLink="/account/support" class="group bg-purple-50 hover:bg-purple-100 rounded-xl p-4 text-center transition-colors">
+        <mat-icon class="!text-3xl text-purple-600 mb-1">support_agent</mat-icon>
+        <p class="text-sm font-medium text-purple-700">Soporte</p>
+      </a>
     </div>
 
     <div class="grid md:grid-cols-2 gap-6">
