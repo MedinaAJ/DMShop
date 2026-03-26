@@ -126,6 +126,13 @@ export const routes: Routes = [
                 (m) => m.AffiliatePageComponent,
               ),
           },
+          {
+            path: 'profile',
+            loadComponent: () =>
+              import('./features/account/profile/profile.component').then(
+                (m) => m.ProfileComponent,
+              ),
+          },
         ],
       },
       {

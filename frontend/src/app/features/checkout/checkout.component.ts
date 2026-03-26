@@ -45,6 +45,9 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
           <a mat-flat-button color="primary" routerLink="/account/addresses/new">Añadir dirección</a>
         </div>
       } @else {
+        <div class="flex flex-col lg:flex-row gap-8">
+          <!-- Main checkout flow -->
+          <div class="flex-1">
         <mat-stepper [linear]="true" #stepper>
           <!-- Step 1: Address -->
           <mat-step [completed]="!!selectedAddressId">
@@ -219,6 +222,63 @@ import { PaymentService, PaymentMethodOption } from '../../core/services/payment
             </div>
           </mat-step>
         </mat-stepper>
+          </div><!-- end main -->
+
+          <!-- Sticky order summary sidebar (desktop) -->
+          <aside class="w-full lg:w-80 shrink-0">
+            <div class="lg:sticky lg:top-24">
+              <mat-card>
+                <mat-card-header>
+                  <mat-icon mat-card-avatar class="!text-blue-600">shopping_bag</mat-icon>
+                  <mat-card-title>Resumen del pedido</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (summary) {
+                    <div class="space-y-2 mt-3">
+                      @for (item of summary.items; track item.id) {
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                          <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <span class="bg-blue-100 text-blue-700 text-xs rounded-full w-5 h-5 flex items-center justify-center shrink-0">
+                              {{ item.quantity }}
+                            </span>
+                            <span class="truncate">{{ item.name }}</span>
+                          </div>
+                          <span class="font-medium shrink-0">{{ item.totalPriceWithTax | currency:'EUR' }}</span>
+                        </div>
+                      }
+                    </div>
+                    <mat-divider class="!my-3" />
+                    <div class="space-y-1 text-sm">
+                      <div class="flex justify-between">
+                        <span class="text-gray-500">Subtotal</span>
+                        <span>{{ summary.totalProductsTax | currency:'EUR' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-500">Envío</span>
+                        <span>{{ summary.totalShippingTax | currency:'EUR' }}</span>
+                      </div>
+                      @if (summary.totalDiscountsTax > 0) {
+                        <div class="flex justify-between text-green-600">
+                          <span>Descuentos</span>
+                          <span>-{{ summary.totalDiscountsTax | currency:'EUR' }}</span>
+                        </div>
+                      }
+                    </div>
+                    <mat-divider class="!my-3" />
+                    <div class="flex justify-between font-bold text-lg">
+                      <span>Total</span>
+                      <span>{{ summary.totalPaid | currency:'EUR' }}</span>
+                    </div>
+                  } @else {
+                    <p class="text-gray-400 text-sm py-4 text-center">
+                      El resumen aparecerá cuando selecciones el método de envío.
+                    </p>
+                  }
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </aside>
+        </div><!-- end flex -->
       }
     </div>
   `,

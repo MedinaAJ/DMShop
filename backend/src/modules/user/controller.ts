@@ -6,6 +6,7 @@ import { State } from '../../models/state.model.js';
 import { sendSuccess, sendPaginated, sendNoContent } from '../../utils/response.js';
 import { AppError } from '../../utils/app-error.js';
 import { ErrorCode } from '@dmshop/shared';
+import bcrypt from 'bcrypt';
 
 export const userController = {
   async list(req: Request, res: Response) {
@@ -93,5 +94,47 @@ export const userController = {
     });
 
     sendSuccess(res, addresses);
+  },
+
+  /** PUT /users/me — update own profile */
+  async updateMe(req: Request, res: Response) {
+    const userId = (req as any).user.id;
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw AppError.notFound('Usuario no encontrado', ErrorCode.USER_NOT_FOUND);
+    }
+
+    const { firstName, lastName, email } = req.body;
+    await user.update({
+      ...(firstName !== undefined && { first_name: firstName }),
+      ...(lastName !== undefined && { last_name: lastName }),
+      ...(email !== undefined && { email }),
+    });
+
+    const updated = await User.findByPk(userId, { attributes: { exclude: ['password'] } });
+    sendSuccess(res, updated);
+  },
+
+  /** PUT /users/me/password — change own password */
+  async changeMyPassword(req: Request, res: Response) {
+    const userId = (req as any).user.id;
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw AppError.notFound('Usuario no encontrado', ErrorCode.USER_NOT_FOUND);
+    }
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      throw AppError.badRequest('Se requieren currentPassword y newPassword', ErrorCode.VALIDATION_ERROR);
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      throw AppError.badRequest('Contraseña actual incorrecta', ErrorCode.AUTH_INVALID_CREDENTIALS);
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await user.update({ password: hashed });
+    sendNoContent(res);
   },
 };

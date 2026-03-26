@@ -6,6 +6,11 @@ import { authorize } from '../../middleware/authorize.js';
 
 export const userRouter = Router();
 
+// Self-service routes (any authenticated user)
+userRouter.put('/me', authenticate, asyncHandler(userController.updateMe));
+userRouter.put('/me/password', authenticate, asyncHandler(userController.changeMyPassword));
+
+// Admin routes
 userRouter.get('/', authenticate, authorize('admin'), asyncHandler(userController.list));
 userRouter.get('/:id', authenticate, authorize('admin'), asyncHandler(userController.getById));
 userRouter.put('/:id', authenticate, authorize('admin'), asyncHandler(userController.update));
@@ -22,3 +27,4 @@ userRouter.get(
   authorize('admin'),
   asyncHandler(userController.getAddresses),
 );
+

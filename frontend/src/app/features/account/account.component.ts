@@ -51,6 +51,10 @@ import { AuthService } from '../../core/services/auth.service';
               <mat-icon matListItemIcon>person</mat-icon>
               <span>Perfil</span>
             </a>
+            <a mat-list-item routerLink="/account/affiliate" routerLinkActive="!bg-blue-50">
+              <mat-icon matListItemIcon>share</mat-icon>
+              <span>Afiliados</span>
+            </a>
           </mat-nav-list>
         </aside>
         <div class="flex-1">
