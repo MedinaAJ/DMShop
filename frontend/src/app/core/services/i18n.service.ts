@@ -64,6 +64,14 @@ export class I18nService {
     },
   };
 
+  /** Initialize: load default language. Called by app.config.ts APP_INITIALIZER */
+  async init(): Promise<void> {
+    const savedLang = isPlatformBrowser(this.platformId)
+      ? localStorage.getItem('lang') ?? 'es'
+      : 'es';
+    await this.setLanguage(savedLang);
+  }
+
   /** Load translations for a given language from a local JSON file */
   async setLanguage(lang: string): Promise<void> {
     this._currentLang.set(lang);
