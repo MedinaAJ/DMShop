@@ -127,6 +127,8 @@ export class AdminLayoutComponent implements OnInit {
       items: [
         { label: 'Páginas CMS', icon: 'description', route: '/cms' },
         { label: 'Newsletter', icon: 'email', route: '/newsletter' },
+        { label: 'Soporte', icon: 'support_agent', route: '/support' },
+        { label: 'Presupuestos', icon: 'request_quote', route: '/quotes' },
         { label: 'Afiliados', icon: 'share', route: '/affiliates' },
       ],
     },

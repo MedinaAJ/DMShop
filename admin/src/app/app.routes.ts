@@ -240,6 +240,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'support',
+        loadComponent: () =>
+          import('./features/support/admin-support.component').then(
+            (m) => m.AdminSupportComponent,
+          ),
+      },
+      {
+        path: 'quotes',
+        loadComponent: () =>
+          import('./features/quotes/admin-quotes.component').then(
+            (m) => m.AdminQuotesComponent,
+          ),
+      },
+      {
         path: 'affiliates',
         loadComponent: () =>
           import('./features/affiliates/affiliates.component').then(

@@ -84,6 +84,8 @@ import { AffiliateReferral } from '../models/affiliate-referral.model.js';
 import { NewsletterSubscriber } from '../models/newsletter-subscriber.model.js';
 import { SupportTicket } from '../models/support-ticket.model.js';
 import { SupportMessage } from '../models/support-message.model.js';
+import { Quote } from '../models/quote.model.js';
+import { QuoteItem } from '../models/quote-item.model.js';
 
 const models = [
   // Core
@@ -176,6 +178,9 @@ const models = [
   // Support
   SupportTicket,
   SupportMessage,
+  // Quotes
+  Quote,
+  QuoteItem,
 ];
 
 export const sequelize = new Sequelize({

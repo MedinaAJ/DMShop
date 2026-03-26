@@ -80,6 +80,10 @@ interface LoyaltyBalance {
         <mat-icon class="!text-3xl text-purple-600 mb-1">support_agent</mat-icon>
         <p class="text-sm font-medium text-purple-700">Soporte</p>
       </a>
+      <a routerLink="/account/quotes" class="group bg-indigo-50 hover:bg-indigo-100 rounded-xl p-4 text-center transition-colors">
+        <mat-icon class="!text-3xl text-indigo-600 mb-1">request_quote</mat-icon>
+        <p class="text-sm font-medium text-indigo-700">Presupuestos</p>
+      </a>
     </div>
 
     <div class="grid md:grid-cols-2 gap-6">

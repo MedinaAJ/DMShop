@@ -162,6 +162,13 @@ export const routes: Routes = [
                 (m) => m.SupportComponent,
               ),
           },
+          {
+            path: 'quotes',
+            loadComponent: () =>
+              import('./features/account/quotes/quotes.component').then(
+                (m) => m.QuotesComponent,
+              ),
+          },
         ],
       },
       {

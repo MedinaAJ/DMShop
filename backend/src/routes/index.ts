@@ -35,6 +35,7 @@ import { themeRouter } from '../modules/theme/theme.routes.js';
 import { emailTemplatesRouter } from '../modules/mail/email-templates.routes.js';
 import { currencyRouter } from '../modules/currency/routes.js';
 import { supportRouter } from '../modules/support/routes.js';
+import { quotesRouter, adminQuotesRouter } from '../modules/quotes/routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 
@@ -76,6 +77,8 @@ apiRouter.use('/', newsletterRouter);
 apiRouter.use('/currencies', currencyRouter);
 apiRouter.use('/support', supportRouter);
 apiRouter.use('/admin', supportRouter);
+apiRouter.use('/quotes', quotesRouter);
+apiRouter.use('/admin/quotes', adminQuotesRouter);
 
 // Invoice download: GET /api/v1/orders/:id/invoice
 apiRouter.get('/orders/:id/invoice', authenticate, asyncHandler(invoiceController.downloadInvoice));

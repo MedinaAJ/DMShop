@@ -99,3 +99,7 @@ export { CmsPageLang } from './cms-page-lang.model.js';
 // Support
 export { SupportTicket } from './support-ticket.model.js';
 export { SupportMessage } from './support-message.model.js';
+
+// Quotes
+export { Quote } from './quote.model.js';
+export { QuoteItem } from './quote-item.model.js';

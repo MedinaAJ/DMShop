@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -10,7 +10,9 @@ import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { CartService } from '../../core/services/cart.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { ApiService } from '../../core/services/api.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-cart',
@@ -136,8 +138,16 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
             <span>{{ 'cart.total' | translate }}</span>
             <span>{{ cartService.cart()!.totalPaid | currency: 'EUR' }}</span>
           </div>
-          <div class="mt-6 flex justify-end gap-3">
+          <div class="mt-6 flex justify-end gap-3 flex-wrap">
             <a mat-button routerLink="/catalog">{{ 'common.back' | translate }}</a>
+            <button mat-stroked-button (click)="requestQuote()" [disabled]="requestingQuote()">
+              @if (requestingQuote()) {
+                <mat-spinner diameter="18" class="inline-block mr-1" />
+              } @else {
+                <mat-icon>request_quote</mat-icon>
+              }
+              Solicitar presupuesto
+            </button>
             <a mat-flat-button color="primary" routerLink="/checkout" class="!px-8">
               {{ 'cart.checkout' | translate }}
             </a>
@@ -158,7 +168,10 @@ export class CartComponent {
   readonly cartService = inject(CartService);
   readonly i18nService = inject(I18nService);
   private readonly snack = inject(MatSnackBar);
+  private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   readonly couponCode = signal('');
+  readonly requestingQuote = signal(false);
 
   async updateQty(itemId: number, quantity: number): Promise<void> {
     if (quantity < 1) return;
@@ -183,5 +196,18 @@ export class CartComponent {
 
   async removeDiscount(cartRuleId: number): Promise<void> {
     await this.cartService.removeDiscount(cartRuleId);
+  }
+
+  async requestQuote(): Promise<void> {
+    this.requestingQuote.set(true);
+    try {
+      await firstValueFrom(this.api.post('/quotes', {}));
+      this.snack.open('Presupuesto solicitado correctamente', 'OK', { duration: 3000 });
+      this.router.navigate(['/account/quotes']);
+    } catch {
+      this.snack.open('Error al solicitar el presupuesto', 'OK', { duration: 3000 });
+    } finally {
+      this.requestingQuote.set(false);
+    }
   }
 }
