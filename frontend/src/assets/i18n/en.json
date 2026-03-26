@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "home": "Home",
+    "catalog": "Catalog",
+    "cart": "Cart",
+    "account": "My account",
+    "wishlist": "Wishlist"
+  },
+  "product": {
+    "add_to_cart": "Add to cart",
+    "out_of_stock": "Out of stock",
+    "price": "Price",
+    "reference": "Reference",
+    "description": "Description",
+    "reviews": "Reviews",
+    "no_reviews": "No reviews yet",
+    "write_review": "Write a review"
+  },
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty",
+    "total": "Total",
+    "checkout": "Checkout",
+    "items": "{{count}} item(s)",
+    "remove": "Remove",
+    "quantity": "Quantity"
+  },
+  "checkout": {
+    "shipping": "Shipping",
+    "payment": "Payment",
+    "summary": "Summary",
+    "place_order": "Place order",
+    "free": "Free"
+  },
+  "account": {
+    "orders": "My orders",
+    "addresses": "My addresses",
+    "profile": "My profile",
+    "logout": "Sign out",
+    "login": "Sign in",
+    "register": "Register",
+    "wishlist": "My wishlist",
+    "loyalty": "My points"
+  },
+  "catalog": {
+    "filter": "Filter",
+    "sort": "Sort",
+    "results": "{{count}} results",
+    "no_results": "No results",
+    "price_asc": "Price: low to high",
+    "price_desc": "Price: high to low",
+    "newest": "Newest"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "search": "Search",
+    "see_more": "See more",
+    "back": "Back"
+  }
+}

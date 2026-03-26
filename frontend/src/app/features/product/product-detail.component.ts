@@ -14,6 +14,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { ReviewService, ReviewStats } from '../../core/services/review.service';
 import { WishlistService } from '../../core/services/wishlist.service';
 import { SeoService } from '../../core/seo.service';
+import { I18nService } from '../../core/services/i18n.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -29,6 +31,7 @@ import { environment } from '../../../environments/environment';
     MatTableModule,
     CurrencyPipe,
     DatePipe,
+    TranslatePipe,
   ],
   template: `
     @if (loading) {
@@ -114,7 +117,7 @@ import { environment } from '../../../environments/environment';
             } @else {
               <p class="text-red-500 mb-2 flex items-center gap-1">
                 <mat-icon class="!text-base">cancel</mat-icon>
-                Agotado
+                {{ 'product.out_of_stock' | translate }}
               </p>
             }
 
@@ -166,14 +169,14 @@ import { environment } from '../../../environments/environment';
                 class="!px-8"
               >
                 <mat-icon>add_shopping_cart</mat-icon>
-                {{ effectiveStock <= 0 ? 'Agotado' : 'Añadir al carrito' }}
+                {{ effectiveStock <= 0 ? ('product.out_of_stock' | translate) : ('product.add_to_cart' | translate) }}
               </button>
             </div>
 
             <!-- Description -->
             @if (productDescription) {
               <div class="prose max-w-none mt-6">
-                <h3 class="text-lg font-semibold mb-2">Descripción</h3>
+                <h3 class="text-lg font-semibold mb-2">{{ 'product.description' | translate }}</h3>
                 <div [innerHTML]="productDescription"></div>
               </div>
             }
@@ -387,6 +390,7 @@ export class ProductDetailComponent implements OnInit {
   private readonly reviewService = inject(ReviewService);
   readonly wishlistService = inject(WishlistService);
   private readonly seoService = inject(SeoService);
+  readonly i18nService = inject(I18nService);
 
   product: any = null;
   loading = true;

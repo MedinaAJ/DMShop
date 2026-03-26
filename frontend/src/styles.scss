@@ -15,4 +15,13 @@ html {
 }
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; font-family: var(--font-family, Roboto, "Helvetica Neue", sans-serif); }
+
+/* CSS custom properties for theming — overridden at runtime by ThemeService */
+:root {
+  --color-primary: #1a56db;
+  --color-primary-rgb: 26, 86, 219;
+  --color-secondary: #7e3af2;
+  --font-family: 'Inter', Roboto, 'Helvetica Neue', sans-serif;
+}
+

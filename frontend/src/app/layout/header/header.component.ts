@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, UpperCasePipe } from '@angular/common';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -14,6 +14,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { CartService } from '../../core/services/cart.service';
 import { WishlistService } from '../../core/services/wishlist.service';
 import { ApiService } from '../../core/services/api.service';
+import { I18nService } from '../../core/services/i18n.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -28,6 +30,8 @@ import { environment } from '../../../environments/environment';
     MatMenuModule,
     MatProgressSpinner,
     CurrencyPipe,
+    UpperCasePipe,
+    TranslatePipe,
   ],
   template: `
     <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
@@ -42,7 +46,7 @@ import { environment } from '../../../environments/environment';
             <input
               type="text"
               class="bg-transparent text-gray-900 placeholder-gray-400 outline-none w-full text-sm"
-              placeholder="Buscar productos..."
+              [placeholder]="'common.search' | translate"
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchInput($event)"
               (keydown.enter)="goToSearch()"
@@ -65,7 +69,7 @@ import { environment } from '../../../environments/environment';
               } @else if (autocompleteResults.products.length > 0 || autocompleteResults.categories.length > 0) {
                 @if (autocompleteResults.categories.length > 0) {
                   <div class="px-4 py-2 bg-gray-50 border-b">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Categorías</p>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ 'nav.catalog' | translate }}</p>
                     @for (cat of autocompleteResults.categories; track cat.id) {
                       <a
                         [routerLink]="['/catalog', cat.id]"
@@ -112,12 +116,12 @@ import { environment } from '../../../environments/environment';
                     class="w-full text-sm text-blue-600 hover:text-blue-800 font-medium py-1"
                     (click)="goToSearch()"
                   >
-                    Ver todos los resultados para "{{ searchQuery }}"
+                    {{ 'common.see_more' | translate }} "{{ searchQuery }}"
                   </button>
                 </div>
               } @else if (!searchLoading) {
                 <div class="px-4 py-6 text-center text-sm text-gray-500">
-                  Sin resultados para "{{ searchQuery }}"
+                  {{ 'catalog.no_results' | translate }}
                 </div>
               }
             </div>
@@ -131,6 +135,21 @@ import { environment } from '../../../environments/environment';
             <mat-icon>search</mat-icon>
           </button>
 
+          <!-- Language selector -->
+          <button mat-icon-button [matMenuTriggerFor]="langMenu" class="text-gray-600" [title]="'Idioma'">
+            <span class="text-xs font-bold">{{ i18nService.lang() | uppercase }}</span>
+          </button>
+          <mat-menu #langMenu="matMenu">
+            @for (lang of i18nService.availableLanguages(); track lang.iso_code) {
+              <button mat-menu-item (click)="changeLang(lang.iso_code)">
+                @if (lang.flag) {
+                  <span class="mr-2">{{ lang.flag }}</span>
+                }
+                <span>{{ lang.name }}</span>
+              </button>
+            }
+          </mat-menu>
+
           <a routerLink="/cart" class="relative p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-gray-100">
             <mat-icon
               [matBadge]="cartService.itemCount() || null"
@@ -142,7 +161,7 @@ import { environment } from '../../../environments/environment';
           </a>
 
           @if (authService.isAuthenticated()) {
-            <a routerLink="/account/wishlist" title="Lista de deseos" class="p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-gray-100">
+            <a routerLink="/account/wishlist" [title]="'nav.wishlist' | translate" class="p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-gray-100">
               <mat-icon
                 [matBadge]="wishlistService.itemCount() > 0 ? wishlistService.itemCount() : null"
                 matBadgeColor="accent"
@@ -163,20 +182,20 @@ import { environment } from '../../../environments/environment';
               </span>
               <a mat-menu-item routerLink="/account">
                 <mat-icon>account_circle</mat-icon>
-                <span>Mi cuenta</span>
+                <span>{{ 'account.profile' | translate }}</span>
               </a>
               <a mat-menu-item routerLink="/account/orders">
                 <mat-icon>receipt_long</mat-icon>
-                <span>Mis pedidos</span>
+                <span>{{ 'account.orders' | translate }}</span>
               </a>
               <button mat-menu-item (click)="authService.logout()">
                 <mat-icon>logout</mat-icon>
-                <span>Cerrar sesión</span>
+                <span>{{ 'account.logout' | translate }}</span>
               </button>
             </mat-menu>
           } @else {
-            <a routerLink="/auth/login" class="hidden sm:inline-flex text-sm text-gray-700 hover:text-gray-900 font-medium whitespace-nowrap px-3 py-2 rounded-lg hover:bg-gray-100 transition">Iniciar sesión</a>
-            <a routerLink="/auth/register" class="text-sm bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition whitespace-nowrap">Registrarse</a>
+            <a routerLink="/auth/login" class="hidden sm:inline-flex text-sm text-gray-700 hover:text-gray-900 font-medium whitespace-nowrap px-3 py-2 rounded-lg hover:bg-gray-100 transition">{{ 'account.login' | translate }}</a>
+            <a routerLink="/auth/register" class="text-sm bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition whitespace-nowrap">{{ 'account.register' | translate }}</a>
           }
         </div>
       </nav>
@@ -189,7 +208,7 @@ import { environment } from '../../../environments/environment';
             <input
               type="text"
               class="bg-transparent text-gray-900 placeholder-gray-400 outline-none w-full text-sm"
-              placeholder="Buscar productos..."
+              [placeholder]="'common.search' | translate"
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchInput($event)"
               (keydown.enter)="goToSearch()"
@@ -216,6 +235,7 @@ export class HeaderComponent {
   readonly authService = inject(AuthService);
   readonly cartService = inject(CartService);
   readonly wishlistService = inject(WishlistService);
+  readonly i18nService = inject(I18nService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
@@ -244,10 +264,7 @@ export class HeaderComponent {
             '/search/autocomplete',
             { q, limit: 8 },
           ).pipe(
-            catchError(() => {
-              // Fallback to basic product search
-              return of(null);
-            }),
+            catchError(() => of(null)),
           );
         }),
       )
@@ -268,6 +285,10 @@ export class HeaderComponent {
           this.autocompleteResults = { products: [], categories: [] };
         },
       });
+  }
+
+  async changeLang(iso_code: string): Promise<void> {
+    await this.i18nService.setLanguage(iso_code);
   }
 
   onSearchInput(query: string): void {

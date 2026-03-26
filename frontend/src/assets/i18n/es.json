@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "catalog": "Catálogo",
+    "cart": "Carrito",
+    "account": "Mi cuenta",
+    "wishlist": "Lista de deseos"
+  },
+  "product": {
+    "add_to_cart": "Añadir al carrito",
+    "out_of_stock": "Sin stock",
+    "price": "Precio",
+    "reference": "Referencia",
+    "description": "Descripción",
+    "reviews": "Valoraciones",
+    "no_reviews": "Sin valoraciones aún",
+    "write_review": "Escribir valoración"
+  },
+  "cart": {
+    "title": "Tu carrito",
+    "empty": "Tu carrito está vacío",
+    "total": "Total",
+    "checkout": "Finalizar compra",
+    "items": "{{count}} artículo(s)",
+    "remove": "Eliminar",
+    "quantity": "Cantidad"
+  },
+  "checkout": {
+    "shipping": "Envío",
+    "payment": "Pago",
+    "summary": "Resumen",
+    "place_order": "Realizar pedido",
+    "free": "Gratis"
+  },
+  "account": {
+    "orders": "Mis pedidos",
+    "addresses": "Mis direcciones",
+    "profile": "Mi perfil",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "wishlist": "Mi lista de deseos",
+    "loyalty": "Mis puntos"
+  },
+  "catalog": {
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "results": "{{count}} resultados",
+    "no_results": "Sin resultados",
+    "price_asc": "Precio: menor a mayor",
+    "price_desc": "Precio: mayor a menor",
+    "newest": "Más recientes"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ha ocurrido un error",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "see_more": "Ver más",
+    "back": "Volver"
+  }
+}

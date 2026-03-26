@@ -13,10 +13,22 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { I18nService } from './core/services/i18n.service';
+import { ThemeService } from './core/services/theme.service';
 
 function initializeAuth(): () => Promise<void> {
   const authService = inject(AuthService);
   return () => authService.init();
+}
+
+function initializeI18n(): () => Promise<void> {
+  const i18nService = inject(I18nService);
+  return () => i18nService.init();
+}
+
+function initializeTheme(): () => Promise<void> {
+  const themeService = inject(ThemeService);
+  return () => themeService.init();
 }
 
 export const appConfig: ApplicationConfig = {
@@ -29,6 +41,16 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: initializeAuth,
+      multi: true,
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeI18n,
+      multi: true,
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeTheme,
       multi: true,
     },
   ],

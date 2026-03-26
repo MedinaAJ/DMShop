@@ -3,19 +3,22 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { CartService } from '../../core/services/cart.service';
+import { I18nService } from '../../core/services/i18n.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [RouterLink, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinner, MatSnackBarModule, CurrencyPipe],
+  imports: [RouterLink, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinner, MatFormFieldModule, MatInputModule, MatSnackBarModule, CurrencyPipe, TranslatePipe],
   template: `
     <div class="max-w-4xl mx-auto px-4 py-8">
-      <h1 class="text-2xl font-bold mb-6">Carrito de compra</h1>
+      <h1 class="text-2xl font-bold mb-6">{{ 'cart.title' | translate }}</h1>
 
       @if (cartService.loading()) {
         <div class="flex justify-center py-12">
@@ -70,7 +73,7 @@ import { CartService } from '../../core/services/cart.service';
                 {{ item.totalPriceWithTax | currency: 'EUR' }}
               </p>
 
-              <button mat-icon-button color="warn" (click)="remove(item.id)">
+              <button mat-icon-button color="warn" (click)="remove(item.id)" [title]="'cart.remove' | translate">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -89,7 +92,7 @@ import { CartService } from '../../core/services/cart.service';
           </div>
           @if (cartService.cart()!.totalShipping > 0) {
             <div class="flex justify-between mb-2">
-              <span>Envío</span>
+              <span>{{ 'checkout.shipping' | translate }}</span>
               <span>{{ cartService.cart()!.totalShipping | currency: 'EUR' }}</span>
             </div>
           }
@@ -119,13 +122,10 @@ import { CartService } from '../../core/services/cart.service';
 
           <!-- Coupon input -->
           <div class="flex items-center gap-2 mb-3">
-            <input
-              [(ngModel)]="couponCode"
-              name="coupon"
-              (keyup.enter)="applyCoupon()"
-              placeholder="Código de cupón"
-              class="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-            />
+            <mat-form-field appearance="outline" class="flex-1 !mb-0" subscriptSizing="dynamic">
+              <mat-label>Código de cupón</mat-label>
+              <input matInput [(ngModel)]="couponCode" name="coupon" (keyup.enter)="applyCoupon()" />
+            </mat-form-field>
             <button mat-stroked-button (click)="applyCoupon()" [disabled]="!couponCode()">
               Aplicar
             </button>
@@ -133,22 +133,22 @@ import { CartService } from '../../core/services/cart.service';
 
           <hr class="my-3" />
           <div class="flex justify-between text-xl font-bold">
-            <span>Total</span>
+            <span>{{ 'cart.total' | translate }}</span>
             <span>{{ cartService.cart()!.totalPaid | currency: 'EUR' }}</span>
           </div>
           <div class="mt-6 flex justify-end gap-3">
-            <a mat-button routerLink="/catalog">Seguir comprando</a>
+            <a mat-button routerLink="/catalog">{{ 'common.back' | translate }}</a>
             <a mat-flat-button color="primary" routerLink="/checkout" class="!px-8">
-              Finalizar compra
+              {{ 'cart.checkout' | translate }}
             </a>
           </div>
         </div>
       } @else {
         <div class="text-center py-16">
           <mat-icon class="!text-6xl text-gray-300 mb-4">shopping_cart</mat-icon>
-          <h2 class="text-xl font-semibold mb-2">Tu carrito está vacío</h2>
+          <h2 class="text-xl font-semibold mb-2">{{ 'cart.empty' | translate }}</h2>
           <p class="text-gray-500 mb-6">Añade productos para comenzar tu compra.</p>
-          <a mat-flat-button routerLink="/catalog">Ver catálogo</a>
+          <a mat-flat-button routerLink="/catalog">{{ 'nav.catalog' | translate }}</a>
         </div>
       }
     </div>
@@ -156,6 +156,7 @@ import { CartService } from '../../core/services/cart.service';
 })
 export class CartComponent {
   readonly cartService = inject(CartService);
+  readonly i18nService = inject(I18nService);
   private readonly snack = inject(MatSnackBar);
   readonly couponCode = signal('');
 
@@ -174,9 +175,9 @@ export class CartComponent {
     try {
       await this.cartService.applyDiscount(code);
       this.couponCode.set('');
-      this.snack.open('Cupón aplicado', 'OK', { duration: 2000 });
+      this.snack.open(this.i18nService.t('common.save'), 'OK', { duration: 2000 });
     } catch {
-      this.snack.open('Cupón inválido o expirado', 'Cerrar', { duration: 3000 });
+      this.snack.open(this.i18nService.t('common.error'), this.i18nService.t('common.close'), { duration: 3000 });
     }
   }
 
