@@ -103,3 +103,6 @@ export { SupportMessage } from './support-message.model.js';
 // Quotes
 export { Quote } from './quote.model.js';
 export { QuoteItem } from './quote-item.model.js';
+
+// Themes
+export { Theme } from './theme.model.js';

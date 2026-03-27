@@ -35,10 +35,10 @@ import { environment } from '../../../environments/environment';
     TranslatePipe,
   ],
   template: `
-    <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+    <header class="sticky top-0 z-50 shadow-sm border-b" style="background-color: var(--bg-primary); border-color: var(--border-color);">
       <nav class="flex items-center px-4 sm:px-6 py-3 gap-4">
         <!-- Logo — left -->
-        <a routerLink="/" class="text-xl font-bold text-gray-900 no-underline shrink-0">DMShop</a>
+        <a routerLink="/" class="text-xl font-bold no-underline shrink-0" style="color: var(--text-primary)">DMShop</a>
 
         <!-- Search bar — center, grows -->
         <div class="search-container flex-1 max-w-2xl mx-auto relative hidden sm:block" #searchContainer>

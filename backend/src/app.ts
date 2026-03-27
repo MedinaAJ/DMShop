@@ -17,6 +17,7 @@ import { registerPaymentModules } from './modules/payment/index.js';
 import { cmsService } from './modules/cms/service.js';
 import { OrderState } from './models/order-state.model.js';
 import { translationService } from './modules/translation/service.js';
+import { themeService } from './modules/theme/theme.service.js';
 import { initWebSocket } from './websocket/notifications.js';
 
 const app = express();
@@ -124,6 +125,10 @@ async function bootstrap() {
     // Seed translations if empty
     await translationService.seedDefaults();
     logger.info('Translations seeded');
+
+    // Seed builtin themes
+    await themeService.seedBuiltinThemes();
+    logger.info('Builtin themes seeded');
 
     // Create HTTP server and attach WebSocket
     const httpServer = createServer(app);

@@ -69,7 +69,8 @@ apiRouter.use('/returns', returnRouter);
 apiRouter.use('/customer-groups', customerGroupRouter);
 apiRouter.use('/langs', langRouter);
 apiRouter.use('/', loyaltyRouter); // Loyalty mounts /account/loyalty, /cart/apply-loyalty, /admin/...
-apiRouter.use('/theme', themeRouter);
+apiRouter.use('/theme', themeRouter);  // legacy: /theme/config
+apiRouter.use('/themes', themeRouter); // new multi-theme API
 apiRouter.use('/admin/email-templates', emailTemplatesRouter);
 apiRouter.use('/translations', translationRouter);
 apiRouter.use('/', affiliateRouter);

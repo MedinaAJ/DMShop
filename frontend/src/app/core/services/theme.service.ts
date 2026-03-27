@@ -5,31 +5,50 @@ import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface ThemeConfig {
-  THEME_NAME: string;
-  THEME_PRIMARY_COLOR: string;
-  THEME_SECONDARY_COLOR: string;
-  THEME_FONT: string;
-  THEME_LOGO_URL: string;
-  THEME_FAVICON_URL: string;
-  THEME_SHOW_PRICES_WITHOUT_TAX: string;
-  THEME_PRODUCTS_PER_PAGE: string;
-  THEME_BANNER_TEXT: string;
-  THEME_BANNER_SUBTITLE: string;
-  THEME_BANNER_IMAGE_URL: string;
+  primaryColor: string;
+  secondaryColor: string;
+  font: string;
+  logoUrl?: string;
+  faviconUrl?: string;
+  showPricesWithoutTax?: boolean;
+  productsPerPage?: number;
+  bannerText?: string;
+  bannerSubtitle?: string;
+  bannerImageUrl?: string;
+  headerStyle?: 'light' | 'dark' | 'transparent';
+  productCardStyle?: 'classic' | 'minimal' | 'detailed';
+  borderRadius?: 'none' | 'small' | 'medium' | 'large';
+  buttonStyle?: 'filled' | 'outlined' | 'soft';
+  colorScheme?: 'light' | 'dark';
+}
+
+export interface Theme {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  preview_image: string | null;
+  is_active: number;
+  is_builtin: number;
+  config: ThemeConfig;
 }
 
 const DEFAULTS: ThemeConfig = {
-  THEME_NAME: 'default',
-  THEME_PRIMARY_COLOR: '#1a56db',
-  THEME_SECONDARY_COLOR: '#7e3af2',
-  THEME_FONT: 'Inter',
-  THEME_LOGO_URL: '',
-  THEME_FAVICON_URL: '',
-  THEME_SHOW_PRICES_WITHOUT_TAX: 'false',
-  THEME_PRODUCTS_PER_PAGE: '12',
-  THEME_BANNER_TEXT: 'Bienvenido a DMShop',
-  THEME_BANNER_SUBTITLE: 'Descubre nuestra colección',
-  THEME_BANNER_IMAGE_URL: '',
+  primaryColor: '#1a56db',
+  secondaryColor: '#7e3af2',
+  font: 'Inter',
+  logoUrl: '',
+  faviconUrl: '',
+  showPricesWithoutTax: false,
+  productsPerPage: 12,
+  bannerText: 'Bienvenido a DMShop',
+  bannerSubtitle: 'Descubre nuestra colección',
+  bannerImageUrl: '',
+  headerStyle: 'light',
+  productCardStyle: 'classic',
+  borderRadius: 'medium',
+  buttonStyle: 'filled',
+  colorScheme: 'light',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -42,10 +61,11 @@ export class ThemeService {
 
   async init(): Promise<void> {
     try {
-      const data = await firstValueFrom(
-        this.http.get<ThemeConfig>(`${environment.apiUrl}/theme/config`)
+      const response = await firstValueFrom(
+        this.http.get<{ success: boolean; data: Theme }>(`${environment.apiUrl}/themes/active`)
       );
-      const merged = { ...DEFAULTS, ...data };
+      const themeConfig = response?.data?.config ?? (response as unknown as ThemeConfig);
+      const merged = { ...DEFAULTS, ...themeConfig };
       this.config.set(merged);
       this.config$.next(merged);
       this.applyTheme(merged);
@@ -55,35 +75,49 @@ export class ThemeService {
     }
   }
 
-  private applyTheme(config: ThemeConfig): void {
+  applyTheme(config: ThemeConfig): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const root = document.documentElement;
 
-    // Apply CSS custom properties
-    if (config.THEME_PRIMARY_COLOR) {
-      root.style.setProperty('--color-primary', config.THEME_PRIMARY_COLOR);
-      root.style.setProperty('--color-primary-rgb', this.hexToRgb(config.THEME_PRIMARY_COLOR));
+    // Colors
+    if (config.primaryColor) {
+      root.style.setProperty('--color-primary', config.primaryColor);
+      root.style.setProperty('--color-primary-rgb', this.hexToRgb(config.primaryColor));
     }
-    if (config.THEME_SECONDARY_COLOR) {
-      root.style.setProperty('--color-secondary', config.THEME_SECONDARY_COLOR);
-    }
-
-    // Apply font
-    if (config.THEME_FONT) {
-      this.loadGoogleFont(config.THEME_FONT);
-      root.style.setProperty('--font-family', `'${config.THEME_FONT}', sans-serif`);
+    if (config.secondaryColor) {
+      root.style.setProperty('--color-secondary', config.secondaryColor);
     }
 
-    // Apply favicon
-    if (config.THEME_FAVICON_URL) {
+    // Font
+    if (config.font) {
+      this.loadGoogleFont(config.font);
+      root.style.setProperty('--font-family', `'${config.font}', sans-serif`);
+    }
+
+    // Border radius preset
+    const radii: Record<string, string> = {
+      none: '0',
+      small: '4px',
+      medium: '8px',
+      large: '16px',
+    };
+    if (config.borderRadius) {
+      root.style.setProperty('--border-radius', radii[config.borderRadius] ?? '8px');
+    }
+
+    // Color scheme (dark mode)
+    root.setAttribute('data-theme', config.colorScheme ?? 'light');
+
+    // Favicon
+    if (config.faviconUrl) {
       let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
       if (!link) {
         link = document.createElement('link');
         link.rel = 'icon';
         document.head.appendChild(link);
       }
-      link.href = config.THEME_FAVICON_URL;
+      link.href = config.faviconUrl;
     }
   }
 

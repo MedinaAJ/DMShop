@@ -80,8 +80,8 @@ interface AffiliateItem {
               </td>
             </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="displayedColumns" />
-            <tr mat-row *matRowDef="let row; columns: displayedColumns" />
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
           </table>
 
           <mat-paginator

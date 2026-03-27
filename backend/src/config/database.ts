@@ -86,6 +86,7 @@ import { SupportTicket } from '../models/support-ticket.model.js';
 import { SupportMessage } from '../models/support-message.model.js';
 import { Quote } from '../models/quote.model.js';
 import { QuoteItem } from '../models/quote-item.model.js';
+import { Theme } from '../models/theme.model.js';
 
 const models = [
   // Core
@@ -181,6 +182,8 @@ const models = [
   // Quotes
   Quote,
   QuoteItem,
+  // Themes
+  Theme,
 ];
 
 export const sequelize = new Sequelize({
